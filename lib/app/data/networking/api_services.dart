@@ -238,19 +238,21 @@ class ApiServices {
   }
 
   Future<APIResponse> getShipmentDataList(
-      final token,
-      final userID,
-      final nextID,
-      final shimentStatus,
-      final receiverGSTNo,
-      final senderGSTNo,
-      final receiverAeraName,
-      final senderAeraName,
-      final destination,
-      final orgin,
-      final receiverCompanyName,
-      final senderCompanyName,
-      final shipmentID) async {
+    final token,
+    final userID,
+    final nextID,
+    final shimentStatus,
+    final receiverGSTNo,
+    final senderGSTNo,
+    final receiverAeraName,
+    final senderAeraName,
+    final destination,
+    final orgin,
+    final receiverCompanyName,
+    final senderCompanyName,
+    final shipmentID,
+    final role,
+  ) async {
     final body = {
       'user_id': userID,
       'next_id': nextID,
@@ -264,6 +266,7 @@ class ApiServices {
       'receiver_company_name': receiverCompanyName,
       'sender_company_name': senderCompanyName,
       'shipment_id': shipmentID,
+      'role': role,
     };
     return _api.post(
       getShipmentDataListPoint,

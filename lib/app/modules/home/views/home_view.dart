@@ -386,7 +386,7 @@ class HomeView extends GetView<HomeController> {
                                   return HomeContainer(
                                     onTap: () {
                                       shipnowController
-                                          .setStatusFilter('Out for Delivery');
+                                          .setStatusFilter('Out for delivery');
                                       Get.toNamed(Routes.SHIPMENT_RECORD);
                                     },
                                     color: themes.blueGray,
@@ -412,11 +412,11 @@ class HomeView extends GetView<HomeController> {
                                   return HomeContainer(
                                       onTap: () {
                                         shipnowController
-                                            .setStatusFilter('Picked Up');
+                                            .setStatusFilter('Picked up');
                                         Get.toNamed(Routes.SHIPMENT_RECORD);
                                       },
                                       color: themes.blueGray,
-                                      title: 'Pickedup',
+                                      title: 'Picked up',
                                       subTitle: homeController
                                                   .isCustomerDashboard.value ==
                                               Status.loading
@@ -438,13 +438,12 @@ class HomeView extends GetView<HomeController> {
                                 child: Obx(() {
                                   return HomeContainer(
                                     onTap: () {
-                                      // Ensure correct filter is applied
                                       shipnowController.setStatusFilter(
                                           'Waiting for Pickup');
                                       Get.toNamed(Routes.SHIPMENT_RECORD);
                                     },
                                     color: themes.blueGray,
-                                    title: 'Wating for Pickup',
+                                    title: 'Wating for pickup',
                                     subTitle: homeController
                                                 .isCustomerDashboard.value ==
                                             Status.loading
@@ -467,7 +466,7 @@ class HomeView extends GetView<HomeController> {
                                     onTap: () {
                                       // Clear any previous status filter before opening
                                       shipnowController
-                                          .setStatusFilter('Shipped');
+                                          .setStatusFilter('shipped');
                                       Get.toNamed(Routes.SHIPMENT_RECORD);
                                     },
                                     color: themes.blueGray,

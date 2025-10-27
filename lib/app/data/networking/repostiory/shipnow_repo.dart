@@ -27,6 +27,7 @@ class ShipnowRepo {
       final userData = await LocalStorage().getUserLocalData();
       final userID = userData?.messangerdetail?.id?.toString() ??
           userData?.customerdetail?.id.toString();
+      final role = userData?.role?.toString();
       final token =
           userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
       if (userID != null && userID.isNotEmpty) {
@@ -44,6 +45,7 @@ class ShipnowRepo {
           receiverCompanyName,
           senderAeraName,
           shipmentID,
+          role.toString(),
         );
         return response.when(
           success: (body) {

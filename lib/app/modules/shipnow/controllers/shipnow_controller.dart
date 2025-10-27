@@ -20,9 +20,9 @@ class ShipnowController extends GetxController {
   final RxString selectedStatusFilter = ''.obs;
   final List<String> statusFilters = [
     '', // All
-    'Out for Delivery',
-    'Waiting for Pickup',
-    'Picked Up',
+    'Out for delivery',
+    'Waiting for pickup',
+    'Picked up',
     'Approved',
     'Pending',
     'Cancelled',
@@ -100,7 +100,10 @@ class ShipnowController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchShipmentData('0', isRefresh: true);
+    fetchShipmentData(
+      '0',
+      isRefresh: true,
+    );
     // Only setup flutter_downloader for Android
     if (Platform.isAndroid) {
       IsolateNameServer.registerPortWithName(
@@ -282,7 +285,8 @@ class ShipnowController extends GetxController {
   }
 
   Future<void> refreshData() async {
-    await fetchShipmentData('0', isRefresh: true);
+    await fetchShipmentData('0',
+        isRefresh: true, shipmentSatus: selectedStatusFilter.value);
   }
 
   void filterShipmentData(String query) {
@@ -303,6 +307,6 @@ class ShipnowController extends GetxController {
   // Call this when user selects a status filter from the filter list button
   void setStatusFilter(String status) {
     selectedStatusFilter.value = status;
-    filterShipmentData(shipmentIDController.text);
+    fetchShipmentData("0", isRefresh: true, shipmentSatus: status);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
+import 'package:axlpl_delivery/app/modules/bottombar/controllers/bottombar_controller.dart';
 import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart';
 import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/views/running_delivery_details_view.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
@@ -17,6 +18,8 @@ class NotificationView extends GetView<NotificationController> {
   const NotificationView({super.key});
   @override
   Widget build(BuildContext context) {
+    final bottomController = Get.put(BottombarController());
+    final user = bottomController.userData.value;
     final runningDeliveryController =
         Get.put(RunningDeliveryDetailsController());
     return CommonScaffold(
@@ -81,7 +84,9 @@ class NotificationView extends GetView<NotificationController> {
                                 Get.to(
                                   RunningDeliveryDetailsView(
                                     isShowInvoice: true,
-                                    isShowTransfer: true,
+                                    isShowTransfer: user?.role == 'messanger'
+                                        ? true
+                                        : false,
                                   ),
                                   arguments: {
                                     'shipmentID': data.shipmentId,

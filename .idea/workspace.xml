@@ -5,16 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a34695b8-f86e-4fe4-82b5-decc75c7aeb4" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/api_client.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/api_client.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/controllers/add_shipment_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/controllers/add_shipment_controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/receiver_address_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/receiver_address_view.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/repostiory/shipnow_repo.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/repostiory/shipnow_repo.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/container_textfiled.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/container_textfiled.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/contract_details_screen.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/contract_details_screen.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/contract_home_screen_widget.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/contract_home_screen_widget.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/contract_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/contract_list.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/used_contract_shipment.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/used_contract_shipment.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/main.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/notification/views/notification_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/notification/views/notification_view.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/common_widget/common_scaffold.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/common_scaffold.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
