@@ -19,7 +19,7 @@ class ContractCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double percent = (used / total);
-
+    double displayedPercent = percent.clamp(0.0, 1.0);
     return InkWell(
       onTap: onTap,
       child: Card(
@@ -83,9 +83,9 @@ class ContractCard extends StatelessWidget {
               CircularPercentIndicator(
                 radius: 45.0,
                 lineWidth: 8.0,
-                percent: percent,
+                percent: displayedPercent,
                 center: Text(
-                  "${(percent * 100).toStringAsFixed(0)}%",
+                  "${(displayedPercent * 100).toStringAsFixed(0)}%",
                   style: themes.fontSize14_500,
                 ),
                 progressColor: Colors.orange,

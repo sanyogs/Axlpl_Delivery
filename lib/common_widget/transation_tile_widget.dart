@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class TransactionTile extends StatelessWidget {
   final DateTime date;
@@ -86,6 +88,7 @@ class TransactionTile extends StatelessWidget {
             child: Column(
               spacing: 3,
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(fromAccount,
                     style: const TextStyle(
@@ -97,9 +100,21 @@ class TransactionTile extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text(
-                  "$shipmentID",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                Row(
+                  children: [
+                    Text(
+                      "$shipmentID",
+                      style: TextStyle(
+                          color: Colors.grey.shade600, fontSize: 13.sp),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: GestureDetector(
+                          onTap: () => Clipboard.setData(
+                              ClipboardData(text: shipmentID)),
+                          child: const Icon(Icons.copy, size: 18)),
+                    ),
+                  ],
                 ),
               ],
             ),

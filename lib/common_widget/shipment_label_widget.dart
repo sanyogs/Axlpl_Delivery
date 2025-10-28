@@ -1,11 +1,13 @@
 import 'package:axlpl_delivery/common_widget/common_textfiled.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ShipmentLabelDialog extends StatelessWidget {
   final VoidCallback onPrint;
-  TextEditingController labelCountController;
+  final TextEditingController labelCountController;
+  final _formKey = GlobalKey<FormState>();
 
   ShipmentLabelDialog({
     Key? key,
@@ -64,9 +66,22 @@ class ShipmentLabelDialog extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 8.h),
-              CommonTextfiled(
-                controller: labelCountController,
-                hintTxt: 'Enter number of labels',
+              Form(
+                key: _formKey,
+                child: CommonTextfiled(
+                  controller: labelCountController,
+                  validator: (val) {
+                    if (val == null || val.isEmpty) {
+                      return 'Please enter number of labels';
+                    }
+                    final intValue = int.tryParse(val);
+                    if (intValue == null || intValue < 1 || intValue > 10) {
+                      return 'enter number between 1 and 10';
+                    }
+                    return null;
+                  },
+                  hintTxt: 'Enter number of labels',
+                ),
               ),
               SizedBox(height: 8),
               Row(
@@ -76,7 +91,7 @@ class ShipmentLabelDialog extends StatelessWidget {
                   // SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Enter a number between 1 and 100',
+                      'Enter a number between 1 and 10',
                       style: TextStyle(
                           fontSize: 13.sp, color: themes.darkCyanBlue),
                     ),
@@ -109,7 +124,21 @@ class ShipmentLabelDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(18.r),
                         ),
                       ),
-                      onPressed: onPrint,
+                      onPressed: () {
+                        // Validate the entered label count (disallow 0)
+                        if (_formKey.currentState?.validate() ?? false) {
+                          onPrint();
+                        } else {
+                          // Brief feedback when validation fails
+                          Get.snackbar(
+                            'Invalid',
+                            'Please enter a valid label count',
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
+                      },
                       icon: Icon(
                         Icons.print,
                         size: 20,

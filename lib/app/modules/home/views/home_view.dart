@@ -439,7 +439,7 @@ class HomeView extends GetView<HomeController> {
                                   return HomeContainer(
                                     onTap: () {
                                       shipnowController.setStatusFilter(
-                                          'Waiting for Pickup');
+                                          'Waiting for pickup');
                                       Get.toNamed(Routes.SHIPMENT_RECORD);
                                     },
                                     color: themes.blueGray,
