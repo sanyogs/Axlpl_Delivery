@@ -245,7 +245,7 @@ class HistoryController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     getDeliveryHistory();
-    getPickupHistory();
+    // getPickupHistory();
     getCashCollectionHistory();
     super.onInit();
   }

@@ -72,8 +72,8 @@ class HistoryPickup {
   String? cityName;
   DateTime? date;
   String? receiverCityName;
-  int? paidAmount;
-  int? transactionId;
+  dynamic paidAmount;
+  dynamic transactionId;
 
   HistoryPickup({
     this.id,

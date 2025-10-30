@@ -77,6 +77,8 @@ class AddShipmentController extends GetxController {
       List.generate(5, (index) => GlobalKey<FormState>());
 
   final TextEditingController searchController = TextEditingController();
+  final TextEditingController searchCommodityController =
+      TextEditingController();
   final TextEditingController netWeightController = TextEditingController();
   final TextEditingController grossWeightController = TextEditingController();
   final TextEditingController noOfParcelController = TextEditingController();
@@ -497,7 +499,8 @@ class AddShipmentController extends GetxController {
     }
   }
 
-  Future commodityListData(final cateID, [String nextID = '']) async {
+  Future commodityListData(final search, final cateID,
+      [String nextID = '']) async {
     if (cateID.isEmpty) return;
     try {
       // If it's the first load (nextID is '0' or empty), show main loading
@@ -511,7 +514,7 @@ class AddShipmentController extends GetxController {
         isLoadingMoreCommodities(true);
       }
 
-      final data = await addShipmentRepo.commodityListRepo(nextID, cateID);
+      final data = await addShipmentRepo.commodityListRepo(search, cateID);
 
       if (data != null && data.isNotEmpty) {
         if (nextID == '0' || nextID.isEmpty) {

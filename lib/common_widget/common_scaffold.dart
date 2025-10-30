@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 
@@ -12,12 +14,16 @@ class CommonScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: appBar,
-        backgroundColor: themes.lightWhite,
-        body: body,
-      ),
+    final scaffold = Scaffold(
+      appBar: appBar,
+      backgroundColor: themes.lightWhite,
+      body: body,
     );
+
+    if (Platform.isAndroid) {
+      return SafeArea(child: scaffold);
+    }
+
+    return scaffold;
   }
 }

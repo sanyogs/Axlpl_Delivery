@@ -147,6 +147,7 @@ class PickupView extends GetView<PickupController> {
                         child: GestureDetector(
                           onTap: () {
                             pickupController.selectedContainer(1);
+                            historyController.getPickupHistory();
                           },
                           child: Container(
                             decoration: BoxDecoration(

@@ -99,7 +99,10 @@ class AddShipmentRepo {
           userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
       final response = await _apiServices.getCommodityList(
-          search, categoryID, token.toString());
+        search,
+        categoryID,
+        token.toString(),
+      );
       return response.when(
         success: (body) {
           final commodityData = CategoryListModel.fromJson(body);

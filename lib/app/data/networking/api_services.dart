@@ -193,7 +193,11 @@ class ApiServices {
       'search_query': search ?? "",
       'category_id': categoryID,
     };
-    return _api.post(getCommodityListPoint, body, token: token);
+    return _api.post(
+      getCommodityListPoint,
+      body,
+      token: token,
+    );
   }
 
   Future<APIResponse> getServiceTypeList(
