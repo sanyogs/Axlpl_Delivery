@@ -554,7 +554,18 @@ class ApiServices {
       'shipment_otp': shipmentOtp,
       'attachment': attachment,
     });
-    return _api.post(uploadPODPoint, formData, token: token);
+
+    // ✅ Add these lines for debugging
+    log("FormData Fields: ${formData.fields}");
+    log("FormData Files: ${formData.files.map((f) => f.key + ' => ' + (f.value.filename ?? 'no-name')).toList()}");
+
+    // ✅ Pass correct content type here
+    return _api.post(
+      uploadPODPoint,
+      formData,
+      token: token,
+      contentType: ContentType.multipart, // <-- ADD THIS
+    );
   }
 
   Future<APIResponse> uploadInvoice(

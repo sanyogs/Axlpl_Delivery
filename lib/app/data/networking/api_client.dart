@@ -73,9 +73,17 @@ class ApiClient {
     String url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
 
     // ✅ Step 3: Define Content Type
-    var content = contentType == ContentType.json
-        ? 'application/json'
-        : 'application/x-www-form-urlencoded';
+    String content;
+    switch (contentType) {
+      case ContentType.json:
+        content = 'application/json';
+        break;
+      case ContentType.multipart:
+        content = 'multipart/form-data';
+        break;
+      default:
+        content = 'application/x-www-form-urlencoded';
+    }
 
     try {
       // ✅ Step 4: Define Headers
@@ -91,10 +99,12 @@ class ApiClient {
         data: body,
         queryParameters: query,
         options: Options(
-          contentType: contentType == ContentType.json
-              ? Headers.jsonContentType
-              : Headers.formUrlEncodedContentType,
-          validateStatus: (status) => true, // Allow handling all status codes
+          contentType: contentType == ContentType.multipart
+              ? 'multipart/form-data'
+              : contentType == ContentType.json
+                  ? Headers.jsonContentType
+                  : Headers.formUrlEncodedContentType,
+          validateStatus: (status) => true,
           headers: headers,
         ),
       );
@@ -272,4 +282,4 @@ class ApiClient {
   }
 }
 
-enum ContentType { urlEncoded, json }
+enum ContentType { json, urlEncoded, multipart }
