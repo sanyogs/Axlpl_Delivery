@@ -207,7 +207,7 @@ class PickupView extends GetView<PickupController> {
                             return RefreshIndicator.adaptive(
                               onRefresh: () => pickupController.getPickupData(),
                               child: SizedBox(
-                                height: 500.h,
+                                height: 490.h,
                                 child: ListView.separated(
                                   physics: BouncingScrollPhysics(),
                                   shrinkWrap: true,
@@ -584,7 +584,7 @@ class PickupView extends GetView<PickupController> {
                         } else if (historyController.isPickedup.value ==
                             Status.success) {
                           return SizedBox(
-                            height: 500.h,
+                            height: 485.h,
                             child: RefreshIndicator.adaptive(
                               onRefresh: () =>
                                   historyController.getPickupHistory(),
@@ -592,7 +592,7 @@ class PickupView extends GetView<PickupController> {
                                 itemCount:
                                     historyController.pickUpHistoryList.length,
                                 shrinkWrap: true,
-                                physics: AlwaysScrollableScrollPhysics(),
+                                physics: BouncingScrollPhysics(),
                                 separatorBuilder: (context, index) =>
                                     SizedBox(),
                                 itemBuilder: (context, index) {

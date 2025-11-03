@@ -545,13 +545,14 @@ class ApiServices {
     final shipmentID,
     final shipmentStatus,
     final shipmentOtp,
-    MultipartFile? attetchment,
+    MultipartFile? attachment,
     final token,
   ) async {
     final formData = FormData.fromMap({
       'shipment_id': shipmentID,
       'shipment_status': shipmentStatus,
       'shipment_otp': shipmentOtp,
+      'attachment': attachment,
     });
     return _api.post(uploadPODPoint, formData, token: token);
   }

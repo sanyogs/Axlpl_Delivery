@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:axlpl_delivery/app/data/models/category&comodity_list_model.dart';
 import 'package:axlpl_delivery/app/data/models/customers_list_model.dart';
+import 'package:axlpl_delivery/app/modules/bottombar/controllers/bottombar_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_dropdown.dart';
 import 'package:axlpl_delivery/common_widget/paginated_dropdown.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
@@ -21,7 +22,7 @@ class AddAddressView extends GetView {
   Widget build(BuildContext context) {
     final addshipController = Get.put(AddShipmentController());
     final Utils utils = Utils();
-
+    final bottomController = Get.put(BottombarController());
     return CommonScaffold(
         body: SingleChildScrollView(
       child: Container(
@@ -75,90 +76,109 @@ class AddAddressView extends GetView {
                         spacing: 5.h,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Obx(() => PaginatedDropdown<CustomersList>(
-                                hint: 'Select Customer',
-                                selectedValue: addshipController
-                                            .selectedExitingCustomer.value !=
-                                        null
-                                    ? addshipController.customerList
-                                        .firstWhereOrNull(
-                                        (e) =>
-                                            e.id ==
-                                            addshipController
-                                                .selectedExitingCustomer.value,
-                                      )
-                                    : null,
-                                items: addshipController.customerList,
-                                itemLabel: (customer) =>
-                                    customer.companyName ?? 'Unknown',
-                                itemValue: (customer) => customer.id,
-                                isLoading:
-                                    addshipController.isLoadingCustomers.value,
-                                isLoadingMore: addshipController
-                                    .isLoadingMoreCustomers.value,
-                                hasMoreData:
-                                    addshipController.hasMoreCustomers.value,
-                                onLoadMore: () async {
-                                  await addshipController.loadMoreCustomers();
-                                },
-                                onChanged: (CustomersList? customer) {
-                                  if (customer != null) {
-                                    addshipController.selectedExitingCustomer
-                                        .value = customer.id;
+                          Obx(() {
+                            if (bottomController.userData.value?.role ==
+                                'customer') {
+                              // Show the company name txt field for customers only
+                              return CommonTextfiled(
+                                hintTxt: bottomController.userData.value
+                                    ?.customerdetail?.companyName,
+                                isEnable: false,
+                              );
+                            } else {
+                              // For other roles, show dropdown as editable
+                              // But if you want to sometimes disable it, use AbsorbPointer:
+                              final shouldDisableDropdown =
+                                  false; // Change as needed!
+                              return AbsorbPointer(
+                                absorbing:
+                                    shouldDisableDropdown, // true disables, false enables!
+                                child: PaginatedDropdown<CustomersList>(
+                                  hint: 'Select Customer',
+                                  selectedValue: addshipController
+                                              .selectedCustomer.value !=
+                                          null
+                                      ? addshipController.customerList
+                                          .firstWhereOrNull(
+                                          (e) =>
+                                              e.id ==
+                                              addshipController
+                                                  .selectedCustomer.value,
+                                        )
+                                      : null,
+                                  items: addshipController.customerList,
+                                  itemLabel: (customer) =>
+                                      customer.companyName ?? 'Unknown',
+                                  itemValue: (customer) => customer.id,
+                                  isLoading: addshipController
+                                      .isLoadingCustomers.value,
+                                  isLoadingMore: addshipController
+                                      .isLoadingMoreCustomers.value,
+                                  hasMoreData:
+                                      addshipController.hasMoreCustomers.value,
+                                  onLoadMore: () async {
+                                    await addshipController.loadMoreCustomers();
+                                  },
+                                  onChanged: (CustomersList? customer) {
+                                    if (customer != null) {
+                                      addshipController.selectedCustomer.value =
+                                          customer.id;
+                                      addshipController
+                                          .selectedExistingSenderStateId
+                                          .value = int.tryParse(
+                                              customer.stateId ?? '0') ??
+                                          0;
+                                      addshipController
+                                          .selectedExistingSenderCityId
+                                          .value = int.tryParse(
+                                              customer.cityId ?? '0') ??
+                                          0;
+                                      addshipController
+                                          .selectedExistingSenderAreaId
+                                          .value = int.tryParse(
+                                              customer.areaId ?? '0') ??
+                                          0;
+                                      log(customer.stateId.toString());
+                                      addshipController
+                                          .existingSenderInfoNameController
+                                          .text = customer.fullName ?? '';
+                                      addshipController
+                                          .existingSenderInfoCompanyNameController
+                                          .text = customer.companyName ?? '';
+                                      addshipController
+                                          .existingSenderInfoZipController
+                                          .text = customer.pincode ?? '';
+                                      addshipController
+                                          .existingSenderInfoStateController
+                                          .text = customer.stateName ?? '';
+                                      addshipController
+                                          .existingSenderInfoCityController
+                                          .text = customer.cityName ?? '';
+                                      addshipController
+                                          .existingSenderInfoMobileController
+                                          .text = customer.mobileNo ?? '';
+                                      addshipController
+                                          .existingSenderInfoEmailController
+                                          .text = customer.email ?? '';
+                                      addshipController
+                                          .existingSenderInfoAddress1Controller
+                                          .text = customer.address1 ?? '';
+                                      addshipController
+                                          .existingSenderInfoAddress2Controller
+                                          .text = customer.address2 ?? '';
+                                      addshipController
+                                          .existingSenderInfoGstNoController
+                                          .text = customer.gstNo ?? '';
+                                      addshipController
+                                          .existingSenderInfoAreaController
+                                          .text = customer.areaName ?? '';
+                                    }
+                                  },
+                                ),
+                              );
+                            }
+                          }),
 
-                                    addshipController
-                                            .selectedExistingSenderStateId
-                                            .value =
-                                        int.tryParse(customer.stateId ?? '0') ??
-                                            0;
-                                    addshipController
-                                            .selectedExistingSenderCityId
-                                            .value =
-                                        int.tryParse(customer.cityId ?? '0') ??
-                                            0;
-                                    addshipController
-                                            .selectedExistingSenderAreaId
-                                            .value =
-                                        int.tryParse(customer.areaId ?? '0') ??
-                                            0;
-
-                                    log(customer.stateId.toString());
-                                    addshipController
-                                        .existingSenderInfoNameController
-                                        .text = customer.fullName ?? '';
-                                    addshipController
-                                        .existingSenderInfoCompanyNameController
-                                        .text = customer.companyName ?? '';
-                                    addshipController
-                                        .existingSenderInfoZipController
-                                        .text = customer.pincode ?? '';
-                                    addshipController
-                                        .existingSenderInfoStateController
-                                        .text = customer.stateName ?? '';
-                                    addshipController
-                                        .existingSenderInfoCityController
-                                        .text = customer.cityName ?? '';
-                                    addshipController
-                                        .existingSenderInfoMobileController
-                                        .text = customer.mobileNo ?? '';
-                                    addshipController
-                                        .existingSenderInfoEmailController
-                                        .text = customer.email ?? '';
-                                    addshipController
-                                        .existingSenderInfoAddress1Controller
-                                        .text = customer.address1 ?? '';
-                                    addshipController
-                                        .existingSenderInfoAddress2Controller
-                                        .text = customer.address2 ?? '';
-                                    addshipController
-                                        .existingSenderInfoGstNoController
-                                        .text = customer.gstNo ?? '';
-                                    addshipController
-                                        .existingSenderInfoAreaController
-                                        .text = customer.areaName ?? '';
-                                  }
-                                },
-                              )),
                           dropdownText('Customer Name'),
                           CommonTextfiled(
                             isEnable: false,

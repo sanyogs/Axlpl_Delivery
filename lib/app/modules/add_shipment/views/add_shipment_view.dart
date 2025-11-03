@@ -229,10 +229,9 @@ class AddShipmentView extends GetView<AddShipmentController> {
                                               controller.selectedCustomer.value,
                                               category.id.toString(),
                                             );
-                                            addshipController.commodityListData(
-                                              category.id.toString(),
-                                              '0',
-                                            );
+                                            await addshipController
+                                                .commodityListData(
+                                                    '', category.id.toString());
                                           }
                                         },
                                       )),

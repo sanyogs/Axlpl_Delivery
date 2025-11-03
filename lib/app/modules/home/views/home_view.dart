@@ -466,11 +466,11 @@ class HomeView extends GetView<HomeController> {
                                     onTap: () {
                                       // Clear any previous status filter before opening
                                       shipnowController
-                                          .setStatusFilter('shipped');
+                                          .setStatusFilter('delivered');
                                       Get.toNamed(Routes.SHIPMENT_RECORD);
                                     },
                                     color: themes.blueGray,
-                                    title: 'shipped',
+                                    title: 'delivered',
                                     subTitle: homeController
                                                 .isCustomerDashboard.value ==
                                             Status.loading

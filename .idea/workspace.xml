@@ -5,12 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a34695b8-f86e-4fe4-82b5-decc75c7aeb4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/repostiory/shipnow_repo.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/repostiory/shipnow_repo.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_sender_address_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_sender_address_view.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_shipment_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_shipment_view.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/notification/views/notification_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/notification/views/notification_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/common_widget/common_scaffold.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/common_widget/common_scaffold.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/pickup/views/pickup_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickup/views/pickup_view.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
