@@ -935,4 +935,38 @@ class ApiServices {
       token: token,
     );
   }
+
+  Future<APIResponse> getAllStatuses({required String token}) async {
+    final response = await _api.post(
+      'getStatus',
+      {},
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+    return response;
+  }
+
+  // ---------------------------
+  // Update Shipment Status
+  // ---------------------------
+  Future<APIResponse> updateShipmentStatus({
+    required String token,
+    required String shipmentId,
+    required String shipmentStatus,
+  }) async {
+    final body = FormData.fromMap({
+      'shipment_id': shipmentId,
+      'shipment_status': shipmentStatus,
+    });
+
+    return _api.post(
+      'update_shipment_status',
+      body,
+      token: token,
+      contentType: ContentType.multipart,
+    );
+  }
+
+
+
 }

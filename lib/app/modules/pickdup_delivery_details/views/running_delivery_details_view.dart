@@ -1,9 +1,12 @@
+import 'package:axlpl_delivery/app/data/models/status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
+import 'package:axlpl_delivery/app/modules/shipnow/controllers/shipnow_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
 import 'package:axlpl_delivery/common_widget/invoice_image_dialog.dart';
 import 'package:axlpl_delivery/common_widget/otp_dialog.dart';
+import 'package:axlpl_delivery/common_widget/paginated_dropdown.dart';
 import 'package:axlpl_delivery/common_widget/pickup_dialog.dart';
 import 'package:axlpl_delivery/common_widget/tracking_info_widget.dart';
 import 'package:axlpl_delivery/common_widget/transfer_dialog.dart';
@@ -12,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+
 // ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
@@ -23,12 +27,14 @@ class RunningDeliveryDetailsView
   // final RunningPickUp? runningPickUp;
   final isShowInvoice;
   final isShowTransfer;
+
   RunningDeliveryDetailsView({
     this.isShowInvoice = true,
     this.isShowTransfer = false,
     super.key,
     // this.runningPickUp,
   });
+
   @override
   Widget build(BuildContext context) {
     final args = Get.arguments as Map<String, dynamic>?;
@@ -120,11 +126,27 @@ class RunningDeliveryDetailsView
                                   color: themes.blueGray,
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: Text(
-                                  overflow: TextOverflow.fade,
-                                  details?.shipmentStatus.toString() ?? 'N/A',
-                                  style: themes.fontSize14_500
-                                      .copyWith(color: themes.darkCyanBlue),
+                                child: InkWell(
+                                  onTap: () {
+                                    showStatusDialog(
+                                      shipmentID ?? '',
+                                      controller,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0, vertical: 2.0),
+                                    child: Text(
+                                      details?.shipmentStatus.toString() ??
+                                          'N/A',
+                                      overflow: TextOverflow.fade,
+                                      style: themes.fontSize14_500.copyWith(
+                                        color: themes.darkCyanBlue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -939,3 +961,160 @@ Widget buildDetailSection(String title, String mainInfo, String secondaryInfo,
               style: themes.fontSize14_500.copyWith(color: themes.grayColor)),
       ],
     );
+
+void showStatusDialog(
+    String shipmentId,
+    RunningDeliveryDetailsController controller,
+    ) async {
+  // ✅ Fetch the latest statuses
+  await controller.getAllStatuses();
+
+  // ✅ Reset the selected value safely
+  if (controller.statusList.isNotEmpty) {
+    controller.selectedStatus.value = controller.statusList.first;
+  } else {
+    controller.selectedStatus.value = null;
+  }
+
+  // ✅ Access the shipnowController for refresh
+  final shipnowController = Get.find<ShipnowController>();
+
+  // ✅ Use Get.dialog for custom layout
+  Get.dialog(
+    Material(
+      color: Colors.black.withOpacity(0.3),
+      child: Center(
+        child: Container(
+          width: Get.width * 0.85, // adds left-right margins
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          decoration: BoxDecoration(
+            color: themes.whiteColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Text(
+                  "Update Shipment Status",
+                  style: themes.fontSize18_600.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+
+                // Dropdown Section
+                Obx(() {
+                  final list = controller.statusList;
+
+                  if (controller.isStatusUpdating.value) {
+                    return const Center(child: CircularProgressIndicator.adaptive());
+                  }
+
+                  if (list.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator.adaptive(),
+                    );
+                  }
+
+                  return DropdownButtonFormField<StatusModel>(
+                    isExpanded: true,
+                    value: controller.selectedStatus.value,
+                    items: list.map((status) {
+                      return DropdownMenuItem<StatusModel>(
+                        value: status,
+                        child: Text(status.status ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      controller.selectedStatus.value = value;
+                    },
+                    decoration: const InputDecoration(
+                      labelText: "Select Shipment Status",
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 24),
+
+                // Buttons Section
+                Obx(() {
+                  final isLoading = controller.isStatusUpdating.value;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Cancel Button
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(color: themes.darkCyanBlue, width: 2),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                        ),
+                        onPressed: () => Get.back(),
+                        child: Text(
+                          "Cancel",
+                          style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Confirm Button
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: themes.darkCyanBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                          // ✅ Close the popup before triggering snackbar
+                          Get.back();
+
+                          // ✅ Perform the update
+                          final success = await controller.updateShipmentStatus(shipmentId);
+
+                          if (success) {
+                            // ✅ Refresh the shipment list after success
+                            await shipnowController.refreshData();
+                          }
+                        },
+                        child: isLoading
+                            ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : Text(
+                          "Update Status",
+                          style: themes.fontSize14_500
+                              .copyWith(color: themes.whiteColor),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+    barrierDismissible: true,
+  );
+}
+
+
+

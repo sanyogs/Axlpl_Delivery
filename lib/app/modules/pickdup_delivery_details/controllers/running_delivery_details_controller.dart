@@ -11,14 +11,15 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class RunningDeliveryDetailsController extends GetxController {
-  //TODO: Implement RunningDeliveryDetailsController
+// ✅ Added imports for status feature
+import 'package:axlpl_delivery/app/data/models/status_model.dart';
+import 'package:axlpl_delivery/app/data/models/update_status_model.dart';
+import 'package:axlpl_delivery/app/data/networking/repostiory/delivery_repo.dart';
 
+class RunningDeliveryDetailsController extends GetxController {
   var currentStep = 0.obs;
   final TrackingRepo repo = TrackingRepo();
   final shipmentDetail = Rxn<ShipmentDetails>();
-
-  // var trackingStatusList = <Tracking>[].obs;
 
   var trackingStatus = <dynamic>[].obs;
   var senderData = <dynamic>[].obs;
@@ -26,17 +27,28 @@ class RunningDeliveryDetailsController extends GetxController {
   var cashCollData = <CashLog>[].obs;
 
   var imageFile = Rx<File?>(null);
-
   var isTrackingLoading = Status.initial.obs;
   var isInvoiceUpload = Status.initial.obs;
-
   final message = ''.obs;
-
   var imageMap = <String, File>{}.obs;
 
+  final DeliveryRepo _deliveryRepo = DeliveryRepo();
+
+  RxList<StatusModel> statusList = <StatusModel>[].obs;
+  Rx<StatusModel?> selectedStatus = Rx<StatusModel?>(null);
+  RxBool isStatusUpdating = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+  }
+
+  // --------------------------------------------------------------------------
+  // 🔹 Local utility helpers
+  // --------------------------------------------------------------------------
   void setImage(String shipmentId, File file) {
     imageMap[shipmentId] = file;
-    imageMap.refresh(); // to trigger Obx
+    imageMap.refresh();
   }
 
   void removeImage(String shipmentId) {
@@ -48,13 +60,9 @@ class RunningDeliveryDetailsController extends GetxController {
     return imageMap[shipmentId];
   }
 
-  // Helper method to get cash collection data
   List<CashLog> get cashCollectionData => cashCollData;
-
-  // Helper method to check if cash collection data exists
   bool get hasCashCollectionData => cashCollData.isNotEmpty;
 
-  // Helper method to get total cash amount
   double get totalCashAmount {
     return cashCollData.fold(0.0, (sum, cash) {
       try {
@@ -66,42 +74,6 @@ class RunningDeliveryDetailsController extends GetxController {
     });
   }
 
-  final List<Map<String, dynamic>> stepsData = [
-    {
-      "title": "Delivery Attempted",
-      "subtitle": "Recipients Address",
-      "date": "Today, 12:30",
-      "icon": Icons.gps_fixed,
-      "hasDriver": true,
-      "driverName": "Mr. Biju Dahal",
-      "driverImage": "assets/manimg.png", // Add your driver image asset
-      "phone": "1234567890"
-    },
-    {
-      "title": "Out for Delivery",
-      "subtitle": "Local Delivery Network",
-      "date": "January, 31, 2024",
-      "icon": Icons.local_shipping
-    },
-    {
-      "title": "In Transit",
-      "subtitle": "En Route",
-      "date": "January, 31, 2024",
-      "icon": Icons.directions_bus
-    },
-    {
-      "title": "Shipment Out for Dispatch",
-      "subtitle": "Recipients Address",
-      "date": "August, 31, 2024",
-      "icon": Icons.local_post_office
-    },
-    {
-      "title": "Order Accepted",
-      "subtitle": "Recipients Address",
-      "date": "August, 31, 2024",
-      "icon": Icons.check_circle
-    }
-  ];
   Future<void> makingPhoneCall(String phoneNo) async {
     final Uri url = Uri(scheme: 'tel', path: phoneNo);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
@@ -109,16 +81,15 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
-  Future<void> pickImage(
-      ImageSource source, void Function(File) onPicked) async {
+  Future<void> pickImage(ImageSource source, void Function(File) onPicked) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
-
-    if (pickedFile != null) {
-      onPicked(File(pickedFile.path));
-    }
+    if (pickedFile != null) onPicked(File(pickedFile.path));
   }
 
+  // --------------------------------------------------------------------------
+  // 🔹 Tracking Fetch
+  // --------------------------------------------------------------------------
   Future<void> fetchTrackingData(String shipmentID) async {
     isTrackingLoading.value = Status.loading;
     try {
@@ -136,15 +107,8 @@ class RunningDeliveryDetailsController extends GetxController {
           if (item.trackingStatus != null && item.trackingStatus!.isNotEmpty) {
             trackingStatusList.addAll(item.trackingStatus!);
           }
-
-          // CHANGED: add single object directly
-          if (item.senderData != null) {
-            senderDataList.add(item.senderData!);
-          }
-
-          if (item.receiverData != null) {
-            receiverDataList.add(item.receiverData!);
-          }
+          if (item.senderData != null) senderDataList.add(item.senderData!);
+          if (item.receiverData != null) receiverDataList.add(item.receiverData!);
           if (item.cashLog != null && item.cashLog!.isNotEmpty) {
             cashCollList.addAll(item.cashLog!);
           }
@@ -161,16 +125,13 @@ class RunningDeliveryDetailsController extends GetxController {
         isTrackingLoading.value = Status.success;
 
         Utils().logInfo("""
-      Tracking Data Loaded:
-      - Status Events: ${trackingStatusList.length}
-      - Sender Data: ${senderDataList.length}
-      - Receiver Data: ${receiverDataList.length}
-      - Cash Collection Data: ${cashCollList.length}
-      - Shipment Details: ${shipmentDetails != null ? 'Available' : 'Not Available'}
-      
-      Cash Collection Details:
-      ${cashCollList.map((cash) => '  - Shipment: ${cash.shipmentId}, Amount: ₹${cash.cashamount}, Mode: ${cash.paymentMode}').join('\n')}
-    """);
+        Tracking Data Loaded:
+        - Status Events: ${trackingStatusList.length}
+        - Sender Data: ${senderDataList.length}
+        - Receiver Data: ${receiverDataList.length}
+        - Cash Collection Data: ${cashCollList.length}
+        - Shipment Details: ${shipmentDetails != null ? 'Available' : 'Not Available'}
+        """);
       } else {
         _clearAllData();
         isTrackingLoading.value = Status.error;
@@ -179,12 +140,13 @@ class RunningDeliveryDetailsController extends GetxController {
     } catch (e) {
       _clearAllData();
       isTrackingLoading.value = Status.error;
-      Utils().logError(
-        "Failed to fetch tracking data: ${e.toString()}",
-      );
+      Utils().logError("Failed to fetch tracking data: ${e.toString()}");
     }
   }
 
+  // --------------------------------------------------------------------------
+  // 🔹 Invoice Upload
+  // --------------------------------------------------------------------------
   Future<void> uploadInvoice({
     required String shipmentID,
     required File file,
@@ -193,15 +155,10 @@ class RunningDeliveryDetailsController extends GetxController {
       isInvoiceUpload.value = Status.loading;
       message.value = '';
 
-      final result = await repo.uploadInvoiceRepo(
-        shipmentID,
-        file,
-      );
-
+      final result = await repo.uploadInvoiceRepo(shipmentID, file);
       if (result) {
         isInvoiceUpload.value = Status.success;
-        message.value = repo.apiMessage ?? 'Upload Inovice successful';
-
+        message.value = repo.apiMessage ?? 'Upload Invoice successful';
         Get.snackbar("Success", message.value,
             backgroundColor: themes.darkCyanBlue, colorText: themes.whiteColor);
         fetchTrackingData(shipmentID);
@@ -214,11 +171,8 @@ class RunningDeliveryDetailsController extends GetxController {
     } catch (e) {
       isInvoiceUpload.value = Status.error;
       message.value = 'Unexpected error: $e';
-      Get.snackbar(
-        "Error",
-        message.value,
-        backgroundColor: themes.redColor,
-      );
+      Get.snackbar("Error", message.value,
+          backgroundColor: themes.redColor, colorText: themes.whiteColor);
     }
   }
 
@@ -226,7 +180,78 @@ class RunningDeliveryDetailsController extends GetxController {
     trackingStatus.clear();
     senderData.clear();
     receiverData.clear();
-    cashCollData.clear(); // Also clear cash collection data
+    cashCollData.clear();
     shipmentDetail.value = null;
   }
+
+  // --------------------------------------------------------------------------
+  // 🔹 Status Dropdown + Update Logic
+  // --------------------------------------------------------------------------
+  Future<void> getAllStatuses() async {
+    try {
+      Utils().logInfo('Fetching statuses...');
+      final list = await _deliveryRepo.fetchStatuses();
+      if (list != null && list.isNotEmpty) {
+        statusList.value = list;
+        Utils().logInfo('Statuses loaded: ${list.length}');
+      } else {
+        statusList.clear();
+        Utils().logInfo('No statuses returned.');
+      }
+    } catch (e) {
+      Utils().logError('Error fetching statuses: $e');
+    }
+  }
+
+  Future<bool> updateShipmentStatus(String shipmentId) async {
+    final selected = selectedStatus.value;
+    if (selected == null) {
+      Get.snackbar(
+        "Error",
+        "Please select a status",
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+      return false;
+    }
+
+    isStatusUpdating.value = true;
+    try {
+      final result = await _deliveryRepo.updateShipmentStatusRepo(
+        shipmentId: shipmentId,
+        shipmentStatus: selected.status ?? '',
+      );
+
+      if (result != null && result.status == "success") {
+        Get.snackbar(
+          "Success",
+          result.message ?? 'Shipment status updated successfully.',
+          backgroundColor: themes.darkCyanBlue,
+          colorText: themes.whiteColor,
+        );
+
+        await fetchTrackingData(shipmentId);
+        return true; // ✅ success
+      } else {
+        Get.snackbar(
+          "Error",
+          result?.message ?? 'Failed to update shipment status.',
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return false;
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Error updating status: $e",
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+      return false;
+    } finally {
+      isStatusUpdating.value = false;
+    }
+  }
+
 }

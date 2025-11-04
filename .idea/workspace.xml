@@ -5,13 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a34695b8-f86e-4fe4-82b5-decc75c7aeb4" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/lib/app/data/models/status_model.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib/app/data/models/update_status_model.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib_l.zip" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/lib_z.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/main_dart.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_sender_address_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_sender_address_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_shipment_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/add_shipment/views/add_shipment_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/home/views/home_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/modules/pickup/views/pickup_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickup/views/pickup_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/repostiory/delivery_repo.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/repostiory/delivery_repo.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/views/running_delivery_details_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/views/running_delivery_details_view.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,22 +59,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;io.flutter.reload.alreadyRun&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/apple/Desktop/flutter_project/axlpl_delivery&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;show.migrate.to.gradle.popup&quot;: &quot;false&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "io.flutter.reload.alreadyRun": "true",
+    "last_opened_file_path": "/Users/apple/Desktop/flutter_project/axlpl_delivery",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "show.migrate.to.gradle.popup": "false"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/app/data/models" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="axlpl_delivery" type="FlutterRunConfigurationType" factoryName="Flutter">
+      <option name="filePath" value="$PROJECT_DIR$/lib/main.dart" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
