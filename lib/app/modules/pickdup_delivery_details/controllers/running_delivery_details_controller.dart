@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/stepper_model.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/models/transtion_history_model.dart';
@@ -252,6 +253,14 @@ class RunningDeliveryDetailsController extends GetxController {
     } finally {
       isStatusUpdating.value = false;
     }
+  }
+
+  final role = ''.obs;
+
+  Future<void> loadUserRole() async {
+    if (role.value.isNotEmpty) return; // prevent reloading
+    final userData = await LocalStorage().getUserLocalData();
+    role.value = userData?.role ?? '';
   }
 
 }

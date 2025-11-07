@@ -50,6 +50,7 @@ class RunningDeliveryDetailsView
     final String? invoicePhoto = args?['invoicePhoto'] as String?;
 
     final pickupController = Get.put(PickupController());
+    controller.loadUserRole();
 
     return CommonScaffold(
       appBar: commonAppbar('Tracking Detail'),
@@ -117,39 +118,45 @@ class RunningDeliveryDetailsView
                                   size: 18,
                                 )),
                             Spacer(),
-                            Flexible(
-                              flex: 5,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: themes.blueGray,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: InkWell(
-                                  onTap: () {
-                                    showStatusDialog(
-                                      shipmentID ?? '',
-                                      controller,
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0, vertical: 2.0),
-                                    child: Text(
-                                      details?.shipmentStatus.toString() ??
-                                          'N/A',
-                                      overflow: TextOverflow.fade,
-                                      style: themes.fontSize14_500.copyWith(
-                                        color: themes.darkCyanBlue,
-                                        decoration: TextDecoration.underline,
+                            Obx(() {
+                              final userRole = controller.role.value;
+
+                              return Expanded(
+                                flex: 5,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: themes.blueGray,
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    child: InkWell(
+                                      onTap: userRole == "messanger"
+                                          ? () {
+                                        showStatusDialog(
+                                          shipmentID ?? '',
+                                          controller,
+                                        );
+                                      }
+                                          : null,
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                                        child: Text(
+                                          details?.shipmentStatus.toString() ?? 'N/A',
+                                          overflow: TextOverflow.fade,
+                                          style: themes.fontSize14_500.copyWith(
+                                            color: themes.darkCyanBlue,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }),
                           ],
                         ),
                       ],

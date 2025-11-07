@@ -5,19 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a34695b8-f86e-4fe4-82b5-decc75c7aeb4" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/lib/app/data/models/status_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/app/data/models/update_status_model.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib_l.zip" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib_z.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Flutter_Plugins.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/main_dart.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/api_services.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/app/data/networking/repostiory/delivery_repo.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/data/networking/repostiory/delivery_repo.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/views/running_delivery_details_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/app/modules/pickdup_delivery_details/views/running_delivery_details_view.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,6 +60,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "dart.analysis.tool.window.visible": "false",
+    "flutter.view.tool.window.visible": "true",
     "git-widget-placeholder": "main",
     "io.flutter.reload.alreadyRun": "true",
     "last_opened_file_path": "/Users/apple/Desktop/flutter_project/axlpl_delivery",
