@@ -28,31 +28,31 @@ class ApiClient {
         ),
       ),
     );
-    if (kDebugMode) {
-      _dio.interceptors.add(TalkerDioLogger(
-        settings: const TalkerDioLoggerSettings(
-          printErrorHeaders: true,
-          printRequestHeaders: true,
-          printResponseData: true,
-          printRequestData: true,
-          printResponseHeaders: true,
-          printResponseMessage: true,
-          printErrorMessage: true,
-          printErrorData: true,
-        ),
-      )
-
-          // PrettyDioLogger(
-          //   requestHeader: true,
-          //   requestBody: true,
-          //   responseBody: true,
-          //   responseHeader: false,
-          //   error: true,
-          //   compact: true,
-          //   maxWidth: 90,
-          // ),
-          );
-    }
+    // if (kDebugMode) {
+    //   _dio.interceptors.add(TalkerDioLogger(
+    //     settings: const TalkerDioLoggerSettings(
+    //       printErrorHeaders: true,
+    //       printRequestHeaders: true,
+    //       printResponseData: true,
+    //       printRequestData: true,
+    //       printResponseHeaders: true,
+    //       printResponseMessage: true,
+    //       printErrorMessage: true,
+    //       printErrorData: true,
+    //     ),
+    //   )
+    //
+    //       // PrettyDioLogger(
+    //       //   requestHeader: true,
+    //       //   requestBody: true,
+    //       //   responseBody: true,
+    //       //   responseHeader: false,
+    //       //   error: true,
+    //       //   compact: true,
+    //       //   maxWidth: 90,
+    //       // ),
+    //       );
+    // }
   }
 
   Future<APIResponse> post(
@@ -111,7 +111,7 @@ class ApiClient {
 
       // ✅ Step 6: Handle Response Codes
       if (response.statusCode == null) {
-        debugPrint('Status Code is Null. Response: ${response.toString()}');
+        // debugPrint('Status Code is Null. Response: ${response.toString()}');
         return APIResponse.error(AppException.connectivity());
       }
 
@@ -154,7 +154,7 @@ class ApiClient {
   /// ✅ Handles DioExceptions like timeouts, no internet, etc.
   APIResponse _handleDioException(DioException e) {
     debugPrint('DioException: ${e.toString()}');
-    debugPrint('Response Data: ${e.response?.data}');
+    // debugPrint('Response Data: ${e.response?.data}');
 
     if (e.error is SocketException) {
       return APIResponse.error(AppException.connectivity());

@@ -1,5 +1,29 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+/// Strongly-typed isolate filter model
+class _FilterArgs<T> {
+  final List<T> items;
+  final String query;
+  final String Function(T) labelFn;
+
+  const _FilterArgs({
+    required this.items,
+    required this.query,
+    required this.labelFn,
+  });
+}
+
+/// Runs filtering in a background isolate safely and statically
+List<T> _runFiltering<T>(_FilterArgs<T> args) {
+  final q = args.query.toLowerCase();
+  if (q.isEmpty) return args.items;
+  return args.items
+      .where((item) => args.labelFn(item).toLowerCase().contains(q))
+      .toList();
+}
 
 class PaginatedDropdown<T> extends StatefulWidget {
   final String hint;
@@ -14,6 +38,9 @@ class PaginatedDropdown<T> extends StatefulWidget {
   final VoidCallback? onLoadMore;
   final bool isSearchable;
 
+  /// Minimum characters required before filtering begins
+  final int minSearchLength;
+
   const PaginatedDropdown({
     Key? key,
     required this.hint,
@@ -27,6 +54,7 @@ class PaginatedDropdown<T> extends StatefulWidget {
     this.hasMoreData = false,
     this.onLoadMore,
     this.isSearchable = true,
+    this.minSearchLength = 1,
   }) : super(key: key);
 
   @override
@@ -36,8 +64,11 @@ class PaginatedDropdown<T> extends StatefulWidget {
 class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
   List<T> _filteredItems = [];
   bool _isDropdownOpen = false;
+  bool _isFiltering = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -67,20 +98,56 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
   }
 
   void _onSearchChanged() {
-    _updateFilteredItems();
+    _debounceTimer?.cancel();
+    // slight debounce avoids isolate storm during typing
+    _debounceTimer = Timer(const Duration(milliseconds: 150), _updateFilteredItems);
   }
 
-  void _updateFilteredItems() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredItems = widget.items.where((item) {
-        return widget.itemLabel(item).toLowerCase().contains(query);
-      }).toList();
-    });
+  Future<void> _updateFilteredItems() async {
+    final query = _searchController.text.trim();
+
+    if (query.isEmpty || query.length < widget.minSearchLength) {
+      // show full list if no query or below threshold
+      if (mounted) {
+        setState(() {
+          _filteredItems = widget.items;
+          _isFiltering = false;
+        });
+      }
+      return;
+    }
+
+    setState(() => _isFiltering = true);
+
+    try {
+      final result = await compute(
+        _runFiltering<T>,
+        _FilterArgs<T>(
+          items: widget.items,
+          query: query,
+          labelFn: widget.itemLabel,
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _filteredItems = result);
+    } catch (e) {
+      // fallback filter if isolate fails (rare)
+      if (mounted) {
+        setState(() {
+          _filteredItems = widget.items
+              .where((item) =>
+              widget.itemLabel(item).toLowerCase().contains(query.toLowerCase()))
+              .toList();
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isFiltering = false);
+    }
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -92,11 +159,7 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _isDropdownOpen = !_isDropdownOpen;
-            });
-          },
+          onTap: () => setState(() => _isDropdownOpen = !_isDropdownOpen),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
@@ -146,128 +209,123 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
             ),
             child: Column(
               children: [
-                if (widget.isSearchable) ...[
+                if (widget.isSearchable)
                   Padding(
                     padding: EdgeInsets.all(8.w),
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search...',
+                        hintText:
+                        'Search (min ${widget.minSearchLength} chars)...',
                         prefixIcon: Icon(Icons.search, size: 20.sp),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(6.r),
                         ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 8.h,
-                        ),
+                        contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       ),
                     ),
                   ),
-                  Divider(height: 1, color: Colors.grey.shade300),
-                ],
+                Divider(height: 1, color: Colors.grey.shade300),
                 Expanded(
-                  child: widget.isLoading
+                  child: _isFiltering || widget.isLoading
                       ? Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.w),
-                            child: CircularProgressIndicator.adaptive(),
-                          ),
-                        )
+                    child: Padding(
+                      padding: EdgeInsets.all(20.w),
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
+                  )
                       : _filteredItems.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(20.w),
+                      ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.w),
+                      child: Text(
+                        _searchController.text.isEmpty
+                            ? 'No items available'
+                            : _searchController.text.length <
+                            widget.minSearchLength
+                            ? 'Type at least ${widget.minSearchLength} characters'
+                            : 'No items found',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14.sp,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                      : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _filteredItems.length +
+                        (widget.hasMoreData ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _filteredItems.length) {
+                        // pagination indicator
+                        return Padding(
+                          padding: EdgeInsets.all(12.w),
+                          child: Center(
+                            child: widget.isLoadingMore
+                                ? SizedBox(
+                              width: 20.w,
+                              height: 20.h,
+                              child:
+                              CircularProgressIndicator.adaptive(
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Text(
+                              'Scroll to load more',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final item = _filteredItems[index];
+                      final isSelected = widget.selectedValue != null &&
+                          widget.itemValue(item) ==
+                              widget.itemValue(widget.selectedValue!);
+
+                      return InkWell(
+                        onTap: () {
+                          widget.onChanged(item);
+                          setState(() => _isDropdownOpen = false);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 12.w, vertical: 12.h),
+                          color: isSelected
+                              ? Colors.blue.shade50
+                              : Colors.transparent,
+                          child: Row(
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  'No items found',
+                                  widget.itemLabel(item),
                                   style: TextStyle(
-                                    color: Colors.grey.shade600,
                                     fontSize: 14.sp,
+                                    color: isSelected
+                                        ? Colors.blue.shade700
+                                        : Colors.black87,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w500
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              itemCount: _filteredItems.length +
-                                  (widget.hasMoreData ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == _filteredItems.length) {
-                                  // Loading more indicator
-                                  return Padding(
-                                    padding: EdgeInsets.all(12.w),
-                                    child: Center(
-                                      child: widget.isLoadingMore
-                                          ? SizedBox(
-                                              width: 20.w,
-                                              height: 20.h,
-                                              child: CircularProgressIndicator
-                                                  .adaptive(
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : Text(
-                                              'Scroll to load more',
-                                              style: TextStyle(
-                                                color: Colors.grey.shade600,
-                                                fontSize: 12.sp,
-                                              ),
-                                            ),
-                                    ),
-                                  );
-                                }
-
-                                final item = _filteredItems[index];
-                                final isSelected = widget.selectedValue !=
-                                        null &&
-                                    widget.itemValue(item) ==
-                                        widget.itemValue(widget.selectedValue!);
-
-                                return InkWell(
-                                  onTap: () {
-                                    widget.onChanged(item);
-                                    setState(() {
-                                      _isDropdownOpen = false;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 12.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? Colors.blue.shade50
-                                          : Colors.transparent,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            widget.itemLabel(item),
-                                            style: TextStyle(
-                                              fontSize: 14.sp,
-                                              color: isSelected
-                                                  ? Colors.blue.shade700
-                                                  : Colors.black87,
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w500
-                                                  : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isSelected)
-                                          Icon(
-                                            Icons.check,
-                                            color: Colors.blue.shade700,
-                                            size: 18.sp,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                              if (isSelected)
+                                Icon(Icons.check,
+                                    color: Colors.blue.shade700,
+                                    size: 18.sp),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

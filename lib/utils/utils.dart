@@ -27,18 +27,19 @@ class Utils {
     return _instance;
   }
 
-  var logger = Logger(
-    printer: PrettyPrinter(
-      methodCount: 6, // Number of method calls to be displayed
-      errorMethodCount: 10, // Number of method calls if stacktrace is provided
-      lineLength: 500, // Width of the output
-      colors: true, // Colorful log messages
-      printEmojis: true, // Print an emoji for each log message
-      // Should each log print contain a timestamp
-    ),
-  );
+  // var logger = Logger(
+  //   printer: PrettyPrinter(
+  //     methodCount: 6, // Number of method calls to be displayed
+  //     errorMethodCount: 10, // Number of method calls if stacktrace is provided
+  //     lineLength: 500, // Width of the output
+  //     colors: true, // Colorful log messages
+  //     printEmojis: true, // Print an emoji for each log message
+  //     // Should each log print contain a timestamp
+  //   ),
+  // );
 
   void logError(String message, [StackTrace? stackTrace]) {
+    return;
     // Log the error message
     log("Error: $message");
     if (stackTrace != null) {
@@ -47,13 +48,13 @@ class Utils {
   }
 
   void logInfo(dynamic info) {
-    logger.i(info);
+    // logger.i(info);
   }
 
   void log(
     dynamic info,
   ) {
-    logger.d(info);
+    // logger.d(info);
   }
 
   String? validatePhone(String? value) {
