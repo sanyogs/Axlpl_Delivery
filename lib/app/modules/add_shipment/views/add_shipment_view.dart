@@ -23,6 +23,7 @@ import '../controllers/add_shipment_controller.dart';
 
 class AddShipmentView extends GetView<AddShipmentController> {
   const AddShipmentView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final addshipController = Get.put(AddShipmentController());
@@ -70,28 +71,25 @@ class AddShipmentView extends GetView<AddShipmentController> {
                         hint: 'Select Customer',
                         selectedValue: controller.selectedCustomer.value != null
                             ? controller.customerList.firstWhereOrNull(
-                                (e) =>
-                                    e.id == controller.selectedCustomer.value,
-                              )
+                              (e) => e.id == controller.selectedCustomer.value,
+                        )
                             : null,
                         items: controller.customerList,
-                        itemLabel: (customer) =>
-                            customer.companyName ?? 'Unknown',
-                        itemValue: (customer) => customer.id,
+                        itemLabel: (c) => c.companyName ?? 'Unknown',
+                        itemValue: (c) => c.id,
                         isLoading: addshipController.isLoadingCustomers.value,
-                        isLoadingMore:
-                            addshipController.isLoadingMoreCustomers.value,
+                        isLoadingMore: addshipController.isLoadingMoreCustomers.value,
                         hasMoreData: addshipController.hasMoreCustomers.value,
-                        onLoadMore: () async {
-                          await addshipController.loadMoreCustomers();
+                        onLoadMore: () async => await addshipController.loadMoreCustomers(),
+                        onChanged: (CustomersList? c) {
+                          if (c != null) controller.selectedCustomer.value = c.id;
                         },
-                        onChanged: (CustomersList? customer) {
-                          if (customer != null) {
-                            controller.selectedCustomer.value = customer.id;
-                          }
+                        onSearch: (String query) async {
+                          await addshipController.searchCustomers(query);
                         },
                       );
                     }),
+
                   if (bottomController.userData.value?.role == 'customer')
                     dropdownText('Company Name'),
                   if (bottomController.userData.value?.role == 'customer')

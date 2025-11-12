@@ -27,10 +27,8 @@ class AddShipmentController extends GetxController {
   //TODO: Implement AddShipmentController
 
   final addShipmentRepo = AddShipmentRepo();
-  // ShipmentRequestModel shipmentData = ShipmentRequestModel();
 
   String? userId;
-
   Future<void> _loadUserId() async {
     final userData = await LocalStorage().getUserLocalData();
     userId = userData?.messangerdetail?.id?.toString() ??
@@ -74,11 +72,11 @@ class AddShipmentController extends GetxController {
   final PageController pageController = PageController();
 
   List<GlobalKey<FormState>> formKeys =
-      List.generate(5, (index) => GlobalKey<FormState>());
+  List.generate(5, (index) => GlobalKey<FormState>());
 
   final TextEditingController searchController = TextEditingController();
   final TextEditingController searchCommodityController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController netWeightController = TextEditingController();
   final TextEditingController grossWeightController = TextEditingController();
   final TextEditingController noOfParcelController = TextEditingController();
@@ -86,121 +84,121 @@ class AddShipmentController extends GetxController {
   final TextEditingController invoiceNoController = TextEditingController();
   final TextEditingController invoiceValueController = TextEditingController();
   final TextEditingController insuranceValueController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController remarkController = TextEditingController();
 
   final TextEditingController senderInfoNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoEmailController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoCompanyNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoZipController = TextEditingController();
 
   final TextEditingController senderInfoStateController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoAreaController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController senderInfoCityController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoGstNoController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoAddress1Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoAddress2Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoMobileController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController senderInfoExitingEmailController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController existingSenderInfoNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoCompanyNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoZipController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoStateController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoCityController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoGstNoController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoAddress1Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoAddress2Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoMobileController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoEmailController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController existingSenderInfoAreaController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController receiverInfoNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoCompanyNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoZipController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController receiverInfoStateController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoCityController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoGstNoController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoAddress1Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoAddress2Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoMobileController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoEmailController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverInfoAreaController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingCompanyNameController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingZipController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController receiverExistingStateController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingCityController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingGstNoController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingAddress1Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingAddress2Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingMobileController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingEmailController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController receiverExistingAreaController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController diffrentZipController = TextEditingController();
   final TextEditingController diffrentStateController = TextEditingController();
   final TextEditingController diffrentCityController = TextEditingController();
   final TextEditingController diffrentAeraController = TextEditingController();
   final TextEditingController diffrentAddress1Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController diffrentAddress2Controller =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController shipmentChargeController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController insuranceChargeController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController odaChargeController = TextEditingController();
   final TextEditingController holidayChargeController = TextEditingController();
   final TextEditingController headlingChargeController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController totalChargeController = TextEditingController();
   final TextEditingController grandeChargeController = TextEditingController();
   final TextEditingController gstChargeController = TextEditingController();
@@ -248,11 +246,8 @@ class AddShipmentController extends GetxController {
   var selectedExitingCustomer = Rxn();
   var selectedReceiverCustomer = Rxn();
   var selectedCategory = Rxn();
-
   var selectedCommodity = Rxn();
-
   var selectedServiceType = Rxn();
-
   var selectedReceiverArea = Rxn();
   var selectedSenderArea = Rxn();
   var selectedDiffrentArea = Rxn();
@@ -283,8 +278,6 @@ class AddShipmentController extends GetxController {
 
   void setSelectedPaymentMode(PaymentMode? mode) async {
     selectedPaymentMode.value = mode;
-    // selectedSubPaymentMode.value = null; // reset sub mode selection
-    // optional call
   }
 
   void setSelectedSubPaymentMode(PaymentMode? mode) {
@@ -309,58 +302,59 @@ class AddShipmentController extends GetxController {
     final shipment = double.tryParse(shipmentChargeController.text) ?? 0.0;
     final insurance = double.tryParse(insuranceChargeController.text) ?? 0.0;
     final oda = double.tryParse(odaChargeController.text) ?? 0.0;
-
     final handling = double.tryParse(handlingChargeController.text) ?? 0.0;
 
     final totalCharges = shipment + insurance + oda + handling;
-
-    const gstRate = 18.0; // 18% GST
+    const gstRate = 18.0;
     final gst = (totalCharges * gstRate) / 100;
     final grandTotalAmount = totalCharges + gst;
 
-    // Update the controllers:
     totalChargeController.text = totalCharges.toStringAsFixed(2);
     gstChargeController.text = grandTotalAmount.toStringAsFixed(2);
 
-    // Update observables (optional if you want to show somewhere)
     gstAmount.value = gst;
     grandTotal.value = grandTotalAmount;
   }
 
-  Future<void> fetchCustomers([String nextID = '']) async {
+  // ---------------------------------------------------------------------------
+  // 🔍 SEARCH + PAGINATION FIXED
+  // ---------------------------------------------------------------------------
+
+  String _lastSearchQuery = '';
+
+  Future<void> searchCustomers(String query) async {
+    await fetchCustomers(search: query);
+  }
+
+  Future<void> fetchCustomers({String search = '', String nextID = '0'}) async {
+    _lastSearchQuery = search; // remember last search for pagination
     try {
-      // If it's the first load (nextID is '0' or empty), show main loading
-      if (nextID == '0' || nextID.isEmpty) {
+      if (nextID.isEmpty || nextID == '0') {
         isLoadingCustomers(true);
-        customerList.clear(); // Clear existing data for fresh load
-        hasMoreCustomers.value = true; // Reset pagination flag
+        customerList.clear();
+        hasMoreCustomers.value = true;
       } else {
-        // If it's pagination, show loading more indicator
         isLoadingMoreCustomers(true);
       }
 
-      final data = await addShipmentRepo.customerListRepo('', nextID);
+      final data = await addShipmentRepo.customerListRepo(search, nextID);
 
       if (data != null && data.isNotEmpty) {
-        if (nextID == '0' || nextID.isEmpty) {
-          // First load - replace the list
+        if (nextID.isEmpty || nextID == '0') {
           customerList.value = data;
         } else {
-          // Pagination - append to existing list
           customerList.addAll(data);
         }
 
-        // Check if there's more data to load
-        // If returned data is less than expected page size, assume no more data
-        hasMoreCustomers.value = data.length >= 10; // Assuming page size is 10
+        hasMoreCustomers.value = data.length >= 10;
       } else {
-        if (nextID == '0' || nextID.isEmpty) {
+        if (nextID.isEmpty || nextID == '0') {
           customerList.value = [];
         }
         hasMoreCustomers.value = false;
       }
     } catch (e) {
-      if (nextID == '0' || nextID.isEmpty) {
+      if (nextID.isEmpty || nextID == '0') {
         customerList.value = [];
       }
       hasMoreCustomers.value = false;
@@ -371,27 +365,29 @@ class AddShipmentController extends GetxController {
     }
   }
 
-  // Method to load more customers for pagination
   Future<void> loadMoreCustomers() async {
-    if (!hasMoreCustomers.value || isLoadingMoreCustomers.value) {
-      return; // Already loading or no more data
-    }
+    if (!hasMoreCustomers.value || isLoadingMoreCustomers.value) return;
 
     if (customerList.isNotEmpty) {
       final lastCustomer = customerList.last;
-      await fetchCustomers(lastCustomer.id ?? '');
+      await fetchCustomers(
+        search: _lastSearchQuery,
+        nextID: lastCustomer.id ?? '',
+      );
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Remaining original methods (receiver, category, commodity, etc.)
+  // ---------------------------------------------------------------------------
+
   Future<void> fetchReciverCustomers([String nextID = '']) async {
     try {
-      // If it's the first load (nextID is '0' or empty), show main loading
       if (nextID == '0' || nextID.isEmpty) {
         isLoadingReceiverCustomer(true);
-        customerReceiverList.clear(); // Clear existing data for fresh load
-        hasMoreReceiverCustomers.value = true; // Reset pagination flag
+        customerReceiverList.clear();
+        hasMoreReceiverCustomers.value = true;
       } else {
-        // If it's pagination, show loading more indicator
         isLoadingMoreReceiverCustomers(true);
       }
 
@@ -399,17 +395,12 @@ class AddShipmentController extends GetxController {
 
       if (data != null && data.isNotEmpty) {
         if (nextID == '0' || nextID.isEmpty) {
-          // First load - replace the list
           customerReceiverList.value = data;
         } else {
-          // Pagination - append to existing list
           customerReceiverList.addAll(data);
         }
 
-        // Check if there's more data to load
-        // If returned data is less than expected page size, assume no more data
-        hasMoreReceiverCustomers.value =
-            data.length >= 10; // Assuming page size is 10
+        hasMoreReceiverCustomers.value = data.length >= 10;
       } else {
         if (nextID == '0' || nextID.isEmpty) {
           customerReceiverList.value = [];
@@ -421,21 +412,16 @@ class AddShipmentController extends GetxController {
         customerReceiverList.value = [];
       }
       hasMoreReceiverCustomers.value = false;
-      Utils().logError(
-        'Receiver Customer fetch failed $e',
-      );
+      Utils().logError('Receiver Customer fetch failed $e');
     } finally {
       isLoadingReceiverCustomer(false);
       isLoadingMoreReceiverCustomers(false);
     }
   }
 
-  // Method to load more receiver customers for pagination
   Future<void> loadMoreReceiverCustomers() async {
     if (!hasMoreReceiverCustomers.value ||
-        isLoadingMoreReceiverCustomers.value) {
-      return; // Already loading or no more data
-    }
+        isLoadingMoreReceiverCustomers.value) return;
 
     if (customerReceiverList.isNotEmpty) {
       final lastCustomer = customerReceiverList.last;
@@ -445,13 +431,11 @@ class AddShipmentController extends GetxController {
 
   Future categoryListData([String nextID = '']) async {
     try {
-      // If it's the first load (nextID is '0' or empty), show main loading
       if (nextID == '0' || nextID.isEmpty) {
         isLoadingCate(true);
-        categoryList.clear(); // Clear existing data for fresh load
-        hasMoreCategories.value = true; // Reset pagination flag
+        categoryList.clear();
+        hasMoreCategories.value = true;
       } else {
-        // If it's pagination, show loading more indicator
         isLoadingMoreCategories(true);
       }
 
@@ -459,16 +443,12 @@ class AddShipmentController extends GetxController {
 
       if (data != null && data.isNotEmpty) {
         if (nextID == '0' || nextID.isEmpty) {
-          // First load - replace the list
           categoryList.value = data;
         } else {
-          // Pagination - append to existing list
           categoryList.addAll(data);
         }
 
-        // Check if there's more data to load
-        // If returned data is less than expected page size, assume no more data
-        hasMoreCategories.value = data.length >= 10; // Assuming page size is 10
+        hasMoreCategories.value = data.length >= 10;
       } else {
         if (nextID == '0' || nextID.isEmpty) {
           categoryList.value = [];
@@ -487,30 +467,23 @@ class AddShipmentController extends GetxController {
     }
   }
 
-  // Method to load more categories for pagination
   Future<void> loadMoreCategories() async {
-    if (!hasMoreCategories.value || isLoadingMoreCategories.value) {
-      return; // Already loading or no more data
-    }
-
+    if (!hasMoreCategories.value || isLoadingMoreCategories.value) return;
     if (categoryList.isNotEmpty) {
       final lastCategory = categoryList.last;
       await categoryListData(lastCategory.id ?? '');
     }
   }
 
-  Future commodityListData(final search, final cateID,
-      [String nextID = '']) async {
+  Future commodityListData(final search, final cateID, [String nextID = '']) async {
     if (cateID.isEmpty) return;
     try {
-      // If it's the first load (nextID is '0' or empty), show main loading
       if (nextID == '0' || nextID.isEmpty) {
         isLoadingCommodity(true);
         selectedCommodity.value = null;
-        commodityList.clear(); // Clear existing data for fresh load
-        hasMoreCommodities.value = true; // Reset pagination flag
+        commodityList.clear();
+        hasMoreCommodities.value = true;
       } else {
-        // If it's pagination, show loading more indicator
         isLoadingMoreCommodities(true);
       }
 
@@ -518,17 +491,12 @@ class AddShipmentController extends GetxController {
 
       if (data != null && data.isNotEmpty) {
         if (nextID == '0' || nextID.isEmpty) {
-          // First load - replace the list
           commodityList.value = data;
         } else {
-          // Pagination - append to existing list
           commodityList.addAll(data);
         }
 
-        // Check if there's more data to load
-        // If returned data is less than expected page size, assume no more data
-        hasMoreCommodities.value =
-            data.length >= 10; // Assuming page size is 10
+        hasMoreCommodities.value = data.length >= 10;
       } else {
         if (nextID == '0' || nextID.isEmpty) {
           commodityList.value = [];
@@ -549,29 +517,19 @@ class AddShipmentController extends GetxController {
     }
   }
 
-  // Method to load more commodities for pagination
   Future<void> loadMoreCommodities(final cateID) async {
-    if (!hasMoreCommodities.value || isLoadingMoreCommodities.value) {
-      return; // Already loading or no more data
-    }
-
+    if (!hasMoreCommodities.value || isLoadingMoreCommodities.value) return;
     if (commodityList.isNotEmpty) {
       final lastCommodity = commodityList.last;
       await commodityListData(cateID, lastCommodity.id ?? '');
     }
   }
 
-  Future<void> getContractDetails(
-    final customerID,
-    final categoryId,
-  ) async {
+  Future<void> getContractDetails(final customerID, final categoryId) async {
     isContractDetails(Status.loading);
     try {
-      final data = await addShipmentRepo.getContractDetailsRepo(
-        customerID,
-        categoryId,
-      );
-      contractsList.value = data; // already a list (never null)
+      final data = await addShipmentRepo.getContractDetailsRepo(customerID, categoryId);
+      contractsList.value = data;
       isContractDetails(Status.success);
     } catch (error) {
       contractsList.value = [];
@@ -587,9 +545,7 @@ class AddShipmentController extends GetxController {
       serviceTypeList.value = data ?? [];
     } catch (e) {
       serviceTypeList.value = [];
-      Utils().logError(
-        'service fetch failed $e',
-      );
+      Utils().logError('service fetch failed $e');
     } finally {
       isServiceType(false);
     }
@@ -599,16 +555,14 @@ class AddShipmentController extends GetxController {
     errorMessage.value = '';
     try {
       isLoadingPincode.value = true;
-
       final response = await addShipmentRepo.pincodeDetailsRepo(pincode);
-
       if (response != null &&
           response.stateName != null &&
           response.cityName != null) {
         pincodeDetailsData.value = response;
         pincodeReceiverDetailsData.value = response;
       } else {
-        pincodeDetailsData.value = null; // clear invalid data
+        pincodeDetailsData.value = null;
         pincodeReceiverDetailsData.value = null;
         errorMessage.value = 'Invalid pincode!';
       }
@@ -616,9 +570,7 @@ class AddShipmentController extends GetxController {
       pincodeDetailsData.value = null;
       pincodeReceiverDetailsData.value = null;
       errorMessage.value = 'Pincode fetch failed!';
-      Utils().logError(
-        'Pincode Fetch Failed $e',
-      );
+      Utils().logError('Pincode Fetch Failed $e');
     } finally {
       isLoadingPincode.value = false;
     }
@@ -628,9 +580,7 @@ class AddShipmentController extends GetxController {
     errorMessage.value = '';
     try {
       isLoadingReceiverPincode.value = true;
-
       final response = await addShipmentRepo.pincodeDetailsRepo(pincode);
-
       if (response != null &&
           response.stateName != null &&
           response.cityName != null) {
@@ -642,9 +592,7 @@ class AddShipmentController extends GetxController {
     } catch (e) {
       pincodeReceiverDetailsData.value = null;
       errorMessage.value = 'Pincode fetch failed!';
-      Utils().logError(
-        'Pincode Fetch Failed $e',
-      );
+      Utils().logError('Pincode Fetch Failed $e');
     } finally {
       isLoadingReceiverPincode.value = false;
     }
@@ -654,23 +602,19 @@ class AddShipmentController extends GetxController {
     errorMessage.value = '';
     try {
       isLoadingDiffPincode.value = true;
-
       final response = await addShipmentRepo.pincodeDetailsRepo(pincode);
-
       if (response != null &&
           response.stateName != null &&
           response.cityName != null) {
         pincodeDataDiff.value = response;
       } else {
-        pincodeDataDiff.value = null; // clear invalid data
+        pincodeDataDiff.value = null;
         errorMessage.value = 'Invalid pincode!';
       }
     } catch (e) {
       pincodeDataDiff.value = null;
       errorMessage.value = 'Pincode fetch failed!';
-      Utils().logError(
-        'Pincode Fetch Failed $e',
-      );
+      Utils().logError('Pincode Fetch Failed $e');
     } finally {
       isLoadingDiffPincode.value = false;
     }
@@ -718,12 +662,10 @@ class AddShipmentController extends GetxController {
     if (diffrentZipController.text.isEmpty) return;
     try {
       isLoadingDiffArea(true);
-
       areaListDiff.value = [];
       final data = await addShipmentRepo.allAeraByZipRepo(zip);
       if (data == null || data.isEmpty) {
         areaListDiff.value = [];
-
         Utils().logInfo('No Aera found ${diffrentZipController.text}');
         return;
       } else {
@@ -732,74 +674,28 @@ class AddShipmentController extends GetxController {
       areaListDiff.value = data;
     } catch (error) {
       areaListDiff.value = [];
-      Utils().logError(
-        'Error getting customers $error',
-      );
+      Utils().logError('Error getting customers $error');
     } finally {
       isLoadingDiffArea(false);
     }
   }
 
-  // Future<void> shipmentCal(
-  //   final custID,
-  //   final cateID,
-  //   final commID,
-  //   final netWeight,
-  //   final grossWeight,
-  //   final paymentMode,
-  //   final invoiceValue,
-  //   final insuranceByAxlpl,
-  //   final policyNo,
-  //   final numberOfParcel,
-  //   final expDate,
-  //   final policyValue,
-  //   final senderZip,
-  //   final receiverZip,
-  // ) async {
-  //   isShipmentCal.value = Status.loading;
-  //   try {
-  //     final data = await addShipmentRepo.shipmentCalculationRepo(
-  //       custID,
-  //       cateID,
-  //       commID,
-  //       netWeight,
-  //       grossWeight,
-  //       paymentMode,
-  //       invoiceValue,
-  //       insuranceByAxlpl,
-  //       policyNo,
-  //       numberOfParcel,
-  //       expDate,
-  //       policyValue,
-  //       senderZip,
-  //       receiverZip,
-  //     );
-  //     shipmentCalList.value = data ?? [];
-  //     isShipmentCal.value = Status.success;
-  //   } catch (e) {
-  //     shipmentCalList.value = [];
-  //     isShipmentCal.value = Status.error;
-  //     Utils().logError(
-  //       'shipmentCal fetch failed $e',
-  //     );
-  //   }
-  // }
   Future<void> shipmentCal(
-    final custID,
-    final cateID,
-    final commID,
-    final netWeight,
-    final grossWeight,
-    final paymentMode,
-    final invoiceValue,
-    final insuranceByAxlpl,
-    final policyNo,
-    final numberOfParcel,
-    final expDate,
-    final policyValue,
-    final senderZip,
-    final receiverZip,
-  ) async {
+      final custID,
+      final cateID,
+      final commID,
+      final netWeight,
+      final grossWeight,
+      final paymentMode,
+      final invoiceValue,
+      final insuranceByAxlpl,
+      final policyNo,
+      final numberOfParcel,
+      final expDate,
+      final policyValue,
+      final senderZip,
+      final receiverZip,
+      ) async {
     isShipmentCal.value = Status.loading;
     try {
       final data = await addShipmentRepo.shipmentCalculationRepo(
@@ -827,10 +723,8 @@ class AddShipmentController extends GetxController {
         insuranceChargeController.text = paymentInfo.insuranceCharges ?? '';
         headlingChargeController.text = paymentInfo.handlingCharges ?? '';
         gstChargeController.text = paymentInfo.tax ?? '';
-
         totalChargeController.text = paymentInfo.totalCharges ?? '';
         grandeChargeController.text = paymentInfo.grandTotal ?? '';
-        //  odaChargeController.text = paymentInfo.additionalAxlplInsurance ?? 0;
       }
 
       isShipmentCal.value = Status.success;
@@ -842,13 +736,13 @@ class AddShipmentController extends GetxController {
   }
 
   Future<void> grossCalculation(
-    final netWeight,
-    final grossWeight,
-    final status,
-    final productID,
-    final contractWeight,
-    final contractRate,
-  ) async {
+      final netWeight,
+      final grossWeight,
+      final status,
+      final productID,
+      final contractWeight,
+      final contractRate,
+      ) async {
     isGorsssCal.value = Status.loading;
     try {
       var data = await addShipmentRepo.gorssCalculationRepo(
@@ -861,18 +755,14 @@ class AddShipmentController extends GetxController {
       );
 
       if (data != null) {
-        // ✅ Success
         errorMessage.value = '';
         isGorsssCal.value = Status.success;
         log('Gross calculation success: ${data.toJson()}');
       } else {
-        // ❌ API returned body but failed (e.g. `status != success`)
         errorMessage.value = 'Gross Weight exceed';
         isGorsssCal.value = Status.error;
       }
     } catch (e) {
-      // ❌ Exception or API error
-
       errorMessage.value = e.toString();
       isGorsssCal.value = Status.error;
       Utils().logError('Gross Cal fetch failed $e');
@@ -883,23 +773,21 @@ class AddShipmentController extends GetxController {
     final DateTime? pickedDate = await holoDatePicker(
       context,
       initialDate: selectDate.value,
-      firstDate: DateTime(2000), // Adjust as needed
-      lastDate: DateTime(2100), // Adjust as needed
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
       hintText: "Choose Start Date",
     );
 
     if (pickedDate != null && pickedDate != selectDate.value) {
-      selectDate.value = pickedDate; // Update the selected date
+      selectDate.value = pickedDate;
     }
   }
 
   void nextPage() {
     int current = currentPage.value;
-
     final isValid = formKeys[current].currentState?.validate() ?? false;
     if (!isValid) return;
 
-    // Close keyboard when navigating
     if (Get.context != null) {
       FocusScope.of(Get.context!).unfocus();
     }
@@ -930,8 +818,7 @@ class AddShipmentController extends GetxController {
         productId: int.tryParse(selectedCommodity.value) ?? 0,
         netWeight: int.tryParse(netWeightController.text) ?? 0,
         grossWeight: int.tryParse(grossWeightController.text) ?? 0,
-        paymentMode: selectedPaymentMode.value?.id.toString() ??
-            'prepaid', // or use expected string id
+        paymentMode: selectedPaymentMode.value?.id.toString() ?? 'prepaid',
         serviceId: int.tryParse(selectedServiceType.value) ?? 0,
         invoiceValue: int.tryParse(invoiceNoController.text) ?? 0,
         axlplInsurance: insuranceType.value,
@@ -942,10 +829,10 @@ class AddShipmentController extends GetxController {
         insuranceValue: insuranceType.value == 0
             ? 0
             : double.tryParse(insuranceValueController.text) ?? 0.0,
-        shipmentStatus: '', // match Postman or your logic
+        shipmentStatus: '',
         calculationStatus: 'custom',
         addedBy: 1,
-        addedByType: 1, // as in Postman
+        addedByType: 1,
         preAlertShipment: 0,
         shipmentInvoiceNo: int.tryParse(invoiceNoController.text) ?? 0,
         isAmtEditedByUser: 0,
@@ -955,7 +842,7 @@ class AddShipmentController extends GetxController {
         additionalAxlplInsurance: 0.0,
         shipmentCharges: double.tryParse(shipmentChargeController.text) ?? 0.0,
         insuranceCharges:
-            double.tryParse(insuranceChargeController.text) ?? 0.0,
+        double.tryParse(insuranceChargeController.text) ?? 0.0,
         invoiceCharges: double.tryParse(insuranceValueController.text) ?? 0.0,
         handlingCharges: double.tryParse(handlingChargeController.text) ?? 0.0,
         tax: double.tryParse(gstChargeController.text) ?? 0.0,
@@ -1012,7 +899,6 @@ class AddShipmentController extends GetxController {
         receiverState: receviverAddressType.value == 0
             ? selectedReceiverStateId.value
             : selectedExistingReceiverStateId.value,
-
         receiverCity: receviverAddressType.value == 0
             ? selectedReceiverCityId.value
             : selectedExistingReceiverCityId.value,
@@ -1051,7 +937,7 @@ class AddShipmentController extends GetxController {
       );
 
       final response =
-          await addShipmentRepo.addShipmentRepo(shipmentModel: shipment);
+      await addShipmentRepo.addShipmentRepo(shipmentModel: shipment);
 
       if (response == true) {
         isShipmentAdd.value = Status.success;
@@ -1080,25 +966,24 @@ class AddShipmentController extends GetxController {
   }
 
   void previousPage() {
-    // Close keyboard when navigating
     if (Get.context != null) {
       FocusScope.of(Get.context!).unfocus();
     }
 
     if (currentPage.value > 0) {
       pageController.previousPage(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
   }
 
   final pickupController = Get.find<PickupController>();
+
   @override
   void onInit() {
-    // TODO: implement onInit
     _loadUserId();
-    fetchCustomers('0');
+    fetchCustomers(search: '', nextID: '0');
     fetchReciverCustomers('0');
     categoryListData();
     fetchServiceType();
@@ -1112,9 +997,6 @@ class AddShipmentController extends GetxController {
 
   @override
   void onClose() {
-    // TODO: implement onClose
-
     super.onClose();
-    // pageController.dispose();
   }
 }

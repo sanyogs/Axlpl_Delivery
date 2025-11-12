@@ -16,13 +16,13 @@ class _FilterArgs<T> {
   });
 }
 
-/// Runs filtering in a background isolate safely and statically
+/// Background isolate filtering (fallback)
 List<T> _runFiltering<T>(_FilterArgs<T> args) {
   final q = args.query.toLowerCase();
   if (q.isEmpty) return args.items;
   return args.items
       .where((item) => args.labelFn(item).toLowerCase().contains(q))
-      .toList();
+      .toList(growable: false);
 }
 
 class PaginatedDropdown<T> extends StatefulWidget {
@@ -32,17 +32,20 @@ class PaginatedDropdown<T> extends StatefulWidget {
   final String Function(T) itemLabel;
   final dynamic Function(T) itemValue;
   final Function(T?) onChanged;
-  final bool isLoading;
-  final bool isLoadingMore;
+  final bool isLoading;        // first load/refresh loader
+  final bool isLoadingMore;    // pagination loader (bottom row only)
   final bool hasMoreData;
   final VoidCallback? onLoadMore;
   final bool isSearchable;
 
-  /// Minimum characters required before filtering begins
+  /// minimum characters before search triggers
   final int minSearchLength;
 
+  /// server search callback (optional)
+  final Future<void> Function(String query)? onSearch;
+
   const PaginatedDropdown({
-    Key? key,
+    super.key,
     required this.hint,
     this.selectedValue,
     required this.items,
@@ -55,20 +58,27 @@ class PaginatedDropdown<T> extends StatefulWidget {
     this.onLoadMore,
     this.isSearchable = true,
     this.minSearchLength = 1,
-  }) : super(key: key);
+    this.onSearch,
+  });
 
   @override
   State<PaginatedDropdown<T>> createState() => _PaginatedDropdownState<T>();
 }
 
 class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
-  final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   List<T> _filteredItems = [];
   bool _isDropdownOpen = false;
+
+  /// FULL overlay loader when user is typing/searching.
   bool _isFiltering = false;
+
   Timer? _debounceTimer;
+
+  /// Guard against race conditions between async filters.
+  int _activeFilterToken = 0;
 
   @override
   void initState() {
@@ -79,10 +89,42 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
   }
 
   @override
-  void didUpdateWidget(PaginatedDropdown<T> oldWidget) {
+  void didUpdateWidget(covariant PaginatedDropdown<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.items != widget.items) {
-      _updateFilteredItems();
+      _onItemsUpdated(); // keep scroll; don't show global loader
+    }
+  }
+
+  void _onItemsUpdated() {
+    final q = _searchController.text.trim();
+    if (q.isEmpty || q.length < widget.minSearchLength) {
+      if (!mounted) return;
+      setState(() {
+        _filteredItems = widget.items; // adopt new/append items
+      });
+    } else {
+      _refilterSilently(q); // async, no overlay loader
+    }
+  }
+
+  Future<void> _refilterSilently(String query) async {
+    final int token = ++_activeFilterToken; // prevent stale results
+    try {
+      final result = await compute<_FilterArgs<T>, List<T>>(
+        _runFiltering<T>,
+        _FilterArgs<T>(
+          items: widget.items,
+          query: query,
+          labelFn: widget.itemLabel,
+        ),
+      );
+      if (!mounted || token != _activeFilterToken) return;
+      setState(() {
+        _filteredItems = result; // do NOT touch _isFiltering here
+      });
+    } catch (e) {
+      debugPrint('Filtering error: $e');
     }
   }
 
@@ -99,28 +141,54 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
 
   void _onSearchChanged() {
     _debounceTimer?.cancel();
-    // slight debounce avoids isolate storm during typing
-    _debounceTimer = Timer(const Duration(milliseconds: 150), _updateFilteredItems);
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      final query = _searchController.text.trim();
+
+      // User is typing: show FULL overlay loader and jump to top immediately.
+      if (mounted) {
+        setState(() => _isFiltering = true);
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0); // kick back to top on typing
+        }
+      }
+
+      try {
+        if (widget.onSearch != null) {
+          await widget.onSearch!(query);
+          // Parent updates 'items'; didUpdateWidget -> _onItemsUpdated will refresh _filteredItems
+        } else {
+          await _updateFilteredItems(showOverlayAlreadyTrue: true);
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isFiltering = false); // hide overlay after search completes
+        }
+      }
+    });
   }
 
-  Future<void> _updateFilteredItems() async {
+  Future<void> _updateFilteredItems({bool showOverlayAlreadyTrue = false}) async {
     final query = _searchController.text.trim();
 
+    // Reset immediately if too short.
     if (query.isEmpty || query.length < widget.minSearchLength) {
-      // show full list if no query or below threshold
-      if (mounted) {
-        setState(() {
-          _filteredItems = widget.items;
-          _isFiltering = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _filteredItems = widget.items;
+        if (!showOverlayAlreadyTrue) _isFiltering = false;
+      });
       return;
     }
 
-    setState(() => _isFiltering = true);
+    final int token = ++_activeFilterToken;
+
+    // If not triggered by typing path, only show overlay for initial search (no items yet).
+    if (!showOverlayAlreadyTrue && mounted && _filteredItems.isEmpty) {
+      setState(() => _isFiltering = true);
+    }
 
     try {
-      final result = await compute(
+      final result = await compute<_FilterArgs<T>, List<T>>(
         _runFiltering<T>,
         _FilterArgs<T>(
           items: widget.items,
@@ -128,20 +196,19 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
           labelFn: widget.itemLabel,
         ),
       );
-      if (!mounted) return;
-      setState(() => _filteredItems = result);
+
+      if (!mounted || token != _activeFilterToken) return;
+
+      setState(() {
+        _filteredItems = result;
+        if (!showOverlayAlreadyTrue) _isFiltering = false;
+      });
     } catch (e) {
-      // fallback filter if isolate fails (rare)
-      if (mounted) {
-        setState(() {
-          _filteredItems = widget.items
-              .where((item) =>
-              widget.itemLabel(item).toLowerCase().contains(query.toLowerCase()))
-              .toList();
-        });
+      debugPrint('Filtering error: $e');
+      if (!mounted || token != _activeFilterToken) return;
+      if (!showOverlayAlreadyTrue) {
+        setState(() => _isFiltering = false);
       }
-    } finally {
-      if (mounted) setState(() => _isFiltering = false);
     }
   }
 
@@ -155,6 +222,8 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final items = _filteredItems;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,15 +260,15 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
             ),
           ),
         ),
-        if (_isDropdownOpen) ...[
-          SizedBox(height: 4.h),
+        if (_isDropdownOpen)
           Container(
-            constraints: BoxConstraints(maxHeight: 140.h),
+            margin: EdgeInsets.only(top: 6.h),
+            constraints: BoxConstraints(maxHeight: 180.h),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(8.r),
               color: Colors.white,
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 4,
@@ -221,73 +290,50 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(6.r),
                         ),
-                        contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 8.h,
+                        ),
                       ),
                     ),
                   ),
                 Divider(height: 1, color: Colors.grey.shade300),
+
+                // Big loader cases:
+                // - initial/refresh when there are no items yet (widget.isLoading && items.isEmpty)
+                // - user typing (_isFiltering) – ALWAYS full overlay
                 Expanded(
-                  child: _isFiltering || widget.isLoading
-                      ? Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.w),
-                      child: CircularProgressIndicator.adaptive(),
-                    ),
-                  )
-                      : _filteredItems.isEmpty
-                      ? Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.w),
-                      child: Text(
-                        _searchController.text.isEmpty
-                            ? 'No items available'
-                            : _searchController.text.length <
-                            widget.minSearchLength
-                            ? 'Type at least ${widget.minSearchLength} characters'
-                            : 'No items found',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14.sp,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
+                  child: (((widget.isLoading && items.isEmpty) || _isFiltering))
+                      ? const Center(child: CircularProgressIndicator())
+                      : (items.isEmpty)
+                      ? const Center(child: Text('No items found'))
                       : ListView.builder(
                     controller: _scrollController,
-                    itemCount: _filteredItems.length +
-                        (widget.hasMoreData ? 1 : 0),
+                    itemCount:
+                    items.length + (widget.hasMoreData ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index == _filteredItems.length) {
-                        // pagination indicator
+                      if (index == items.length) {
+                        // Bottom loader row for pagination (keeps scroll position).
                         return Padding(
                           padding: EdgeInsets.all(12.w),
                           child: Center(
                             child: widget.isLoadingMore
-                                ? SizedBox(
-                              width: 20.w,
-                              height: 20.h,
+                                ? const SizedBox(
+                              width: 20,
+                              height: 20,
                               child:
-                              CircularProgressIndicator.adaptive(
-                                strokeWidth: 2,
-                              ),
+                              CircularProgressIndicator(),
                             )
-                                : Text(
-                              'Scroll to load more',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 12.sp,
-                              ),
-                            ),
+                                : const Text('Scroll to load more'),
                           ),
                         );
                       }
 
-                      final item = _filteredItems[index];
+                      final item = items[index];
                       final isSelected = widget.selectedValue != null &&
                           widget.itemValue(item) ==
-                              widget.itemValue(widget.selectedValue!);
+                              widget.itemValue(
+                                  widget.selectedValue!);
 
                       return InkWell(
                         onTap: () {
@@ -295,11 +341,13 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
                           setState(() => _isDropdownOpen = false);
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12.w, vertical: 12.h),
                           color: isSelected
                               ? Colors.blue.shade50
                               : Colors.transparent,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 10.h,
+                          ),
                           child: Row(
                             children: [
                               Expanded(
@@ -310,16 +358,15 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
                                     color: isSelected
                                         ? Colors.blue.shade700
                                         : Colors.black87,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w500
-                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
                               if (isSelected)
-                                Icon(Icons.check,
-                                    color: Colors.blue.shade700,
-                                    size: 18.sp),
+                                Icon(
+                                  Icons.check,
+                                  color: Colors.blue.shade700,
+                                  size: 18.sp,
+                                ),
                             ],
                           ),
                         ),
@@ -330,7 +377,6 @@ class _PaginatedDropdownState<T> extends State<PaginatedDropdown<T>> {
               ],
             ),
           ),
-        ],
       ],
     );
   }
