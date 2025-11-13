@@ -30,33 +30,38 @@ class ShipnowController extends GetxController {
   ];
   final themes = Themes();
   final isDownloadingLabel = false.obs;
-  //TODO: Implement ShipnowController
+
+  // Repository
   final shipNowRepo = ShipnowRepo();
 
+  // Data storage
   final allShipmentData = <ShipmentDatum>[].obs;
   final filteredShipmentData = <ShipmentDatum>[].obs;
 
+  // Loading states
   final isLoadingShipNow = false.obs;
   final isLoadingMore = false.obs;
 
+  // Controllers
   final shipmentIDController = TextEditingController();
   final TextEditingController shipmentLabelCountController =
-      TextEditingController();
+  TextEditingController();
 
   final Map<String, TextEditingController> shipmentLableControllers = {};
-
-  TextEditingController getLableController(String shipmentId) =>
-      shipmentLableControllers.putIfAbsent(
-          shipmentId, () => TextEditingController());
 
   // Pagination variables
   int currentPage = 0;
   bool hasMoreData = true;
   static const int pageSize = 10;
 
+  TextEditingController getLableController(String shipmentId) =>
+      shipmentLableControllers.putIfAbsent(
+          shipmentId, () => TextEditingController());
+
   Future<void> fetchShipmentData(String nextID,
-      {bool isRefresh = false, final shipmentSatus}) async {
+      {bool isRefresh = false, final shipmentStatus}) async {
     try {
+      // Start loading state
       if (isRefresh) {
         isLoadingShipNow(true);
         currentPage = 0;
@@ -65,28 +70,34 @@ class ShipnowController extends GetxController {
         isLoadingMore(true);
       }
 
+      // Fetch data from repository
       final data = await shipNowRepo.customerListRepo(
-          nextID, shipmentSatus, '', '', '', '', '', '', '', '', '');
+        nextID,
+        shipmentStatus,
+        shipmentIDController.text, // Search query
+        '', '', '', '', '', '', '', '',
+      );
 
       final newItems = data ?? [];
 
+      // Update data based on refresh or pagination
       if (isRefresh) {
         allShipmentData.value = newItems;
       } else {
         allShipmentData.addAll(newItems);
       }
 
-      // Check if we have more data
+      // Check if we have more data to load
       hasMoreData = newItems.length >= pageSize;
-
-      filterShipmentData(shipmentIDController.text);
     } catch (e) {
+      // Handle error and clear data if refreshing
       if (isRefresh) {
         allShipmentData.clear();
         filteredShipmentData.clear();
       }
       Utils().logError('Shipment fetch failed $e');
     } finally {
+      // Reset loading state
       if (isRefresh) {
         isLoadingShipNow(false);
       } else {
@@ -95,15 +106,15 @@ class ShipnowController extends GetxController {
     }
   }
 
+  // Isolate for download progress
   final ReceivePort _port = ReceivePort();
 
   @override
   void onInit() {
     super.onInit();
-    fetchShipmentData(
-      '0',
-      isRefresh: true,
-    );
+    // Initial data load
+    fetchShipmentData('0', isRefresh: true);
+
     // Only setup flutter_downloader for Android
     if (Platform.isAndroid) {
       IsolateNameServer.registerPortWithName(
@@ -122,28 +133,29 @@ class ShipnowController extends GetxController {
       FlutterDownloader.registerCallback(downloadCallback);
     }
 
+    // Listen to shipment ID changes for filtering
     shipmentIDController.addListener(() {
-      filterShipmentData(shipmentIDController.text);
+      fetchShipmentData('0', isRefresh: true, shipmentStatus: selectedStatusFilter.value);
     });
   }
 
   @override
   void onClose() {
-    // Only cleanup flutter_downloader for Android
+    // Cleanup flutter_downloader for Android
     if (Platform.isAndroid) {
       IsolateNameServer.removePortNameMapping('downloader_send_port');
     }
-    // shipmentIDController.dispose();
     super.onClose();
   }
 
   @pragma('vm:entry-point')
   static void downloadCallback(String id, int status, int progress) {
     final SendPort? send =
-        IsolateNameServer.lookupPortByName('downloader_send_port');
+    IsolateNameServer.lookupPortByName('downloader_send_port');
     send?.send([id, status, progress]);
   }
 
+  // Download shipment label
   Future<void> downloadShipmentLable(String url, String fileName) async {
     isDownloadingLabel.value = true;
     try {
@@ -162,6 +174,7 @@ class ShipnowController extends GetxController {
     }
   }
 
+  // iOS-specific file download
   Future<void> _downloadFileForIOS(String url, String fileName) async {
     try {
       // Get the documents directory for iOS
@@ -190,42 +203,42 @@ class ShipnowController extends GetxController {
       Get.dialog(
         Platform.isIOS
             ? CupertinoAlertDialog(
-                title: Text('Download Complete'),
-                content: Text(
-                    'Label downloaded successfully. Would you like to open it?'),
-                actions: [
-                  CupertinoDialogAction(
-                    isDestructiveAction: true,
-                    onPressed: () => Get.back(),
-                    child: Text('Cancel'),
-                  ),
-                  CupertinoDialogAction(
-                    onPressed: () async {
-                      Get.back();
-                      await OpenFile.open(filePath);
-                    },
-                    child: Text('Open'),
-                  ),
-                ],
-              )
+          title: Text('Download Complete'),
+          content: Text(
+              'Label downloaded successfully. Would you like to open it?'),
+          actions: [
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () => Get.back(),
+              child: Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () async {
+                Get.back();
+                await OpenFile.open(filePath);
+              },
+              child: Text('Open'),
+            ),
+          ],
+        )
             : AlertDialog(
-                title: Text('Download Complete'),
-                content: Text(
-                    'Label downloaded successfully. Would you like to open it?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      Get.back();
-                      await OpenFile.open(filePath);
-                    },
-                    child: Text('Open'),
-                  ),
-                ],
-              ),
+          title: Text('Download Complete'),
+          content: Text(
+              'Label downloaded successfully. Would you like to open it?'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Get.back();
+                await OpenFile.open(filePath);
+              },
+              child: Text('Open'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       print('iOS download error: $e');
@@ -233,6 +246,7 @@ class ShipnowController extends GetxController {
     }
   }
 
+  // Android-specific file download
   Future<void> _downloadFileForAndroid(String url, String fileName) async {
     try {
       final directory = await getExternalStorageDirectory();
@@ -255,6 +269,7 @@ class ShipnowController extends GetxController {
     }
   }
 
+  // Show success toast
   void _showSuccessToast(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -266,6 +281,7 @@ class ShipnowController extends GetxController {
     );
   }
 
+  // Show error toast
   void _showErrorToast(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -277,6 +293,7 @@ class ShipnowController extends GetxController {
     );
   }
 
+  // Load more data when paginating
   Future<void> loadMoreData() async {
     if (!hasMoreData || isLoadingMore.value) return;
 
@@ -284,11 +301,13 @@ class ShipnowController extends GetxController {
     await fetchShipmentData(currentPage.toString(), isRefresh: false);
   }
 
+  // Refresh data
   Future<void> refreshData() async {
     await fetchShipmentData('0',
-        isRefresh: true, shipmentSatus: selectedStatusFilter.value);
+        isRefresh: true, shipmentStatus: selectedStatusFilter.value);
   }
 
+  // Filter data based on search query
   void filterShipmentData(String query) {
     filteredShipmentData.value = allShipmentData.where((data) {
       final matchesQuery = query.isEmpty ||
@@ -307,6 +326,6 @@ class ShipnowController extends GetxController {
   // Call this when user selects a status filter from the filter list button
   void setStatusFilter(String status) {
     selectedStatusFilter.value = status;
-    fetchShipmentData("0", isRefresh: true, shipmentSatus: status);
+    fetchShipmentData("0", isRefresh: true, shipmentStatus: status);
   }
 }

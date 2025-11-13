@@ -24,11 +24,11 @@ import '../controllers/shipment_record_controller.dart';
 
 class ShipmentRecordView extends GetView<ShipmentRecordController> {
   const ShipmentRecordView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final shipnowController = Get.put(ShipnowController());
     final runningController = Get.put(RunningDeliveryDetailsController());
-    final shipmentController = Get.put(ShipnowController());
     final theme = Themes();
     final ScrollController scrollController = ScrollController();
 
@@ -42,6 +42,7 @@ class ShipmentRecordView extends GetView<ShipmentRecordController> {
         shipnowController.loadMoreData();
       }
     });
+
     return CommonScaffold(
         appBar: commonAppbar('My Shipments'),
         body: Padding(
@@ -58,8 +59,11 @@ class ShipmentRecordView extends GetView<ShipmentRecordController> {
                 controller: shipnowController.shipmentIDController,
                 hintText: 'Search Here',
                 onChanged: (value) {
-                  // shipnowController.filterByQuery(value!);
-                  return null;
+                  // Trigger a refresh of the data when search text changes
+                  shipnowController.fetchShipmentData('0',
+                      isRefresh: true,
+                      shipmentStatus:
+                          shipnowController.selectedStatusFilter.value);
                 },
                 suffixIcon: Icon(CupertinoIcons.search),
                 prefixIcon: InkWell(
@@ -165,21 +169,20 @@ class ShipmentRecordView extends GetView<ShipmentRecordController> {
                   );
                 }
 
-                if (shipnowController.filteredShipmentData.isNotEmpty) {
+                if (shipnowController.allShipmentData.isNotEmpty) {
                   return Expanded(
                     child: RefreshIndicator(
                       onRefresh: shipnowController.refreshData,
                       child: ListView.builder(
                         controller: scrollController,
                         shrinkWrap: true,
-                        itemCount:
-                            shipnowController.filteredShipmentData.length +
-                                (shipnowController.hasMoreData ? 1 : 0),
+                        itemCount: shipnowController.allShipmentData.length +
+                            (shipnowController.hasMoreData ? 1 : 0),
                         padding: const EdgeInsets.all(8),
                         itemBuilder: (context, index) {
                           // Show loading indicator at the end
                           if (index ==
-                              shipnowController.filteredShipmentData.length) {
+                              shipnowController.allShipmentData.length) {
                             return Obx(() => Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Center(
@@ -192,7 +195,7 @@ class ShipmentRecordView extends GetView<ShipmentRecordController> {
                           }
 
                           final shipment =
-                              shipnowController.filteredShipmentData[index];
+                              shipnowController.allShipmentData[index];
                           final status = shipment.shipmentStatus;
                           return Container(
                             margin: EdgeInsets.symmetric(
