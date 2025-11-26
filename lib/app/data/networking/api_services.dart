@@ -256,6 +256,7 @@ class ApiServices {
     final senderCompanyName,
     final shipmentID,
     final role,
+    final search_query,
   ) async {
     final body = {
       'user_id': userID,
@@ -271,6 +272,7 @@ class ApiServices {
       'sender_company_name': senderCompanyName,
       'shipment_id': shipmentID,
       'role': role,
+      'search_query': search_query,
     };
     return _api.post(
       getShipmentDataListPoint,

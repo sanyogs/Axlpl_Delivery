@@ -75,7 +75,7 @@ class ShipnowController extends GetxController {
         nextID,
         shipmentStatus,
         shipmentIDController.text, // Search query
-        '', '', '', '', '', '', '', '',
+        '', '', '', '', '', '', '', '', '',
       );
 
       final newItems = data ?? [];

@@ -13,6 +13,7 @@ class ShipnowRepo {
   Future<List<ShipmentDatum>?> customerListRepo(
     final nextID,
     final shimentStatus,
+    final search_query,
     final receiverGSTNo,
     final senderGSTNo,
     final receiverAeraName,
@@ -46,6 +47,7 @@ class ShipnowRepo {
           senderAeraName,
           shipmentID,
           role.toString(),
+          search_query,
         );
         return response.when(
           success: (body) {
