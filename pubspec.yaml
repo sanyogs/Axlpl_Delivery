@@ -37,7 +37,6 @@ dependencies:
   get: ^4.6.6
   google_fonts: ^6.2.1
   flutter_screenutil: ^5.9.3
-  fvm: ^3.2.1
   dotted_border: ^2.1.0
   easy_stepper: ^0.8.5+1
   enhance_stepper: ^1.0.1
@@ -61,7 +60,7 @@ dependencies:
   dropdown_search: ^5.0.6
   firebase_messaging: ^15.2.5
   firebase_core: ^3.13.0
-  awesome_notifications: ^0.8.2
+  awesome_notifications: ^0.10.1
   flutter_local_notifications: ^19.3.0
   device_info_plus: ^11.3.0
   flutter_rating_stars: ^1.1.0
@@ -77,7 +76,7 @@ dependencies:
   flutter_file_downloader: ^2.1.0
   open_file: ^3.5.10
   fluttertoast: ^8.2.12
-  intl: ^0.18.1
+  intl: ^0.20.2
   step_progress: ^2.5.2
   change_app_package_name: ^1.5.0
   syncfusion_flutter_pdfviewer: ^29.1.38
@@ -88,7 +87,7 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/logo.png"
   remove_alpha_ios: true
-  min_sdk_android: 21 # android min sdk min:16, default 21
+  min_sdk_android: 23 # android min sdk min:16, default 21
   web:
     generate: true
     image_path: "assets/logo.png"

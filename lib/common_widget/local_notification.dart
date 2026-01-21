@@ -1,11 +1,16 @@
 // notification_service.dart
 
+import 'dart:io';
+
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
+import 'package:axlpl_delivery/common_widget/siren_alert_payload.dart';
+import 'package:axlpl_delivery/common_widget/siren_alert_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get/get.dart';
 
 class NotificationService {
   static const String _sirenSoundKey = 'siren';
@@ -21,6 +26,10 @@ class NotificationService {
 
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  static NotificationAppLaunchDetails? _launchDetails;
+  static SirenAlertPayload? _queuedSirenLaunch;
+  static bool _isSirenScreenVisible = false;
 
   int downloadNotificationId = 1001;
   String downloadChannelKey = 'download_channel';
@@ -41,6 +50,8 @@ class NotificationService {
     return soundValue == _sirenSoundKey;
   }
 
+  static bool isSirenMessage(RemoteMessage message) => _shouldPlaySiren(message);
+
   static String? _normalizeSoundValue(String? raw) {
     if (raw == null) return null;
     final value = raw.trim().toLowerCase();
@@ -54,8 +65,8 @@ class NotificationService {
     return base.isEmpty ? null : base;
   }
 
-  static void _playSirenIfNeeded(RemoteMessage message) {
-    final shouldPlay = _shouldPlaySiren(message);
+  static void _playSirenIfNeeded(RemoteMessage message,
+      {required bool shouldPlay}) {
     if (kDebugMode) {
       debugPrint(
         'NotificationService: sound=${message.data['sound']} androidSound=${message.notification?.android?.sound} appleSound=${message.notification?.apple?.sound?.name} shouldPlaySiren=$shouldPlay',
@@ -92,7 +103,50 @@ class NotificationService {
     }();
   }
 
-  static Future<void> init() async {
+  static Future<NotificationAppLaunchDetails?> getNotificationLaunchDetails() async {
+    _launchDetails ??= await _notificationsPlugin.getNotificationAppLaunchDetails();
+    return _launchDetails;
+  }
+
+  static void queueSirenLaunch(SirenAlertPayload payload) {
+    _queuedSirenLaunch = payload;
+  }
+
+  static SirenAlertPayload? consumeQueuedSirenLaunch() {
+    final queued = _queuedSirenLaunch;
+    _queuedSirenLaunch = null;
+    return queued;
+  }
+
+  static bool _canPresentUI() {
+    try {
+      return Get.key.currentContext != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static void showSirenAlertScreen(SirenAlertPayload payload) {
+    if (_isSirenScreenVisible) return;
+    if (!_canPresentUI()) {
+      queueSirenLaunch(payload);
+      return;
+    }
+    _isSirenScreenVisible = true;
+    final navigation = Get.to(
+      () => SirenAlertScreen(payload: payload),
+      fullscreenDialog: true,
+    );
+    if (navigation == null) {
+      _isSirenScreenVisible = false;
+      return;
+    }
+    navigation.whenComplete(() {
+      _isSirenScreenVisible = false;
+    });
+  }
+
+  static Future<void> init({bool requestPermissions = true}) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
 
@@ -112,6 +166,11 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (response) {
+        final sirenPayload = SirenAlertPayload.tryDecode(response.payload);
+        if (sirenPayload != null) {
+          showSirenAlertScreen(sirenPayload);
+        }
+
         print("Action clicked: ${response.actionId}");
 
         if (response.actionId == 'accept') {
@@ -147,10 +206,18 @@ class NotificationService {
 
     await androidPlugin?.createNotificationChannel(pickupChannel);
     await androidPlugin?.createNotificationChannel(deliveryStatusChannel);
+
+    if (requestPermissions && Platform.isAndroid) {
+      await androidPlugin?.requestNotificationsPermission();
+    }
   }
 
   // Pickup notification with accept/reject buttons (for messengers)
-  static void showPickupNotification(RemoteMessage message) {
+  static void showPickupNotification(
+    RemoteMessage message, {
+    required bool useFullScreenIntent,
+    String? payloadOverride,
+  }) {
     final data = message.data;
     final title =
         data['title'] ?? message.notification?.title ?? 'New Pickup Request';
@@ -162,14 +229,19 @@ class NotificationService {
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'pickup_channel',
           'Pickup Notifications',
           icon: 'ic_notification',
           importance: Importance.max,
-          priority: Priority.high,
+          priority: useFullScreenIntent ? Priority.max : Priority.high,
           color: Colors.orange,
+          category:
+              useFullScreenIntent ? AndroidNotificationCategory.call : null,
+          visibility:
+              useFullScreenIntent ? NotificationVisibility.public : null,
+          fullScreenIntent: useFullScreenIntent,
           actions: <AndroidNotificationAction>[
             AndroidNotificationAction('accept', 'Accept',
                 showsUserInterface: true),
@@ -178,12 +250,16 @@ class NotificationService {
           ],
         ),
       ),
-      payload: 'pickup',
+      payload: payloadOverride ?? 'pickup',
     );
   }
 
   // Out for delivery notification - no action buttons
-  static void showOutForDeliveryNotification(RemoteMessage message) {
+  static void showOutForDeliveryNotification(
+    RemoteMessage message, {
+    required bool useFullScreenIntent,
+    String? payloadOverride,
+  }) {
     final data = message.data;
     final title =
         data['title'] ?? message.notification?.title ?? 'Out for Delivery';
@@ -195,26 +271,35 @@ class NotificationService {
       DateTime.now().millisecondsSinceEpoch ~/ 1000 + 2, // Different ID
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'delivery_status_channel',
           'Delivery Status Notifications',
           icon: 'ic_notification',
           importance: Importance.max,
-          priority: Priority.high,
+          priority: useFullScreenIntent ? Priority.max : Priority.high,
           color: Colors.green,
+          category:
+              useFullScreenIntent ? AndroidNotificationCategory.call : null,
+          visibility:
+              useFullScreenIntent ? NotificationVisibility.public : null,
+          fullScreenIntent: useFullScreenIntent,
           // No actions for out for delivery notifications
         ),
         iOS: DarwinNotificationDetails(
           categoryIdentifier: 'out_for_delivery',
         ),
       ),
-      payload: 'out_for_delivery',
+      payload: payloadOverride ?? 'out_for_delivery',
     );
   }
 
   // Customer notification - only title and message (no action buttons)
-  static void showCustomerNotification(RemoteMessage message) {
+  static void showCustomerNotification(
+    RemoteMessage message, {
+    required bool useFullScreenIntent,
+    String? payloadOverride,
+  }) {
     final data = message.data;
     final title =
         data['title'] ?? message.notification?.title ?? 'Delivery Update';
@@ -226,26 +311,35 @@ class NotificationService {
       DateTime.now().millisecondsSinceEpoch ~/ 1000 + 1, // Different ID
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'delivery_status_channel',
           'Delivery Status Notifications',
           icon: 'ic_notification',
           importance: Importance.max,
-          priority: Priority.high,
+          priority: useFullScreenIntent ? Priority.max : Priority.high,
           color: Colors.blue,
+          category:
+              useFullScreenIntent ? AndroidNotificationCategory.call : null,
+          visibility:
+              useFullScreenIntent ? NotificationVisibility.public : null,
+          fullScreenIntent: useFullScreenIntent,
           // No actions - only title and message for customers
         ),
         iOS: DarwinNotificationDetails(
           categoryIdentifier: 'customer_delivery',
         ),
       ),
-      payload: 'customer_notification',
+      payload: payloadOverride ?? 'customer_notification',
     );
   }
 
   // Smart notification method based on message data
-  static void showNotificationByType(RemoteMessage message) {
+  static void showNotificationByType(
+    RemoteMessage message, {
+    required bool useFullScreenIntent,
+    String? payloadOverride,
+  }) {
     final data = message.data;
     final notificationType = data['type'] ?? '';
     final status = data['status'] ?? '';
@@ -255,25 +349,67 @@ class NotificationService {
     if (title.toLowerCase().contains('out for delivery') ||
         notificationType == 'out_for_delivery' ||
         status == 'out_for_delivery') {
-      showOutForDeliveryNotification(message);
+      showOutForDeliveryNotification(
+        message,
+        useFullScreenIntent: useFullScreenIntent,
+        payloadOverride: payloadOverride,
+      );
     } else if (title.toLowerCase().contains('pickup') ||
         notificationType == 'pickup' ||
         status == 'pickup') {
-      showPickupNotification(message);
+      showPickupNotification(
+        message,
+        useFullScreenIntent: useFullScreenIntent,
+        payloadOverride: payloadOverride,
+      );
     } else if (title.toLowerCase().contains('delivered') ||
         notificationType == 'customer' ||
         status == 'delivered') {
-      showCustomerNotification(message);
+      showCustomerNotification(
+        message,
+        useFullScreenIntent: useFullScreenIntent,
+        payloadOverride: payloadOverride,
+      );
     } else {
       // Default to pickup notification for backward compatibility
-      showPickupNotification(message);
+      showPickupNotification(
+        message,
+        useFullScreenIntent: useFullScreenIntent,
+        payloadOverride: payloadOverride,
+      );
     }
   }
 
   // Keep the original method for backward compatibility
   static void showNotification(RemoteMessage message) {
-    _playSirenIfNeeded(message);
+    final shouldPlaySiren = _shouldPlaySiren(message);
+    _playSirenIfNeeded(message, shouldPlay: shouldPlaySiren);
+
+    final SirenAlertPayload? sirenPayload =
+        shouldPlaySiren ? SirenAlertPayload.fromRemoteMessage(message) : null;
+
     // Use the smart method to determine notification type
-    showNotificationByType(message);
+    showNotificationByType(
+      message,
+      useFullScreenIntent: shouldPlaySiren,
+      payloadOverride: sirenPayload?.encode(),
+    );
+
+    if (sirenPayload != null) {
+      showSirenAlertScreen(sirenPayload);
+    }
+  }
+
+  static void showBackgroundNotification(RemoteMessage message) {
+    final shouldPlaySiren = _shouldPlaySiren(message);
+    final sirenPayload = shouldPlaySiren
+        ? SirenAlertPayload.fromRemoteMessage(message).encode()
+        : null;
+
+    showNotificationByType(
+      message,
+      useFullScreenIntent: shouldPlaySiren,
+      payloadOverride: sirenPayload,
+    );
   }
 }

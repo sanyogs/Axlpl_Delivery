@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/common_widget/error_screen.dart';
 import 'package:axlpl_delivery/common_widget/local_notification.dart';
+import 'package:axlpl_delivery/common_widget/siren_alert_payload.dart';
 import 'package:axlpl_delivery/firebase_options.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,11 +21,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app/routes/app_pages.dart';
 
 // core Flutter primitives
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  NotificationService.showNotification(
-    message,
+  WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+  await NotificationService.init(requestPermissions: false);
+  NotificationService.showBackgroundNotification(message);
 }
 
 final LocalStorage _localStorage = LocalStorage();
@@ -96,7 +102,9 @@ Future<void> _getFCMToken(FirebaseMessaging messaging) async {
   try {
     String? token = await messaging.getToken();
     if (token != null) {
-      Utils().log("FCM Token: $token");
+      if (kDebugMode) {
+        print("FCM Token: $token");
+      }
       await storage.write(key: _localStorage.fcmToken, value: token);
     } else {
       if (kDebugMode) {
@@ -136,7 +144,28 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await NotificationService.init();
 
+  final launchDetails = await NotificationService.getNotificationLaunchDetails();
+  final launchPayload =
+      SirenAlertPayload.tryDecode(launchDetails?.notificationResponse?.payload);
+  if (launchPayload != null) {
+    NotificationService.queueSirenLaunch(launchPayload);
+  }
+
   final messaging = FirebaseMessaging.instance;
+  final initialMessage = await messaging.getInitialMessage();
+  if (initialMessage != null && NotificationService.isSirenMessage(initialMessage)) {
+    NotificationService.queueSirenLaunch(
+      SirenAlertPayload.fromRemoteMessage(initialMessage),
+    );
+  }
+
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    if (!NotificationService.isSirenMessage(message)) return;
+    NotificationService.showSirenAlertScreen(
+      SirenAlertPayload.fromRemoteMessage(message),
+    );
+  });
+
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
     announcement: false,
@@ -197,7 +226,9 @@ void main() async {
 
   // Listen for FCM token refresh (APNS token available later on iOS)
   messaging.onTokenRefresh.listen((token) {
-    Utils().log("FCM Token refreshed: $token");
+    if (kDebugMode) {
+      print("FCM Token refreshed: $token");
+    }
     storage.write(key: _localStorage.fcmToken, value: token);
   });
 
@@ -238,6 +269,13 @@ void main() async {
             ErrorWidget.builder = (FlutterErrorDetails details) {
               return ErrorScreen();
             };
+
+            final queuedSiren = NotificationService.consumeQueuedSirenLaunch();
+            if (queuedSiren != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                NotificationService.showSirenAlertScreen(queuedSiren);
+              });
+            }
 
             if (Platform.isAndroid) {
               return SafeArea(child: child!);
