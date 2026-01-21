@@ -12,9 +12,38 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 
+enum _NotificationKind {
+  pickup,
+  outForDelivery,
+  customer,
+}
+
+class _NotificationActionDefinition {
+  const _NotificationActionDefinition(this.id, this.label);
+
+  final String id;
+  final String label;
+
+  AndroidNotificationAction toAndroid() => AndroidNotificationAction(
+        id,
+        label,
+        showsUserInterface: true,
+      );
+
+  SirenAlertAction toSiren() => SirenAlertAction(id: id, label: label);
+}
+
 class NotificationService {
   static const String _sirenSoundKey = 'siren';
   static const String _sirenAssetPath = 'siren.wav';
+  static const String _pickupTitleBase = 'New Pickup Available';
+
+  static const List<_NotificationActionDefinition> _pickupActions =
+      <_NotificationActionDefinition>[
+    _NotificationActionDefinition('accept', 'Accept'),
+    _NotificationActionDefinition('reject', 'Reject'),
+  ];
+
   static final AudioPlayer _audioPlayer = AudioPlayer();
   static final AudioContext _sirenAudioContext = AudioContext(
     android: const AudioContextAndroid(
@@ -51,6 +80,103 @@ class NotificationService {
   }
 
   static bool isSirenMessage(RemoteMessage message) => _shouldPlaySiren(message);
+
+  static SirenAlertPayload buildSirenPayload(RemoteMessage message) {
+    final kind = _kindForMessage(message);
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
+
+    return SirenAlertPayload.fromRemoteMessage(
+      message,
+      titleOverride: title,
+      bodyOverride: body,
+      actions: _sirenActionsForKind(kind),
+    );
+  }
+
+  static String? _stringFromData(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  static String? _firstStringFromData(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = _stringFromData(data, key);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  static _NotificationKind _kindForMessage(RemoteMessage message) {
+    final data = message.data;
+    final type =
+        (_stringFromData(data, 'type') ?? _stringFromData(data, 'notification_type') ?? '')
+            .toLowerCase();
+    final status = (_stringFromData(data, 'status') ?? '').toLowerCase();
+    final title =
+        (_stringFromData(data, 'title') ?? message.notification?.title ?? '')
+            .toLowerCase();
+
+    if (title.contains('out for delivery') ||
+        type == 'out_for_delivery' ||
+        status == 'out_for_delivery') {
+      return _NotificationKind.outForDelivery;
+    }
+    if (title.contains('pickup') || type == 'pickup' || status == 'pickup') {
+      return _NotificationKind.pickup;
+    }
+    if (title.contains('delivered') || type == 'customer' || status == 'delivered') {
+      return _NotificationKind.customer;
+    }
+
+    return _NotificationKind.pickup;
+  }
+
+  static String _titleForMessage(RemoteMessage message, _NotificationKind kind) {
+    final data = message.data;
+
+    return switch (kind) {
+      _NotificationKind.pickup => () {
+          final area = _firstStringFromData(
+            data,
+            const ['area', 'Area', 'pickup_area', 'pickupArea'],
+          );
+          return area == null ? _pickupTitleBase : '$_pickupTitleBase - $area';
+        }(),
+      _NotificationKind.outForDelivery =>
+        _firstStringFromData(data, const ['title']) ??
+            message.notification?.title ??
+            'Out for Delivery',
+      _NotificationKind.customer =>
+        _firstStringFromData(data, const ['title']) ??
+            message.notification?.title ??
+            'Delivery Update',
+    };
+  }
+
+  static String _bodyForMessage(RemoteMessage message, _NotificationKind kind) {
+    final data = message.data;
+    final body = _firstStringFromData(data, const ['body', 'message']) ??
+        message.notification?.body;
+
+    if (body != null && body.trim().isNotEmpty) return body.trim();
+
+    return switch (kind) {
+      _NotificationKind.pickup => 'Do you accept this pickup?',
+      _NotificationKind.outForDelivery => 'Your package is out for delivery',
+      _NotificationKind.customer => 'Your delivery status has been updated',
+    };
+  }
+
+  static List<SirenAlertAction> _sirenActionsForKind(_NotificationKind kind) {
+    return switch (kind) {
+      _NotificationKind.pickup => _pickupActions.map((a) => a.toSiren()).toList(),
+      _NotificationKind.outForDelivery => const <SirenAlertAction>[],
+      _NotificationKind.customer => const <SirenAlertAction>[],
+    };
+  }
 
   static String? _normalizeSoundValue(String? raw) {
     if (raw == null) return null;
@@ -126,15 +252,44 @@ class NotificationService {
     }
   }
 
+  static void _handleSirenAction(SirenAlertAction action, SirenAlertPayload payload) {
+    if (kDebugMode) {
+      debugPrint('NotificationService: siren action=${action.id}');
+    }
+
+    if (_isSirenScreenVisible) {
+      final navigator = Get.key.currentState;
+      if (navigator?.canPop() == true) {
+        navigator?.pop();
+      }
+    }
+
+    if (kDebugMode) {
+      if (action.id == 'accept') {
+        debugPrint('NotificationService: ✅ ACCEPTED');
+      } else if (action.id == 'reject') {
+        debugPrint('NotificationService: ❌ REJECTED');
+      }
+    }
+  }
+
   static void showSirenAlertScreen(SirenAlertPayload payload) {
     if (_isSirenScreenVisible) return;
     if (!_canPresentUI()) {
       queueSirenLaunch(payload);
       return;
     }
+    if (kDebugMode && payload.actions.isNotEmpty) {
+      debugPrint(
+        'NotificationService: siren screen actions=${payload.actions.map((a) => a.id).join(',')}',
+      );
+    }
     _isSirenScreenVisible = true;
     final navigation = Get.to(
-      () => SirenAlertScreen(payload: payload),
+      () => SirenAlertScreen(
+        payload: payload,
+        onActionPressed: (action) => _handleSirenAction(action, payload),
+      ),
       fullscreenDialog: true,
     );
     if (navigation == null) {
@@ -167,7 +322,24 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (response) {
         final sirenPayload = SirenAlertPayload.tryDecode(response.payload);
-        if (sirenPayload != null) {
+        final actionId = response.actionId;
+        final isActionTap = response.notificationResponseType ==
+            NotificationResponseType.selectedNotificationAction;
+
+        if (sirenPayload != null &&
+            isActionTap &&
+            actionId != null &&
+            actionId.trim().isNotEmpty) {
+          final resolvedActionId = actionId.trim();
+          final action = sirenPayload.actions.firstWhere(
+            (item) => item.id == resolvedActionId,
+            orElse: () => SirenAlertAction(
+              id: resolvedActionId,
+              label: resolvedActionId,
+            ),
+          );
+          _handleSirenAction(action, sirenPayload);
+        } else if (sirenPayload != null) {
           showSirenAlertScreen(sirenPayload);
         }
 
@@ -218,12 +390,9 @@ class NotificationService {
     required bool useFullScreenIntent,
     String? payloadOverride,
   }) {
-    final data = message.data;
-    final title =
-        data['title'] ?? message.notification?.title ?? 'New Pickup Request';
-    final body = data['body'] ??
-        message.notification?.body ??
-        'Do you accept this pickup?';
+    final kind = _NotificationKind.pickup;
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
 
     _notificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -242,12 +411,7 @@ class NotificationService {
           visibility:
               useFullScreenIntent ? NotificationVisibility.public : null,
           fullScreenIntent: useFullScreenIntent,
-          actions: <AndroidNotificationAction>[
-            AndroidNotificationAction('accept', 'Accept',
-                showsUserInterface: true),
-            AndroidNotificationAction('reject', 'Reject',
-                showsUserInterface: true),
-          ],
+          actions: _pickupActions.map((a) => a.toAndroid()).toList(),
         ),
       ),
       payload: payloadOverride ?? 'pickup',
@@ -260,12 +424,9 @@ class NotificationService {
     required bool useFullScreenIntent,
     String? payloadOverride,
   }) {
-    final data = message.data;
-    final title =
-        data['title'] ?? message.notification?.title ?? 'Out for Delivery';
-    final body = data['body'] ??
-        message.notification?.body ??
-        'Your package is out for delivery';
+    final kind = _NotificationKind.outForDelivery;
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
 
     _notificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000 + 2, // Different ID
@@ -300,12 +461,9 @@ class NotificationService {
     required bool useFullScreenIntent,
     String? payloadOverride,
   }) {
-    final data = message.data;
-    final title =
-        data['title'] ?? message.notification?.title ?? 'Delivery Update';
-    final body = data['body'] ??
-        message.notification?.body ??
-        'Your delivery status has been updated';
+    final kind = _NotificationKind.customer;
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
 
     _notificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000 + 1, // Different ID
@@ -340,43 +498,28 @@ class NotificationService {
     required bool useFullScreenIntent,
     String? payloadOverride,
   }) {
-    final data = message.data;
-    final notificationType = data['type'] ?? '';
-    final status = data['status'] ?? '';
-    final title = data['title'] ?? message.notification?.title ?? '';
-
-    // Check title for notification type
-    if (title.toLowerCase().contains('out for delivery') ||
-        notificationType == 'out_for_delivery' ||
-        status == 'out_for_delivery') {
-      showOutForDeliveryNotification(
-        message,
-        useFullScreenIntent: useFullScreenIntent,
-        payloadOverride: payloadOverride,
-      );
-    } else if (title.toLowerCase().contains('pickup') ||
-        notificationType == 'pickup' ||
-        status == 'pickup') {
-      showPickupNotification(
-        message,
-        useFullScreenIntent: useFullScreenIntent,
-        payloadOverride: payloadOverride,
-      );
-    } else if (title.toLowerCase().contains('delivered') ||
-        notificationType == 'customer' ||
-        status == 'delivered') {
-      showCustomerNotification(
-        message,
-        useFullScreenIntent: useFullScreenIntent,
-        payloadOverride: payloadOverride,
-      );
-    } else {
-      // Default to pickup notification for backward compatibility
-      showPickupNotification(
-        message,
-        useFullScreenIntent: useFullScreenIntent,
-        payloadOverride: payloadOverride,
-      );
+    switch (_kindForMessage(message)) {
+      case _NotificationKind.outForDelivery:
+        showOutForDeliveryNotification(
+          message,
+          useFullScreenIntent: useFullScreenIntent,
+          payloadOverride: payloadOverride,
+        );
+        break;
+      case _NotificationKind.customer:
+        showCustomerNotification(
+          message,
+          useFullScreenIntent: useFullScreenIntent,
+          payloadOverride: payloadOverride,
+        );
+        break;
+      case _NotificationKind.pickup:
+        showPickupNotification(
+          message,
+          useFullScreenIntent: useFullScreenIntent,
+          payloadOverride: payloadOverride,
+        );
+        break;
     }
   }
 
@@ -385,8 +528,18 @@ class NotificationService {
     final shouldPlaySiren = _shouldPlaySiren(message);
     _playSirenIfNeeded(message, shouldPlay: shouldPlaySiren);
 
-    final SirenAlertPayload? sirenPayload =
-        shouldPlaySiren ? SirenAlertPayload.fromRemoteMessage(message) : null;
+    final kind = _kindForMessage(message);
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
+
+    final SirenAlertPayload? sirenPayload = shouldPlaySiren
+        ? SirenAlertPayload.fromRemoteMessage(
+            message,
+            titleOverride: title,
+            bodyOverride: body,
+            actions: _sirenActionsForKind(kind),
+          )
+        : null;
 
     // Use the smart method to determine notification type
     showNotificationByType(
@@ -402,8 +555,16 @@ class NotificationService {
 
   static void showBackgroundNotification(RemoteMessage message) {
     final shouldPlaySiren = _shouldPlaySiren(message);
+    final kind = _kindForMessage(message);
+    final title = _titleForMessage(message, kind);
+    final body = _bodyForMessage(message, kind);
     final sirenPayload = shouldPlaySiren
-        ? SirenAlertPayload.fromRemoteMessage(message).encode()
+        ? SirenAlertPayload.fromRemoteMessage(
+            message,
+            titleOverride: title,
+            bodyOverride: body,
+            actions: _sirenActionsForKind(kind),
+          ).encode()
         : null;
 
     showNotificationByType(

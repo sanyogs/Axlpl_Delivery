@@ -7,9 +7,11 @@ class SirenAlertScreen extends StatelessWidget {
   const SirenAlertScreen({
     super.key,
     required this.payload,
+    this.onActionPressed,
   });
 
   final SirenAlertPayload payload;
+  final void Function(SirenAlertAction action)? onActionPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -132,20 +134,20 @@ class SirenAlertScreen extends StatelessWidget {
                   color: theme.colorScheme.surface,
                   elevation: 6,
                   shape: const CircleBorder(),
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      final navigator = Navigator.of(context);
-                      if (navigator.canPop()) {
-                        navigator.pop();
-                        return;
-                      }
-                      Get.offAllNamed(AppPages.INITIAL);
-                    },
-                  ),
-                ),
-              ),
-            ),
+	                  child: IconButton(
+	                    icon: const Icon(Icons.close),
+	                    onPressed: () {
+	                      final navigator = Navigator.of(context);
+	                      if (navigator.canPop()) {
+	                        navigator.pop();
+	                        return;
+	                      }
+	                      Get.offAllNamed(AppPages.INITIAL);
+	                    },
+	                  ),
+	                ),
+	              ),
+	            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -231,6 +233,13 @@ class SirenAlertScreen extends StatelessWidget {
                         ]),
                         secondary: dropoffAddress,
                       ),
+                    if (payload.actions.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _ActionButtons(
+                        actions: payload.actions,
+                        onPressed: onActionPressed,
+                      ),
+                    ],
                     if (remainingEntries.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       const Divider(height: 24),
@@ -257,6 +266,105 @@ class SirenAlertScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ActionButtons extends StatelessWidget {
+  const _ActionButtons({
+    required this.actions,
+    this.onPressed,
+  });
+
+  final List<SirenAlertAction> actions;
+  final void Function(SirenAlertAction action)? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (actions.length == 1) {
+      final action = actions.first;
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: onPressed == null ? null : () => onPressed!(action),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Text(action.label),
+        ),
+      );
+    }
+
+    if (actions.length == 2) {
+      final primary = actions[0];
+      final secondary = actions[1];
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: onPressed == null ? null : () => onPressed!(primary),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(primary.label),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: onPressed == null ? null : () => onPressed!(secondary),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: BorderSide(
+                  color: theme.colorScheme.onSurface.withOpacity(0.2),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(secondary.label),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < actions.length; index++)
+          Padding(
+            padding: EdgeInsets.only(bottom: index == actions.length - 1 ? 0 : 10),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: onPressed == null
+                    ? null
+                    : () => onPressed!(actions[index]),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(
+                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  actions[index].label,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

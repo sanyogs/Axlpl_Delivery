@@ -155,14 +155,14 @@ void main() async {
   final initialMessage = await messaging.getInitialMessage();
   if (initialMessage != null && NotificationService.isSirenMessage(initialMessage)) {
     NotificationService.queueSirenLaunch(
-      SirenAlertPayload.fromRemoteMessage(initialMessage),
+      NotificationService.buildSirenPayload(initialMessage),
     );
   }
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     if (!NotificationService.isSirenMessage(message)) return;
     NotificationService.showSirenAlertScreen(
-      SirenAlertPayload.fromRemoteMessage(message),
+      NotificationService.buildSirenPayload(message),
     );
   });
 
