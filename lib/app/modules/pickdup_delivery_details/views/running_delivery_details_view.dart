@@ -52,6 +52,50 @@ class RunningDeliveryDetailsView
     final pickupController = Get.put(PickupController());
     controller.loadUserRole();
 
+    void showInvoiceSourcePicker(String shipmentId) {
+      showModalBottomSheet<void>(
+        context: context,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 8.h),
+              Text(
+                'Add Invoice',
+                style: themes.fontSize16_400
+                    .copyWith(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.h),
+              ListTile(
+                leading: Icon(Icons.attach_file, color: themes.darkCyanBlue),
+                title: const Text('Attach invoice'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  controller.pickImage(ImageSource.gallery, (file) {
+                    controller.setImage(shipmentId, file);
+                  });
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: themes.darkCyanBlue),
+                title: const Text('Capture using camera'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  controller.pickImage(ImageSource.camera, (file) {
+                    controller.setImage(shipmentId, file);
+                  });
+                },
+              ),
+              SizedBox(height: 8.h),
+            ],
+          ),
+        ),
+      );
+    }
+
     return CommonScaffold(
       appBar: commonAppbar('Tracking Detail'),
       body: Padding(
@@ -492,7 +536,7 @@ class RunningDeliveryDetailsView
                               //         ? 'N/A'
                               //         : '' ?? 'N/A'),
                               Divider(),
-                              details?.invoiceFile != ''
+                              (details?.invoiceFile ?? '').isNotEmpty
                                   ? InvoiceImagePopup(
                                       invoicePath:
                                           details?.invoicePath.toString() ??
@@ -520,13 +564,9 @@ class RunningDeliveryDetailsView
                                                   null) // No image selected, show upload icon
                                                 InkWell(
                                                   onTap: () {
-                                                    controller.pickImage(
-                                                        ImageSource.gallery,
-                                                        (file) {
-                                                      controller.setImage(
-                                                          shipmentID.toString(),
-                                                          file);
-                                                    });
+                                                    showInvoiceSourcePicker(
+                                                      shipmentID.toString(),
+                                                    );
                                                   },
                                                   child: Icon(
                                                     Icons.upload_file,
@@ -1122,6 +1162,5 @@ void showStatusDialog(
     barrierDismissible: true,
   );
 }
-
 
 

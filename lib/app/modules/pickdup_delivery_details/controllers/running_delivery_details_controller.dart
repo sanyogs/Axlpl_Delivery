@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/tracking_repo.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -83,9 +84,50 @@ class RunningDeliveryDetailsController extends GetxController {
   }
 
   Future<void> pickImage(ImageSource source, void Function(File) onPicked) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) onPicked(File(pickedFile.path));
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      final file = File(pickedFile.path);
+      if (!await file.exists()) {
+        Get.snackbar(
+          "Error",
+          "Unable to read the selected image.",
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return;
+      }
+
+      onPicked(file);
+    } on PlatformException catch (e) {
+      final code = e.code.toLowerCase();
+      final isPermissionIssue = code.contains('permission') ||
+          code.contains('denied') ||
+          code.contains('camera_access_denied') ||
+          code.contains('photo_access_denied');
+
+      Get.snackbar(
+        isPermissionIssue ? "Permission Required" : "Error",
+        isPermissionIssue
+            ? "Please allow camera/photos permission to add the invoice."
+            : (e.message ?? "Unable to pick image."),
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Unable to pick image: $e",
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -153,6 +195,16 @@ class RunningDeliveryDetailsController extends GetxController {
     required File file,
   }) async {
     try {
+      if (!await file.exists()) {
+        Get.snackbar(
+          "Error",
+          "Selected invoice file not found.",
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return;
+      }
+
       isInvoiceUpload.value = Status.loading;
       message.value = '';
 
