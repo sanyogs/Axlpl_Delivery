@@ -1,17 +1,97 @@
 // notification_service.dart
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
+  static const String _sirenSoundKey = 'siren';
+  static const String _sirenAssetPath = 'siren.wav';
+  static final AudioPlayer _audioPlayer = AudioPlayer();
+  static final AudioContext _sirenAudioContext = AudioContext(
+    android: const AudioContextAndroid(
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.notificationEvent,
+      audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+    ),
+  );
+
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   int downloadNotificationId = 1001;
   String downloadChannelKey = 'download_channel';
   LocalStorage storage = LocalStorage();
+
+  static bool _shouldPlaySiren(RemoteMessage message) {
+    final dynamic dataSound =
+        message.data['sound'] ?? message.data['Sound'] ?? message.data['SOUND'];
+    final String? dataSoundValue = switch (dataSound) {
+      Map<dynamic, dynamic>() => dataSound['name']?.toString(),
+      _ => dataSound?.toString(),
+    };
+
+    final String? soundValue = _normalizeSoundValue(dataSoundValue) ??
+        _normalizeSoundValue(message.notification?.android?.sound) ??
+        _normalizeSoundValue(message.notification?.apple?.sound?.name);
+
+    return soundValue == _sirenSoundKey;
+  }
+
+  static String? _normalizeSoundValue(String? raw) {
+    if (raw == null) return null;
+    final value = raw.trim().toLowerCase();
+    if (value.isEmpty) return null;
+
+    final lastSegment = value.split('/').last.split('?').first;
+    if (lastSegment.isEmpty) return null;
+
+    final base =
+        lastSegment.contains('.') ? lastSegment.split('.').first : lastSegment;
+    return base.isEmpty ? null : base;
+  }
+
+  static void _playSirenIfNeeded(RemoteMessage message) {
+    final shouldPlay = _shouldPlaySiren(message);
+    if (kDebugMode) {
+      debugPrint(
+        'NotificationService: sound=${message.data['sound']} androidSound=${message.notification?.android?.sound} appleSound=${message.notification?.apple?.sound?.name} shouldPlaySiren=$shouldPlay',
+      );
+    }
+    if (!shouldPlay) return;
+
+    () async {
+      try {
+        await _audioPlayer.stop();
+        await _audioPlayer.play(
+          AssetSource(_sirenAssetPath),
+          ctx: _sirenAudioContext,
+          mode: PlayerMode.lowLatency,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('NotificationService: siren play failed: $e');
+        }
+
+        try {
+          await _audioPlayer.stop();
+          await _audioPlayer.play(
+            AssetSource(_sirenAssetPath),
+            ctx: _sirenAudioContext,
+            mode: PlayerMode.mediaPlayer,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('NotificationService: siren play fallback failed: $e');
+          }
+        }
+      }
+    }();
+  }
+
   static Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
@@ -192,6 +272,7 @@ class NotificationService {
 
   // Keep the original method for backward compatibility
   static void showNotification(RemoteMessage message) {
+    _playSirenIfNeeded(message);
     // Use the smart method to determine notification type
     showNotificationByType(message);
   }
