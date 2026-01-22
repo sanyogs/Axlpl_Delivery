@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/siren_alert_payload.dart';
 import 'package:axlpl_delivery/common_widget/siren_alert_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -65,6 +66,9 @@ class NotificationService {
   LocalStorage storage = LocalStorage();
 
   static bool _shouldPlaySiren(RemoteMessage message) {
+    // Trigger siren/full-screen only when the incoming FCM payload indicates
+    // `sound: siren`. Backend may send it either in data or in the platform
+    // notification object; handle null/empty gracefully.
     final dynamic dataSound =
         message.data['sound'] ?? message.data['Sound'] ?? message.data['SOUND'];
     final String? dataSoundValue = switch (dataSound) {
@@ -80,6 +84,11 @@ class NotificationService {
   }
 
   static bool isSirenMessage(RemoteMessage message) => _shouldPlaySiren(message);
+
+  static bool isSirenPayload(SirenAlertPayload payload) {
+    final raw = payload.data['sound']?.toString();
+    return _normalizeSoundValue(raw) == _sirenSoundKey;
+  }
 
   static SirenAlertPayload buildSirenPayload(RemoteMessage message) {
     final kind = _kindForMessage(message);
@@ -195,7 +204,7 @@ class NotificationService {
       {required bool shouldPlay}) {
     if (kDebugMode) {
       debugPrint(
-        'NotificationService: sound=${message.data['sound']} androidSound=${message.notification?.android?.sound} appleSound=${message.notification?.apple?.sound?.name} shouldPlaySiren=$shouldPlay',
+        'NotificationService: dataSound=${message.data['sound']} androidSound=${message.notification?.android?.sound} appleSound=${message.notification?.apple?.sound?.name} shouldPlaySiren=$shouldPlay',
       );
     }
     if (!shouldPlay) return;
@@ -215,6 +224,38 @@ class NotificationService {
 
         try {
           await _audioPlayer.stop();
+          await _audioPlayer.play(
+            AssetSource(_sirenAssetPath),
+            ctx: _sirenAudioContext,
+            mode: PlayerMode.mediaPlayer,
+          );
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('NotificationService: siren play fallback failed: $e');
+          }
+        }
+      }
+    }();
+  }
+
+  static void _playSirenNow() {
+    () async {
+      try {
+        await _audioPlayer.stop();
+        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+        await _audioPlayer.play(
+          AssetSource(_sirenAssetPath),
+          ctx: _sirenAudioContext,
+          mode: PlayerMode.lowLatency,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('NotificationService: siren play failed: $e');
+        }
+
+        try {
+          await _audioPlayer.stop();
+          await _audioPlayer.setReleaseMode(ReleaseMode.loop);
           await _audioPlayer.play(
             AssetSource(_sirenAssetPath),
             ctx: _sirenAudioContext,
@@ -252,10 +293,16 @@ class NotificationService {
     }
   }
 
-  static void _handleSirenAction(SirenAlertAction action, SirenAlertPayload payload) {
+  static void handleSirenAction(SirenAlertAction action, SirenAlertPayload payload) {
     if (kDebugMode) {
       debugPrint('NotificationService: siren action=${action.id}');
     }
+
+    () async {
+      try {
+        await _audioPlayer.stop();
+      } catch (_) {}
+    }();
 
     if (_isSirenScreenVisible) {
       final navigator = Get.key.currentState;
@@ -271,6 +318,10 @@ class NotificationService {
         debugPrint('NotificationService: ❌ REJECTED');
       }
     }
+
+    // Requirement: when user acts (accept/reject), go to dashboard.
+    // For non-siren cases, we never show the siren screen in the first place.
+    Get.offAllNamed(AppPages.INITIAL);
   }
 
   static void showSirenAlertScreen(SirenAlertPayload payload) {
@@ -279,6 +330,7 @@ class NotificationService {
       queueSirenLaunch(payload);
       return;
     }
+    _playSirenNow();
     if (kDebugMode && payload.actions.isNotEmpty) {
       debugPrint(
         'NotificationService: siren screen actions=${payload.actions.map((a) => a.id).join(',')}',
@@ -288,7 +340,7 @@ class NotificationService {
     final navigation = Get.to(
       () => SirenAlertScreen(
         payload: payload,
-        onActionPressed: (action) => _handleSirenAction(action, payload),
+        onActionPressed: (action) => handleSirenAction(action, payload),
       ),
       fullscreenDialog: true,
     );
@@ -298,6 +350,11 @@ class NotificationService {
     }
     navigation.whenComplete(() {
       _isSirenScreenVisible = false;
+      () async {
+        try {
+          await _audioPlayer.stop();
+        } catch (_) {}
+      }();
     });
   }
 
@@ -338,7 +395,7 @@ class NotificationService {
               label: resolvedActionId,
             ),
           );
-          _handleSirenAction(action, sirenPayload);
+          handleSirenAction(action, sirenPayload);
         } else if (sirenPayload != null) {
           showSirenAlertScreen(sirenPayload);
         }
@@ -555,6 +612,7 @@ class NotificationService {
 
   static void showBackgroundNotification(RemoteMessage message) {
     final shouldPlaySiren = _shouldPlaySiren(message);
+    _playSirenIfNeeded(message, shouldPlay: shouldPlaySiren);
     final kind = _kindForMessage(message);
     final title = _titleForMessage(message, kind);
     final body = _bodyForMessage(message, kind);

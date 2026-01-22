@@ -7,6 +7,7 @@ import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/common_widget/error_screen.dart';
 import 'package:axlpl_delivery/common_widget/local_notification.dart';
 import 'package:axlpl_delivery/common_widget/siren_alert_payload.dart';
+import 'package:axlpl_delivery/common_widget/siren_alert_screen.dart';
 import 'package:axlpl_delivery/firebase_options.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -147,8 +148,12 @@ void main() async {
   final launchDetails = await NotificationService.getNotificationLaunchDetails();
   final launchPayload =
       SirenAlertPayload.tryDecode(launchDetails?.notificationResponse?.payload);
-  if (launchPayload != null) {
-    NotificationService.queueSirenLaunch(launchPayload);
+  final SirenAlertPayload? initialSirenPayload =
+      launchPayload != null && NotificationService.isSirenPayload(launchPayload)
+          ? launchPayload
+          : null;
+  if (initialSirenPayload != null) {
+    NotificationService.queueSirenLaunch(initialSirenPayload);
   }
 
   final messaging = FirebaseMessaging.instance;
@@ -270,19 +275,22 @@ void main() async {
               return ErrorScreen();
             };
 
-            final queuedSiren = NotificationService.consumeQueuedSirenLaunch();
-            if (queuedSiren != null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                NotificationService.showSirenAlertScreen(queuedSiren);
-              });
-            }
-
             if (Platform.isAndroid) {
               return SafeArea(child: child!);
             }
             return child!;
           },
-          initialRoute: AppPages.INITIAL,
+          home: initialSirenPayload == null
+              ? null
+              : SirenAlertScreen(
+                  payload: initialSirenPayload,
+                  onActionPressed: (action) =>
+                      NotificationService.handleSirenAction(
+                    action,
+                    initialSirenPayload,
+                  ),
+                ),
+          initialRoute: initialSirenPayload == null ? AppPages.INITIAL : null,
           getPages: AppPages.routes,
           theme: ThemeData(textTheme: GoogleFonts.workSansTextTheme()),
         );

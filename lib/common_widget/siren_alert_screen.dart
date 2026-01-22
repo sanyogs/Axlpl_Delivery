@@ -22,10 +22,6 @@ class SirenAlertScreen extends StatelessWidget {
       data,
       const ['service', 'service_name', 'serviceName', 'app', 'app_name'],
     );
-    final incentive = _firstNonEmpty(
-      data,
-      const ['incentive', 'incentive_earned', 'incentiveEarned'],
-    );
     final amount = _firstNonEmpty(
       data,
       const ['amount', 'fare', 'price', 'total', 'total_amount'],
@@ -80,9 +76,6 @@ class SirenAlertScreen extends StatelessWidget {
       'serviceName',
       'app',
       'app_name',
-      'incentive',
-      'incentive_earned',
-      'incentiveEarned',
       'amount',
       'fare',
       'price',
@@ -167,26 +160,6 @@ class SirenAlertScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          'INCENTIVE EARNED',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          incentive ?? '0',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
                     Align(
                       alignment: Alignment.center,
                       child: _ServicePill(label: serviceName ?? 'AXLPL'),
