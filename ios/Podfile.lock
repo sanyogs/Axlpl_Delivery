@@ -2,9 +2,9 @@ PODS:
   - audioplayers_darwin (0.0.1):
     - Flutter
     - FlutterMacOS
-  - awesome_notifications (0.8.1):
+  - awesome_notifications (0.10.0):
     - Flutter
-    - IosAwnCore (~> 0.8.0)
+    - IosAwnCore (~> 0.10.0)
   - connectivity_plus (0.0.1):
     - Flutter
   - device_info_plus (0.0.1):
@@ -79,7 +79,7 @@ PODS:
     - GoogleUtilities/Privacy
   - image_picker_ios (0.0.1):
     - Flutter
-  - IosAwnCore (0.8.0)
+  - IosAwnCore (0.10.0)
   - JNKeychain (0.1.4)
   - mobile_device_identifier (0.0.1):
     - Flutter
@@ -186,7 +186,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   audioplayers_darwin: 4027b33a8f471d996c13f71cb77f0b1583b5d923
-  awesome_notifications: db394d2e061e4583ba0f738ddea611e3986cc3fb
+  awesome_notifications: dd5518ff1c80be03d4f1c40f04da9d9cc2a37af5
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   device_info_plus: bf2e3232933866d73fe290f2942f2156cdd10342
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
@@ -204,7 +204,7 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
-  IosAwnCore: ed1b2b6d84962a758354dbacd9ce525c72ce28a9
+  IosAwnCore: 653786a911089012092ce831f2945cd339855a89
   JNKeychain: fb6cc9ec95959ba46cd95d0ee6f7a05e41da9f42
   mobile_device_identifier: 34f80c8985bb1506880c2ae10cb24cfb9918f1a7
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
