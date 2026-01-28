@@ -61,26 +61,26 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCS9RFlvOWm7RkKdklTcZBvmvt50_N24yM',
-    appId: '1:778652530713:ios:c4088ed51894239a051288',
+    appId: '1:778652530713:ios:32b57689b7ecbc12051288',
     messagingSenderId: '778652530713',
     projectId: 'myjainshasan-240a2',
     databaseURL: 'https://myjainshasan-240a2.firebaseio.com',
     storageBucket: 'myjainshasan-240a2.firebasestorage.app',
     androidClientId:
         '778652530713-hgljomi7pe5shi761kr5ve6rpuval36e.apps.googleusercontent.com',
-    iosBundleId: 'com.example.axlplDelivery',
+    iosBundleId: 'com.axlpl.delivery',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCS9RFlvOWm7RkKdklTcZBvmvt50_N24yM',
-    appId: '1:778652530713:ios:c4088ed51894239a051288',
+    appId: '1:778652530713:ios:32b57689b7ecbc12051288',
     messagingSenderId: '778652530713',
     projectId: 'myjainshasan-240a2',
     databaseURL: 'https://myjainshasan-240a2.firebaseio.com',
     storageBucket: 'myjainshasan-240a2.firebasestorage.app',
     androidClientId:
         '778652530713-hgljomi7pe5shi761kr5ve6rpuval36e.apps.googleusercontent.com',
-    iosBundleId: 'com.example.axlplDelivery',
+    iosBundleId: 'com.axlpl.delivery',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

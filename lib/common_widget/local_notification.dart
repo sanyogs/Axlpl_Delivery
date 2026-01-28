@@ -470,6 +470,12 @@ class NotificationService {
           fullScreenIntent: useFullScreenIntent,
           actions: _pickupActions.map((a) => a.toAndroid()).toList(),
         ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
+          sound: 'siren.wav',
+        ),
       ),
       payload: payloadOverride ?? 'pickup',
     );
@@ -506,6 +512,9 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(
           categoryIdentifier: 'out_for_delivery',
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
         ),
       ),
       payload: payloadOverride ?? 'out_for_delivery',
@@ -543,6 +552,9 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(
           categoryIdentifier: 'customer_delivery',
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
         ),
       ),
       payload: payloadOverride ?? 'customer_notification',
