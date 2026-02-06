@@ -193,7 +193,10 @@ class DeliveryRepo {
     }
   }
 
-  Future<List<NegativeStatusModel>> fetchNegativeStatuses() async {
+  Future<List<NegativeStatusModel>> fetchNegativeStatuses({
+    String? status,
+    String? statusId,
+  }) async {
     try {
       final userData = await LocalStorage().getUserLocalData();
       final token =
@@ -204,13 +207,22 @@ class DeliveryRepo {
         return [];
       }
 
-      List<NegativeStatusModel> parsed =
-          await _parseNegativeStatusResponse(
-              await _apiServices.getNegativeStatusList(token: token));
+      List<NegativeStatusModel> parsed = await _parseNegativeStatusResponse(
+        await _apiServices.getNegativeStatusList(
+          token: token,
+          status: status,
+          statusId: statusId,
+        ),
+      );
 
       if (parsed.isEmpty) {
         parsed = await _parseNegativeStatusResponse(
-            await _apiServices.getNegativeStatusListPost(token: token));
+          await _apiServices.getNegativeStatusListPost(
+            token: token,
+            status: status,
+            statusId: statusId,
+          ),
+        );
       }
 
       return parsed;

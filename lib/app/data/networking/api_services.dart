@@ -948,19 +948,46 @@ class ApiServices {
     return response;
   }
 
-  Future<APIResponse> getNegativeStatusList({required String token}) async {
+  Future<APIResponse> getNegativeStatusList({
+    required String token,
+    String? status,
+    String? statusId,
+  }) async {
+    final query = <String, dynamic>{};
+    final statusValue = status?.trim();
+    final statusIdValue = statusId?.trim();
+    if (statusValue != null && statusValue.isNotEmpty) {
+      query['status'] = statusValue;
+    }
+    if (statusIdValue != null && statusIdValue.isNotEmpty) {
+      query['status_id'] = statusIdValue;
+    }
     final response = await _api.get(
       getNegativeStatusListPoint,
       token: token,
+      query: query.isEmpty ? null : query,
       contentType: ContentType.urlEncoded,
     );
     return response;
   }
 
-  Future<APIResponse> getNegativeStatusListPost({required String token}) async {
+  Future<APIResponse> getNegativeStatusListPost({
+    required String token,
+    String? status,
+    String? statusId,
+  }) async {
+    final body = <String, dynamic>{};
+    final statusValue = status?.trim();
+    final statusIdValue = statusId?.trim();
+    if (statusValue != null && statusValue.isNotEmpty) {
+      body['status'] = statusValue;
+    }
+    if (statusIdValue != null && statusIdValue.isNotEmpty) {
+      body['status_id'] = statusIdValue;
+    }
     final response = await _api.post(
       getNegativeStatusListPoint,
-      {},
+      body,
       token: token,
       contentType: ContentType.urlEncoded,
     );

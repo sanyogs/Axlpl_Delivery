@@ -1132,6 +1132,7 @@ void showStatusDialog(
                     }).toList(),
                     onChanged: (value) {
                       controller.setSelectedStatus(value);
+                      controller.getNegativeStatuses(status: value);
                     },
                     decoration: const InputDecoration(
                       hintText: "Select Status",
@@ -1152,8 +1153,12 @@ void showStatusDialog(
                         onChanged: (value) {
                           final flag = value ?? false;
                           controller.isNegative.value = flag;
-                          if (!flag) {
+                          if (flag) {
+                            controller.getNegativeStatuses(
+                                status: controller.selectedStatus.value);
+                          } else {
                             controller.selectedNegativeStatus.value = null;
+                            controller.negativeStatusList.clear();
                           }
                         },
                         activeColor: themes.darkCyanBlue,

@@ -272,11 +272,19 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
-  Future<void> getNegativeStatuses() async {
+  Future<void> getNegativeStatuses({StatusModel? status}) async {
     try {
       isNegativeStatusLoading.value = true;
+      negativeStatusList.clear();
+      selectedNegativeStatus.value = null;
       Utils().logInfo('Fetching negative statuses...');
-      final list = await _deliveryRepo.fetchNegativeStatuses();
+      final effectiveStatus = status ?? selectedStatus.value;
+      final statusText = effectiveStatus?.status?.trim();
+      final statusId = effectiveStatus?.id?.trim();
+      final list = await _deliveryRepo.fetchNegativeStatuses(
+        status: (statusText != null && statusText.isNotEmpty) ? statusText : null,
+        statusId: (statusId != null && statusId.isNotEmpty) ? statusId : null,
+      );
       if (list.isNotEmpty) {
         negativeStatusList.value = list;
         Utils().logInfo('Negative statuses loaded: ${list.length}');
