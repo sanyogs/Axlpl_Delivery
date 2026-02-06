@@ -46,3 +46,5 @@ const String customerRegisterPoint = 'customer_registration';
 const String getCustomerCategoryPoint = 'get_categories';
 const String getNatureOfBusinessPoint = 'get_nature_of_business';
 const String deleteProfilePoint = 'deleteProfile';
+const String getNegativeStatusListPoint = 'negative_status_list';
+const String updateShipmentStatusNewPoint = 'update_shipment_status_new';

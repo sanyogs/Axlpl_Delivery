@@ -948,6 +948,25 @@ class ApiServices {
     return response;
   }
 
+  Future<APIResponse> getNegativeStatusList({required String token}) async {
+    final response = await _api.get(
+      getNegativeStatusListPoint,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+    return response;
+  }
+
+  Future<APIResponse> getNegativeStatusListPost({required String token}) async {
+    final response = await _api.post(
+      getNegativeStatusListPoint,
+      {},
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+    return response;
+  }
+
   // ---------------------------
   // Update Shipment Status
   // ---------------------------
@@ -966,6 +985,34 @@ class ApiServices {
       body,
       token: token,
       contentType: ContentType.multipart,
+    );
+  }
+
+  Future<APIResponse> updateShipmentStatusNew({
+    required String token,
+    required String shipmentId,
+    required String shipmentStatus,
+    required String isNegative,
+    String? negativeStatus,
+    String? negativeRemark,
+    String? receiverName,
+    String? messangerId,
+  }) async {
+    final body = {
+      'shipment_id': shipmentId,
+      'shipment_status': shipmentStatus,
+      'is_negative': isNegative,
+      'negative_status': negativeStatus ?? '',
+      'negative_remark': negativeRemark ?? '',
+      'receiver_name': receiverName ?? '',
+      'messanger_id': messangerId ?? '',
+    };
+
+    return _api.post(
+      updateShipmentStatusNewPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
     );
   }
 

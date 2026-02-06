@@ -3,6 +3,7 @@ import 'package:axlpl_delivery/app/data/models/common_model.dart';
 import 'package:axlpl_delivery/app/data/models/history_delivery_model.dart';
 import 'package:axlpl_delivery/app/data/models/history_pickup_model.dart';
 import 'package:axlpl_delivery/app/data/models/lat_long_model.dart';
+import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/models/status_model.dart';
 import 'package:axlpl_delivery/app/data/models/update_status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_services.dart';
@@ -192,6 +193,94 @@ class DeliveryRepo {
     }
   }
 
+  Future<List<NegativeStatusModel>> fetchNegativeStatuses() async {
+    try {
+      final userData = await LocalStorage().getUserLocalData();
+      final token =
+          userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
+
+      if (token == null || token.isEmpty) {
+        Utils().logError("Token is null or empty, cannot fetch negative status.");
+        return [];
+      }
+
+      List<NegativeStatusModel> parsed =
+          await _parseNegativeStatusResponse(
+              await _apiServices.getNegativeStatusList(token: token));
+
+      if (parsed.isEmpty) {
+        parsed = await _parseNegativeStatusResponse(
+            await _apiServices.getNegativeStatusListPost(token: token));
+      }
+
+      return parsed;
+    } catch (e) {
+      Utils().logError(e.toString());
+      return [];
+    }
+  }
+
+  Future<List<NegativeStatusModel>> _parseNegativeStatusResponse(
+      final response) async {
+    return response.when(
+      success: (body) {
+        List<dynamic> rawList = [];
+        if (body is List) {
+          rawList = body;
+        } else if (body is Map<String, dynamic>) {
+          final statusValue = body['status'];
+          final isOk = statusValue == null ||
+              statusValue == 'success' ||
+              statusValue == true ||
+              statusValue == 1;
+          if (isOk) {
+            const preferredKeys = [
+              'NegativeStatus',
+              'negative_status_list',
+              'negative_status',
+              'data',
+              'Status',
+            ];
+            for (final key in preferredKeys) {
+              final value = body[key];
+              if (value is List) {
+                rawList = value;
+                break;
+              }
+            }
+            if (rawList.isEmpty) {
+              for (final entry in body.entries) {
+                if (entry.value is List) {
+                  rawList = entry.value as List;
+                  break;
+                }
+              }
+            }
+          } else {
+            Utils().logInfo(
+                'API call successful but status is not "success" : ${body['message']}');
+            return [];
+          }
+        }
+
+        final parsed = <NegativeStatusModel>[];
+        for (final item in rawList) {
+          if (item is Map) {
+            parsed.add(NegativeStatusModel.fromJson(
+                Map<String, dynamic>.from(item)));
+          } else {
+            parsed.add(NegativeStatusModel(status: item?.toString() ?? ''));
+          }
+        }
+        return parsed;
+      },
+      error: (error) {
+        Utils().logError("Fetch Negative Status Failed: ${error.toString()}");
+        return [];
+      },
+    );
+  }
+
   // ---------------------------
   // 🔹 Update Shipment Status Repo
   // ---------------------------
@@ -234,6 +323,67 @@ class DeliveryRepo {
       );
     } catch (e) {
       Utils().logError("Error updating shipment status: $e");
+      return null;
+    }
+  }
+
+  Future<UpdateStatusModel?> updateShipmentStatusNewRepo({
+    required String shipmentId,
+    required String shipmentStatus,
+    required bool isNegative,
+    String? negativeStatus,
+    String? negativeRemark,
+    String? receiverName,
+  }) async {
+    try {
+      final userData = await LocalStorage().getUserLocalData();
+      final token =
+          userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
+      final messangerId = userData?.messangerdetail?.id?.toString();
+
+      if (token == null || token.isEmpty) {
+        Utils()
+            .logError("Token not found, cannot update shipment status (new).");
+        return null;
+      }
+
+      if (messangerId == null || messangerId.isEmpty) {
+        Utils().logError(
+            "Messenger ID not found, cannot update shipment status (new).");
+        return null;
+      }
+
+      final response = await _apiServices.updateShipmentStatusNew(
+        token: token,
+        shipmentId: shipmentId,
+        shipmentStatus: shipmentStatus,
+        isNegative: isNegative ? '1' : '0',
+        negativeStatus: negativeStatus,
+        negativeRemark: negativeRemark,
+        receiverName: receiverName,
+        messangerId: messangerId,
+      );
+
+      return response.when(
+        success: (body) {
+          final model = UpdateStatusModel.fromJson(body);
+          if (model.status == "success") {
+            Utils().logInfo(
+                'Shipment status updated successfully: ${model.statusText}');
+            return model;
+          } else {
+            Utils().logError('Update failed: ${model.message}');
+            return model;
+          }
+        },
+        error: (error) {
+          Utils().logError(
+              "Error updating status (new): ${error.toString()}");
+          return null;
+        },
+      );
+    } catch (e) {
+      Utils().logError("Error updating status (new): $e");
       return null;
     }
   }

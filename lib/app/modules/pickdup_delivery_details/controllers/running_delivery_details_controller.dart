@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/stepper_model.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/models/transtion_history_model.dart';
+import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/tracking_repo.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -39,10 +40,25 @@ class RunningDeliveryDetailsController extends GetxController {
   RxList<StatusModel> statusList = <StatusModel>[].obs;
   Rx<StatusModel?> selectedStatus = Rx<StatusModel?>(null);
   RxBool isStatusUpdating = false.obs;
+  RxList<NegativeStatusModel> negativeStatusList = <NegativeStatusModel>[].obs;
+  Rx<NegativeStatusModel?> selectedNegativeStatus =
+      Rx<NegativeStatusModel?>(null);
+  RxBool isNegative = false.obs;
+  RxBool isNegativeStatusLoading = false.obs;
+  final TextEditingController negativeRemarkController =
+      TextEditingController();
+  final TextEditingController receiverNameController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
+  }
+
+  @override
+  void onClose() {
+    negativeRemarkController.dispose();
+    receiverNameController.dispose();
+    super.onClose();
   }
 
   // --------------------------------------------------------------------------
@@ -256,6 +272,53 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
+  Future<void> getNegativeStatuses() async {
+    try {
+      isNegativeStatusLoading.value = true;
+      Utils().logInfo('Fetching negative statuses...');
+      final list = await _deliveryRepo.fetchNegativeStatuses();
+      if (list.isNotEmpty) {
+        negativeStatusList.value = list;
+        Utils().logInfo('Negative statuses loaded: ${list.length}');
+      } else {
+        negativeStatusList.clear();
+        Utils().logInfo('No negative statuses returned.');
+      }
+    } catch (e) {
+      Utils().logError('Error fetching negative statuses: $e');
+      negativeStatusList.clear();
+    } finally {
+      isNegativeStatusLoading.value = false;
+    }
+  }
+
+  String _resolveReceiverName() {
+    if (receiverData.isNotEmpty) {
+      final first = receiverData.first;
+      if (first is ErData) {
+        return first.receiverName?.trim().isNotEmpty == true
+            ? first.receiverName!.trim()
+            : (first.companyName ?? '').trim();
+      }
+      if (first is Map) {
+        final name = first['receiver_name']?.toString().trim();
+        if (name != null && name.isNotEmpty) return name;
+        final company = first['company_name']?.toString().trim();
+        if (company != null && company.isNotEmpty) return company;
+      }
+    }
+    return '';
+  }
+
+  void setSelectedStatus(StatusModel? status) {
+    selectedStatus.value = status;
+    final statusText = (status?.status ?? '').trim().toLowerCase();
+    if (statusText == 'delivered' &&
+        receiverNameController.text.trim().isEmpty) {
+      receiverNameController.text = _resolveReceiverName();
+    }
+  }
+
   Future<bool> updateShipmentStatus(String shipmentId) async {
     final selected = selectedStatus.value;
     if (selected == null) {
@@ -268,11 +331,54 @@ class RunningDeliveryDetailsController extends GetxController {
       return false;
     }
 
+    final statusText = (selected.status ?? '').trim().toLowerCase();
+    final isDelivered = statusText == 'delivered';
+    final receiverNameInput = receiverNameController.text.trim();
+    final resolvedReceiverName =
+        receiverNameInput.isNotEmpty ? receiverNameInput : _resolveReceiverName();
+
+    if (isDelivered && resolvedReceiverName.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter receiver name",
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+      return false;
+    }
+
+    if (isNegative.value) {
+      if (selectedNegativeStatus.value == null) {
+        Get.snackbar(
+          "Error",
+          "Please select a negative status",
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return false;
+      }
+      if (negativeRemarkController.text.trim().isEmpty) {
+        Get.snackbar(
+          "Error",
+          "Please enter a remark",
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return false;
+      }
+    }
+
     isStatusUpdating.value = true;
     try {
-      final result = await _deliveryRepo.updateShipmentStatusRepo(
+      final remark = negativeRemarkController.text.trim();
+      final result = await _deliveryRepo.updateShipmentStatusNewRepo(
         shipmentId: shipmentId,
         shipmentStatus: selected.status ?? '',
+        isNegative: isNegative.value,
+        negativeStatus:
+            isNegative.value ? selectedNegativeStatus.value?.apiValue : null,
+        negativeRemark: remark.isNotEmpty ? remark : null,
+        receiverName: isDelivered ? resolvedReceiverName : null,
       );
 
       if (result != null && result.status == "success") {

@@ -1,9 +1,12 @@
 import 'package:axlpl_delivery/app/data/models/status_model.dart';
+import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
+import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
 import 'package:axlpl_delivery/app/modules/shipnow/controllers/shipnow_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
+import 'package:axlpl_delivery/common_widget/common_textfiled.dart';
 import 'package:axlpl_delivery/common_widget/invoice_image_dialog.dart';
 import 'package:axlpl_delivery/common_widget/otp_dialog.dart';
 import 'package:axlpl_delivery/common_widget/paginated_dropdown.dart';
@@ -1015,13 +1018,14 @@ void showStatusDialog(
     ) async {
   // ✅ Fetch the latest statuses
   await controller.getAllStatuses();
+  await controller.getNegativeStatuses();
 
   // ✅ Reset the selected value safely
-  if (controller.statusList.isNotEmpty) {
-    controller.selectedStatus.value = controller.statusList.first;
-  } else {
-    controller.selectedStatus.value = null;
-  }
+  controller.isNegative.value = false;
+  controller.selectedNegativeStatus.value = null;
+  controller.negativeRemarkController.clear();
+  controller.receiverNameController.clear();
+  controller.setSelectedStatus(null);
 
   // ✅ Access the shipnowController for refresh
   final shipnowController = Get.find<ShipnowController>();
@@ -1040,15 +1044,67 @@ void showStatusDialog(
           ),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Title
                 Text(
-                  "Update Shipment Status",
+                  "Shipment Status",
                   style: themes.fontSize18_600.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+
+                // Status History
+                Obx(() {
+                  final history = controller.trackingStatus;
+                  final last = history.isNotEmpty && history.last is TrackingStatus
+                      ? history.last as TrackingStatus
+                      : null;
+                  final statusText = last?.status ?? 'N/A';
+                  final dateText = last?.dateTime != null
+                      ? DateFormat('dd-MM-yyyy h:mm a')
+                          .format(last!.dateTime!)
+                          .toLowerCase()
+                      : 'N/A';
+
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Status History',
+                          style: themes.fontSize14_500
+                              .copyWith(color: themes.darkCyanBlue),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Status : $statusText',
+                          style: themes.fontSize14_500,
+                        ),
+                        Text(
+                          'Date : $dateText',
+                          style: themes.fontSize14_500,
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 14),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Change Status',
+                    style: themes.fontSize14_500
+                        .copyWith(color: themes.darkCyanBlue),
+                  ),
+                ),
+                const SizedBox(height: 6),
 
                 // Dropdown Section
                 Obx(() {
@@ -1075,12 +1131,138 @@ void showStatusDialog(
                       );
                     }).toList(),
                     onChanged: (value) {
-                      controller.selectedStatus.value = value;
+                      controller.setSelectedStatus(value);
                     },
                     decoration: const InputDecoration(
-                      labelText: "Select Shipment Status",
+                      hintText: "Select Status",
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 14),
+
+                // Exception Checkbox
+                Obx(() {
+                  return Row(
+                    children: [
+                      Checkbox(
+                        value: controller.isNegative.value,
+                        onChanged: (value) {
+                          final flag = value ?? false;
+                          controller.isNegative.value = flag;
+                          if (!flag) {
+                            controller.selectedNegativeStatus.value = null;
+                          }
+                        },
+                        activeColor: themes.darkCyanBlue,
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      Text(
+                        'Is Exception?',
+                        style: themes.fontSize14_500
+                            .copyWith(color: themes.darkCyanBlue),
+                      ),
+                    ],
+                  );
+                }),
+
+                // Negative Status
+                Obx(() {
+                  if (!controller.isNegative.value) {
+                    return const SizedBox.shrink();
+                  }
+
+                  if (controller.isNegativeStatusLoading.value) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      ),
+                    );
+                  }
+
+                  final negativeList = controller.negativeStatusList;
+
+                  if (negativeList.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'No negative statuses found',
+                        style: themes.fontSize14_500
+                            .copyWith(color: themes.grayColor),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Negative Status',
+                        style: themes.fontSize14_500
+                            .copyWith(color: themes.darkCyanBlue),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<NegativeStatusModel>(
+                        isExpanded: true,
+                        value: controller.selectedNegativeStatus.value,
+                        items: negativeList.map((status) {
+                          return DropdownMenuItem<NegativeStatusModel>(
+                            value: status,
+                            child: Text(
+                              status.displayText.isNotEmpty
+                                  ? status.displayText
+                                  : 'Unknown',
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          controller.selectedNegativeStatus.value = value;
+                        },
+                        decoration: const InputDecoration(
+                          hintText: "Select",
+                          border: OutlineInputBorder(),
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 12),
+
+                // Remark (optional unless exception)
+                CommonTextfiled(
+                  controller: controller.negativeRemarkController,
+                  obscureText: false,
+                  hintTxt: 'Remark',
+                  lableText: 'Remark',
+                  keyboardType: TextInputType.text,
+                  maxLine: 2,
+                ),
+
+                // Receiver Name (only for Delivered)
+                Obx(() {
+                  final statusText = (controller.selectedStatus.value?.status ?? '')
+                      .toString()
+                      .trim()
+                      .toLowerCase();
+                  final isDelivered = statusText == 'delivered';
+                  if (!isDelivered) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: CommonTextfiled(
+                      controller: controller.receiverNameController,
+                      obscureText: false,
+                      hintTxt: 'Receiver Name',
+                      lableText: 'Receiver Name',
+                      keyboardType: TextInputType.text,
                     ),
                   );
                 }),
@@ -1091,8 +1273,46 @@ void showStatusDialog(
                 Obx(() {
                   final isLoading = controller.isStatusUpdating.value;
                   return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      // Confirm Button
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: themes.darkCyanBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () async {
+                          // ✅ Perform the update
+                          final success = await controller.updateShipmentStatus(shipmentId);
+
+                          if (success) {
+                            Get.back();
+                            // ✅ Refresh the shipment list after success
+                            await shipnowController.refreshData();
+                          }
+                        },
+                        child: isLoading
+                            ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : Text(
+                          "Update",
+                          style: themes.fontSize14_500
+                              .copyWith(color: themes.whiteColor),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       // Cancel Button
                       TextButton(
                         style: TextButton.styleFrom(
@@ -1109,51 +1329,11 @@ void showStatusDialog(
                           style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
                         ),
                       ),
-                      const SizedBox(width: 12),
-
-                      // Confirm Button
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: themes.darkCyanBlue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () async {
-                          // ✅ Close the popup before triggering snackbar
-                          Get.back();
-
-                          // ✅ Perform the update
-                          final success = await controller.updateShipmentStatus(shipmentId);
-
-                          if (success) {
-                            // ✅ Refresh the shipment list after success
-                            await shipnowController.refreshData();
-                          }
-                        },
-                        child: isLoading
-                            ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : Text(
-                          "Update Status",
-                          style: themes.fontSize14_500
-                              .copyWith(color: themes.whiteColor),
-                        ),
-                      ),
                     ],
                   );
                 }),
               ],
+            ),
             ),
           ),
         ),
@@ -1162,5 +1342,3 @@ void showStatusDialog(
     barrierDismissible: true,
   );
 }
-
-
