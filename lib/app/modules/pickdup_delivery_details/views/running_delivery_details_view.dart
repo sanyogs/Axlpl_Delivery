@@ -1297,7 +1297,14 @@ void showStatusDialog(
                           final success = await controller.updateShipmentStatus(shipmentId);
 
                           if (success) {
-                            Get.back();
+                            if (Get.isDialogOpen ?? false) {
+                              Get.back();
+                            } else if (Get.overlayContext != null) {
+                              Navigator.of(
+                                Get.overlayContext!,
+                                rootNavigator: true,
+                              ).maybePop();
+                            }
                             // ✅ Refresh the shipment list after success
                             await shipnowController.refreshData();
                           }
