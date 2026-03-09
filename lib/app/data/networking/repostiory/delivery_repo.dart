@@ -13,9 +13,9 @@ class DeliveryRepo {
   final ApiServices _apiServices = ApiServices();
 
   Future<List<HistoryDelivery>?> deliveryHistoryRepo(
-      final zipcode,
-      final nextID,
-      ) async {
+    final zipcode,
+    final nextID,
+  ) async {
     try {
       final userData = await LocalStorage().getUserLocalData();
       final userID = userData?.messangerdetail?.id?.toString() ??
@@ -92,17 +92,17 @@ class DeliveryRepo {
   }
 
   Future<bool> uploadDeliveryRepo(
-      shipmentID,
-      shipmentStatus,
-      id,
-      date,
-      amtPaid,
-      cashAmount,
-      paymentMode,
-      subPaymentMode,
-      deliveryOtp, {
-        String? chequeNumber,
-      }) async {
+    shipmentID,
+    shipmentStatus,
+    id,
+    date,
+    amtPaid,
+    cashAmount,
+    paymentMode,
+    subPaymentMode,
+    deliveryOtp, {
+    String? chequeNumber,
+  }) async {
     try {
       final userData = await LocalStorage().getUserLocalData();
       final userID = userData?.messangerdetail?.id?.toString();
@@ -203,7 +203,8 @@ class DeliveryRepo {
           userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
       if (token == null || token.isEmpty) {
-        Utils().logError("Token is null or empty, cannot fetch negative status.");
+        Utils()
+            .logError("Token is null or empty, cannot fetch negative status.");
         return [];
       }
 
@@ -278,8 +279,8 @@ class DeliveryRepo {
         final parsed = <NegativeStatusModel>[];
         for (final item in rawList) {
           if (item is Map) {
-            parsed.add(NegativeStatusModel.fromJson(
-                Map<String, dynamic>.from(item)));
+            parsed.add(
+                NegativeStatusModel.fromJson(Map<String, dynamic>.from(item)));
           } else {
             parsed.add(NegativeStatusModel(status: item?.toString() ?? ''));
           }
@@ -329,7 +330,8 @@ class DeliveryRepo {
           }
         },
         error: (error) {
-          Utils().logError("Error updating shipment status: ${error.toString()}");
+          Utils()
+              .logError("Error updating shipment status: ${error.toString()}");
           return null;
         },
       );
@@ -389,14 +391,19 @@ class DeliveryRepo {
           }
         },
         error: (error) {
-          Utils().logError(
-              "Error updating status (new): ${error.toString()}");
-          return null;
+          Utils().logError("Error updating status (new): ${error.toString()}");
+          return UpdateStatusModel(
+            status: 'error',
+            message: error.message,
+          );
         },
       );
     } catch (e) {
       Utils().logError("Error updating status (new): $e");
-      return null;
+      return UpdateStatusModel(
+        status: 'error',
+        message: e.toString(),
+      );
     }
   }
 }

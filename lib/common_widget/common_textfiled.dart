@@ -23,6 +23,7 @@ class CommonTextfiled extends StatelessWidget {
   final int? maxLength;
   final String? errorText; //
   final String? forceErrorText;
+  final AutovalidateMode autovalidateMode;
 
   const CommonTextfiled({
     super.key,
@@ -45,6 +46,7 @@ class CommonTextfiled extends StatelessWidget {
     this.maxLength,
     this.forceErrorText,
     this.errorText,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
   });
 
   @override
@@ -57,7 +59,7 @@ class CommonTextfiled extends StatelessWidget {
       textInputAction: textInputAction,
       obscureText: obscureText,
       controller: controller,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: autovalidateMode,
       validator: validator,
       onChanged: onChanged,
       readOnly: isReadOnly,

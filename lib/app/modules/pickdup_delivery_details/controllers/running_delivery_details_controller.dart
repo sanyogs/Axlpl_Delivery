@@ -16,8 +16,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 // ✅ Added imports for status feature
 import 'package:axlpl_delivery/app/data/models/status_model.dart';
-import 'package:axlpl_delivery/app/data/models/update_status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/delivery_repo.dart';
+
+class StatusUpdateResult {
+  final bool isSuccess;
+  final String message;
+
+  const StatusUpdateResult({
+    required this.isSuccess,
+    required this.message,
+  });
+}
 
 class RunningDeliveryDetailsController extends GetxController {
   var currentStep = 0.obs;
@@ -99,7 +108,8 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
-  Future<void> pickImage(ImageSource source, void Function(File) onPicked) async {
+  Future<void> pickImage(
+      ImageSource source, void Function(File) onPicked) async {
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
@@ -167,7 +177,8 @@ class RunningDeliveryDetailsController extends GetxController {
             trackingStatusList.addAll(item.trackingStatus!);
           }
           if (item.senderData != null) senderDataList.add(item.senderData!);
-          if (item.receiverData != null) receiverDataList.add(item.receiverData!);
+          if (item.receiverData != null)
+            receiverDataList.add(item.receiverData!);
           if (item.cashLog != null && item.cashLog!.isNotEmpty) {
             cashCollList.addAll(item.cashLog!);
           }
@@ -282,7 +293,8 @@ class RunningDeliveryDetailsController extends GetxController {
       final statusText = effectiveStatus?.status?.trim();
       final statusId = effectiveStatus?.id?.trim();
       final list = await _deliveryRepo.fetchNegativeStatuses(
-        status: (statusText != null && statusText.isNotEmpty) ? statusText : null,
+        status:
+            (statusText != null && statusText.isNotEmpty) ? statusText : null,
         statusId: (statusId != null && statusId.isNotEmpty) ? statusId : null,
       );
       if (list.isNotEmpty) {
@@ -327,95 +339,48 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
-  Future<bool> updateShipmentStatus(String shipmentId) async {
+  Future<StatusUpdateResult> updateShipmentStatus(String shipmentId) async {
     final selected = selectedStatus.value;
-    if (selected == null) {
-      Get.snackbar(
-        "Error",
-        "Please select a status",
-        backgroundColor: themes.redColor,
-        colorText: themes.whiteColor,
-      );
-      return false;
-    }
-
-    final statusText = (selected.status ?? '').trim().toLowerCase();
+    final statusText = (selected?.status ?? '').trim().toLowerCase();
     final isDelivered = statusText == 'delivered';
-    final receiverNameInput = receiverNameController.text.trim();
-    final resolvedReceiverName =
-        receiverNameInput.isNotEmpty ? receiverNameInput : _resolveReceiverName();
-
-    if (isDelivered && resolvedReceiverName.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please enter receiver name",
-        backgroundColor: themes.redColor,
-        colorText: themes.whiteColor,
-      );
-      return false;
-    }
-
-    if (isNegative.value) {
-      if (selectedNegativeStatus.value == null) {
-        Get.snackbar(
-          "Error",
-          "Please select a negative status",
-          backgroundColor: themes.redColor,
-          colorText: themes.whiteColor,
-        );
-        return false;
-      }
-      if (negativeRemarkController.text.trim().isEmpty) {
-        Get.snackbar(
-          "Error",
-          "Please enter a remark",
-          backgroundColor: themes.redColor,
-          colorText: themes.whiteColor,
-        );
-        return false;
-      }
-    }
 
     isStatusUpdating.value = true;
     try {
       final remark = negativeRemarkController.text.trim();
+      final receiverName = receiverNameController.text.trim();
       final result = await _deliveryRepo.updateShipmentStatusNewRepo(
         shipmentId: shipmentId,
-        shipmentStatus: selected.status ?? '',
+        shipmentStatus: selected?.status ?? '',
         isNegative: isNegative.value,
         negativeStatus:
             isNegative.value ? selectedNegativeStatus.value?.apiValue : null,
         negativeRemark: remark.isNotEmpty ? remark : null,
-        receiverName: isDelivered ? resolvedReceiverName : null,
+        receiverName:
+            isDelivered && receiverName.isNotEmpty ? receiverName : null,
       );
 
-      if (result != null && result.status == "success") {
-        Get.snackbar(
-          "Success",
-          result.message ?? 'Shipment status updated successfully.',
-          backgroundColor: themes.darkCyanBlue,
-          colorText: themes.whiteColor,
+      if (result != null) {
+        final isSuccess = result.status == "success";
+        final message = (result.message ?? '').trim().isNotEmpty
+            ? result.message!.trim()
+            : 'No message returned from server.';
+        if (isSuccess) {
+          await fetchTrackingData(shipmentId);
+        }
+        return StatusUpdateResult(
+          isSuccess: isSuccess,
+          message: message,
         );
-
-        await fetchTrackingData(shipmentId);
-        return true; // ✅ success
-      } else {
-        Get.snackbar(
-          "Error",
-          result?.message ?? 'Failed to update shipment status.',
-          backgroundColor: themes.redColor,
-          colorText: themes.whiteColor,
-        );
-        return false;
       }
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Error updating status: $e",
-        backgroundColor: themes.redColor,
-        colorText: themes.whiteColor,
+      return const StatusUpdateResult(
+        isSuccess: false,
+        message: "No response returned from server.",
       );
-      return false;
+    } catch (e) {
+      return StatusUpdateResult(
+        isSuccess: false,
+        message: e.toString(),
+      );
     } finally {
       isStatusUpdating.value = false;
     }
@@ -428,5 +393,4 @@ class RunningDeliveryDetailsController extends GetxController {
     final userData = await LocalStorage().getUserLocalData();
     role.value = userData?.role ?? '';
   }
-
 }

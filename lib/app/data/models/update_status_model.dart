@@ -14,10 +14,11 @@ class UpdateStatusModel {
   factory UpdateStatusModel.fromJson(Map<String, dynamic> json) {
     return UpdateStatusModel(
       status: json['status']?.toString(),
-      message: json['message']?.toString(),
+      message: json['message']?.toString() ??
+          json['msg']?.toString() ??
+          json['error']?.toString(),
       shipmentId: json['shipment_id']?.toString(),
       statusText: json['status_text']?.toString(),
     );
   }
 }
-
