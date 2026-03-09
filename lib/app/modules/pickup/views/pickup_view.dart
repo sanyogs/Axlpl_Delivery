@@ -352,12 +352,15 @@ class PickupView extends GetView<PickupController> {
                                                       pickupData.shipmentId
                                                           .toString());
 
+                                          pickupController.resetOtpState();
+                                          otpController.clear();
+
                                           // Original condition: Only 'topay' shows pickup dialog, others show OTP dialog
                                           if (pickupData.paymentMode !=
                                               'topay') {
                                             // For non-topay: Show simple OTP dialog
-                                            showOtpDialog(
-                                              () async {
+                                            await showOtpDialog(
+                                              onConfirmCallback: () async {
                                                 // Use the amount from the controller (preserves any user edits)
                                                 final finalAmount =
                                                     shipmentAmountController
@@ -369,22 +372,34 @@ class PickupView extends GetView<PickupController> {
                                                                 ?.toString() ??
                                                             '';
 
-                                                pickupController.uploadPickup(
-                                                    pickupData.shipmentId,
-                                                    'Picked up',
-                                                    pickupData.date,
-                                                    finalAmount,
-                                                    pickupData.paymentMode,
-                                                    0, // For non-topay, subPaymentMode is 0
-                                                    otpController.text,
-                                                    chequeNumber: '0');
-                                                Get.back();
+                                                return pickupController
+                                                    .uploadPickup(
+                                                        pickupData.shipmentId,
+                                                        'Picked up',
+                                                        pickupData.date,
+                                                        finalAmount,
+                                                        pickupData.paymentMode,
+                                                        0, // For non-topay, subPaymentMode is 0
+                                                        otpController.text,
+                                                        chequeNumber: '0');
                                               },
-                                              () async {
+                                              onOtpCallback: () async {
                                                 await pickupController.getOtp(
                                                     pickupData.shipmentId);
                                               },
-                                              otpController,
+                                              otpController: otpController,
+                                              otpLoading:
+                                                  pickupController.isOtpLoading,
+                                              submitLoading: pickupController
+                                                  .isUploadPickup,
+                                              canResend:
+                                                  pickupController.canResend,
+                                              secondsLeft:
+                                                  pickupController.secondsLeft,
+                                              isOtpSent:
+                                                  pickupController.isOtpSent,
+                                              otpStatusMessage: pickupController
+                                                  .otpStatusMessage,
                                             );
                                           } else {
                                             // For topay: Show full pickup dialog with payment details

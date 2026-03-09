@@ -2,14 +2,15 @@ import 'package:axlpl_delivery/app/data/models/status_model.dart';
 import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
+import 'package:axlpl_delivery/app/modules/delivery/controllers/delivery_controller.dart';
 import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
 import 'package:axlpl_delivery/app/modules/shipnow/controllers/shipnow_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
 import 'package:axlpl_delivery/common_widget/common_textfiled.dart';
+import 'package:axlpl_delivery/common_widget/delivery_dialog.dart';
 import 'package:axlpl_delivery/common_widget/invoice_image_dialog.dart';
 import 'package:axlpl_delivery/common_widget/otp_dialog.dart';
-import 'package:axlpl_delivery/common_widget/paginated_dropdown.dart';
 import 'package:axlpl_delivery/common_widget/pickup_dialog.dart';
 import 'package:axlpl_delivery/common_widget/tracking_info_widget.dart';
 import 'package:axlpl_delivery/common_widget/transfer_dialog.dart';
@@ -792,11 +793,14 @@ class RunningDeliveryDetailsView
                                             .getSelectedSubPaymentMode(
                                                 shipmentID.toString());
 
+                                    pickupController.resetOtpState();
+                                    otpController.clear();
+
                                     if (details?.paymentMode.toString() !=
                                         'topay') {
-                                      showOtpDialog(
-                                        () async {
-                                          pickupController.uploadPickup(
+                                      await showOtpDialog(
+                                        onConfirmCallback: () async {
+                                          return pickupController.uploadPickup(
                                             shipmentID,
                                             'Picked up',
                                             date,
@@ -807,11 +811,21 @@ class RunningDeliveryDetailsView
                                             otpController.text,
                                           );
                                         },
-                                        () async {
+                                        onOtpCallback: () async {
                                           await pickupController
                                               .getOtp(shipmentID);
                                         },
-                                        otpController,
+                                        otpController: otpController,
+                                        otpLoading:
+                                            pickupController.isOtpLoading,
+                                        submitLoading:
+                                            pickupController.isUploadPickup,
+                                        canResend: pickupController.canResend,
+                                        secondsLeft:
+                                            pickupController.secondsLeft,
+                                        isOtpSent: pickupController.isOtpSent,
+                                        otpStatusMessage:
+                                            pickupController.otpStatusMessage,
                                       );
                                     } else {
                                       showPickupDialog(
@@ -1076,11 +1090,127 @@ void showStatusDialog(
 
   // ✅ Access the shipnowController for refresh
   final shipnowController = Get.find<ShipnowController>();
+  final deliveryController = Get.isRegistered<DeliveryController>()
+      ? Get.find<DeliveryController>()
+      : Get.put(DeliveryController());
+
+  Future<bool> handleDeliveredUpdate() async {
+    final shipmentDetails = controller.shipmentDetail.value;
+    final isToPay =
+        deliveryController.isToPayPaymentMode(shipmentDetails?.paymentMode);
+    final amountController =
+        deliveryController.getAmountController(shipmentId.toString());
+    final transactionController =
+        deliveryController.getChequeController(shipmentId.toString());
+    final otpController =
+        deliveryController.getOtpController(shipmentId.toString());
+
+    deliveryController.resetOtpState();
+    otpController.clear();
+    transactionController.clear();
+    deliveryController.getSelectedSubPaymentMode(shipmentId.toString()).value =
+        null;
+    amountController.text = shipmentDetails?.totalCharges?.toString() ??
+        shipmentDetails?.grandTotal?.toString() ??
+        '';
+
+    if (isToPay) {
+      if (deliveryController.subPaymentModes.isEmpty) {
+        await deliveryController.fetchPaymentModes();
+      }
+
+      final dialogResult = await showDialog<bool>(
+        context: Get.overlayContext ?? Get.context!,
+        builder: (_) => DeliveryDialog(
+          shipmentID: shipmentId,
+          date: DateTime.now().toIso8601String(),
+          amountController: amountController,
+          chequeNumberController: transactionController,
+          otpController: otpController,
+          dropdownHintTxt: 'Select Payment Mode',
+          btnTxt: 'Delivery',
+          onConfirmCallback: () async {
+            final subPaymentMode = deliveryController
+                .getSelectedSubPaymentMode(shipmentId.toString())
+                .value
+                ?.id;
+
+            final didUpload = await deliveryController.uploadDelivery(
+              shipmentId,
+              'Delivered',
+              deliveryController.currentUserId.value,
+              DateTime.now().toIso8601String(),
+              shipmentDetails?.totalCharges?.toString() ?? '0',
+              amountController.text,
+              shipmentDetails?.paymentMode,
+              subPaymentMode,
+              otpController.text,
+              chequeNumber: transactionController.text,
+              receiverName: controller.receiverNameController.text.trim(),
+            );
+
+            if (!didUpload) {
+              return false;
+            }
+
+            await controller.fetchTrackingData(shipmentId);
+            await shipnowController.refreshData();
+            return true;
+          },
+          onSendOtpCallback: () async {
+            await deliveryController.getOtp(shipmentId);
+          },
+        ),
+      );
+
+      return dialogResult == true;
+    }
+
+    final dialogResult = await showOtpDialog(
+      onConfirmCallback: () async {
+        final didUpload = await deliveryController.uploadDelivery(
+          shipmentId,
+          'Delivered',
+          deliveryController.currentUserId.value,
+          DateTime.now().toIso8601String(),
+          shipmentDetails?.totalCharges?.toString() ?? '0',
+          '0',
+          shipmentDetails?.paymentMode,
+          '0',
+          otpController.text,
+          chequeNumber: '0',
+          receiverName: controller.receiverNameController.text.trim(),
+        );
+
+        if (!didUpload) {
+          return false;
+        }
+
+        await controller.fetchTrackingData(shipmentId);
+        await shipnowController.refreshData();
+        return true;
+      },
+      onOtpCallback: () async {
+        await deliveryController.getOtp(shipmentId);
+      },
+      otpController: otpController,
+      otpLoading: deliveryController.isOtpLoading,
+      submitLoading: deliveryController.isUploadDelivery,
+      canResend: deliveryController.canResend,
+      secondsLeft: deliveryController.secondsLeft,
+      isOtpSent: deliveryController.isOtpSent,
+      otpStatusMessage: deliveryController.otpStatusMessage,
+      submitStatusMessage: deliveryController.submitStatusMessage,
+      isSubmitStatusError: deliveryController.isSubmitStatusError,
+    );
+
+    return dialogResult == true;
+  }
 
   // ✅ Use Get.dialog for custom layout
   Get.dialog(
     Material(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
           width: Get.width * 0.85, // adds left-right margins
@@ -1172,8 +1302,13 @@ void showStatusDialog(
                     }
 
                     return DropdownButtonFormField<StatusModel>(
+                      key: ValueKey(
+                        controller.selectedStatus.value?.id ??
+                            controller.selectedStatus.value?.status ??
+                            'status-none',
+                      ),
                       isExpanded: true,
-                      value: controller.selectedStatus.value,
+                      initialValue: controller.selectedStatus.value,
                       items: list.map((status) {
                         return DropdownMenuItem<StatusModel>(
                           value: status,
@@ -1263,8 +1398,14 @@ void showStatusDialog(
                         ),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<NegativeStatusModel>(
+                          key: ValueKey(
+                            controller.selectedNegativeStatus.value?.apiValue ??
+                                controller.selectedNegativeStatus.value
+                                    ?.displayText ??
+                                'negative-status-none',
+                          ),
                           isExpanded: true,
-                          value: controller.selectedNegativeStatus.value,
+                          initialValue: controller.selectedNegativeStatus.value,
                           items: negativeList.map((status) {
                             return DropdownMenuItem<NegativeStatusModel>(
                               value: status,
@@ -1324,12 +1465,28 @@ void showStatusDialog(
                       ),
                     );
                   }),
+                  Obx(() {
+                    if (!controller.isDeliveredSelected) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        'Proceed to OTP verification and cash collection.',
+                        style: themes.fontSize14_500.copyWith(
+                          color: themes.darkCyanBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    );
+                  }),
 
                   const SizedBox(height: 24),
 
                   // Buttons Section
                   Obx(() {
                     final isLoading = controller.isStatusUpdating.value;
+                    final isDeliveredSelected = controller.isDeliveredSelected;
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -1348,6 +1505,22 @@ void showStatusDialog(
                               ? null
                               : () async {
                                   FocusManager.instance.primaryFocus?.unfocus();
+                                  final validationResult =
+                                      controller.validateStatusSelection();
+                                  if (validationResult != null) {
+                                    showResponsePopup(validationResult.message);
+                                    return;
+                                  }
+
+                                  if (controller.isDeliveredSelected) {
+                                    final didUpdate =
+                                        await handleDeliveredUpdate();
+                                    if (didUpdate) {
+                                      closePopup();
+                                    }
+                                    return;
+                                  }
+
                                   final result = await controller
                                       .updateShipmentStatus(shipmentId);
 
@@ -1368,7 +1541,7 @@ void showStatusDialog(
                                   ),
                                 )
                               : Text(
-                                  "Update",
+                                  isDeliveredSelected ? "Proceed" : "Update",
                                   style: themes.fontSize14_500
                                       .copyWith(color: themes.whiteColor),
                                 ),

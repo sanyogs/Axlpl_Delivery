@@ -660,6 +660,7 @@ class ApiServices {
     token, {
     // Start of optional named parameters
     String? chequeNumber,
+    String? receiverName,
   }) async {
     final body = {
       'shipment_id': shipmentID,
@@ -674,6 +675,7 @@ class ApiServices {
       'sub_payment_mode': subPaymentMode,
       'delivery_otp': deliveryOtp,
       'cheque_number': chequeNumber ?? 0,
+      'receiver_name': receiverName ?? '',
     };
 
     return _api.post(
@@ -1042,7 +1044,4 @@ class ApiServices {
       contentType: ContentType.urlEncoded,
     );
   }
-
-
-
 }

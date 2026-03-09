@@ -302,32 +302,44 @@ class DeliveryView extends GetView<DeliveryController> {
                                               deliveryData.pincode.toString());
                                         },
                                         pickUpTap: () async {
+                                          final shipmentId = deliveryData
+                                              .shipmentId
+                                              .toString();
                                           final amountController =
                                               deliveryController
                                                   .getAmountController(
-                                                      deliveryData.shipmentId
-                                                          .toString());
+                                                      shipmentId);
 
                                           final chequeController =
                                               deliveryController
-                                                  .getAccountController(
-                                                      deliveryData.shipmentId
-                                                          .toString());
+                                                  .getChequeController(
+                                                      shipmentId);
 
                                           final otpController =
                                               deliveryController
-                                                  .getOtpController(deliveryData
-                                                      .shipmentId
-                                                      .toString());
+                                                  .getOtpController(shipmentId);
 
-                                          if (deliveryData.paymentMode ==
-                                              'topay') {
-                                            showDialog(
+                                          deliveryController.resetOtpState();
+                                          otpController.clear();
+                                          chequeController.clear();
+                                          deliveryController
+                                              .getSelectedSubPaymentMode(
+                                                  shipmentId)
+                                              .value = null;
+
+                                          if (deliveryController
+                                              .isToPayPaymentMode(
+                                                  deliveryData.paymentMode)) {
+                                            if (deliveryController
+                                                .subPaymentModes.isEmpty) {
+                                              await deliveryController
+                                                  .fetchPaymentModes();
+                                            }
+
+                                            await showDialog<bool>(
                                               context: context,
                                               builder: (_) => DeliveryDialog(
-                                                shipmentID: deliveryData
-                                                    .shipmentId
-                                                    .toString(),
+                                                shipmentID: shipmentId,
                                                 date: deliveryData.date
                                                     .toString(),
                                                 amountController:
@@ -343,13 +355,11 @@ class DeliveryView extends GetView<DeliveryController> {
                                                   final subPaymentMode =
                                                       deliveryController
                                                           .getSelectedSubPaymentMode(
-                                                              deliveryData
-                                                                  .shipmentId
-                                                                  .toString())
+                                                              shipmentId)
                                                           .value
                                                           ?.id;
 
-                                                  deliveryController
+                                                  return deliveryController
                                                       .uploadDelivery(
                                                     deliveryData.shipmentId,
                                                     'Delivered',
@@ -368,43 +378,54 @@ class DeliveryView extends GetView<DeliveryController> {
                                                 },
                                                 onSendOtpCallback: () async {
                                                   await deliveryController
-                                                      .getOtp(deliveryData
-                                                          .shipmentId
-                                                          .toString());
+                                                      .getOtp(shipmentId);
                                                 },
                                               ),
                                             );
                                           } else {
-                                            showOtpDialog(
-                                              () async {
-                                                try {
-                                                  await deliveryController
-                                                      .uploadDelivery(
-                                                    deliveryData.shipmentId
-                                                        .toString(),
-                                                    'Delivered',
-                                                    deliveryController
-                                                        .currentUserId.value,
-                                                    deliveryData.date,
-                                                    deliveryData.totalCharges
-                                                        .toString(),
-                                                    0,
-                                                    deliveryData.paymentMode,
-                                                    0,
-                                                    otpController.text,
-                                                    chequeNumber: '0',
-                                                  );
-                                                } catch (e) {
-                                                  // Close dialog even if there's an error
-                                                  Navigator.of(context).pop();
-                                                }
+                                            await showOtpDialog(
+                                              onConfirmCallback: () async {
+                                                return deliveryController
+                                                    .uploadDelivery(
+                                                  deliveryData.shipmentId
+                                                      .toString(),
+                                                  'Delivered',
+                                                  deliveryController
+                                                      .currentUserId.value,
+                                                  deliveryData.date,
+                                                  deliveryData.totalCharges
+                                                      .toString(),
+                                                  0,
+                                                  deliveryData.paymentMode,
+                                                  0,
+                                                  otpController.text,
+                                                  chequeNumber: '0',
+                                                );
                                               },
-                                              () async {
-                                                await deliveryController.getOtp(
-                                                    deliveryData.shipmentId
-                                                        .toString());
+                                              onOtpCallback: () async {
+                                                await deliveryController
+                                                    .getOtp(shipmentId);
                                               },
-                                              otpController,
+                                              otpController: otpController,
+                                              otpLoading: deliveryController
+                                                  .isOtpLoading,
+                                              submitLoading: deliveryController
+                                                  .isUploadDelivery,
+                                              canResend:
+                                                  deliveryController.canResend,
+                                              secondsLeft: deliveryController
+                                                  .secondsLeft,
+                                              isOtpSent:
+                                                  deliveryController.isOtpSent,
+                                              otpStatusMessage:
+                                                  deliveryController
+                                                      .otpStatusMessage,
+                                              submitStatusMessage:
+                                                  deliveryController
+                                                      .submitStatusMessage,
+                                              isSubmitStatusError:
+                                                  deliveryController
+                                                      .isSubmitStatusError,
                                             );
                                           }
                                         },

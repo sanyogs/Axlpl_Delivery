@@ -24,6 +24,10 @@ class DeliveryController extends GetxController {
   var isDeliveryLoading = Status.initial.obs;
   var isUploadDelivery = Status.initial.obs;
   var isOtpLoading = Status.initial.obs;
+  final isOtpSent = false.obs;
+  final otpStatusMessage = ''.obs;
+  final submitStatusMessage = ''.obs;
+  final isSubmitStatusError = false.obs;
   final currentUserId = ''.obs;
   RxInt isSelected = 0.obs;
   final secondsLeft = 0.obs; // 0 means no active timer
@@ -134,14 +138,12 @@ class DeliveryController extends GetxController {
       if (success == true) {
         // start cooldown timer
         _startResendCooldown();
-        Get.snackbar(
-          'OTP',
-          'OTP sent successfully!',
-          backgroundColor: themes.darkCyanBlue,
-          colorText: themes.whiteColor,
-        );
+        isOtpSent.value = true;
+        otpStatusMessage.value = 'OTP sent successfully';
         isOtpLoading.value = Status.success;
       } else {
+        isOtpSent.value = false;
+        otpStatusMessage.value = '';
         Get.snackbar(
           'Error',
           'Failed to send OTP',
@@ -151,6 +153,8 @@ class DeliveryController extends GetxController {
         isOtpLoading.value = Status.error;
       }
     } catch (e) {
+      isOtpSent.value = false;
+      otpStatusMessage.value = '';
       Get.snackbar(
         'Error',
         'Failed to send OTP: $e',
@@ -163,6 +167,18 @@ class DeliveryController extends GetxController {
         isOtpLoading.value = Status.initial;
       }
     }
+  }
+
+  void resetOtpState() {
+    _resendTimer?.cancel();
+    secondsLeft.value = 0;
+    canResend.value = true;
+    isOtpLoading.value = Status.initial;
+    isUploadDelivery.value = Status.initial;
+    isOtpSent.value = false;
+    otpStatusMessage.value = '';
+    submitStatusMessage.value = '';
+    isSubmitStatusError.value = false;
   }
 
   void _startResendCooldown() {
@@ -188,7 +204,7 @@ class DeliveryController extends GetxController {
     super.onClose();
   }
 
-  Future<void> uploadDelivery(
+  Future<bool> uploadDelivery(
     shipmentID,
     shipmentStatus,
     id,
@@ -199,8 +215,11 @@ class DeliveryController extends GetxController {
     subPaymentMode,
     deliveryOtp, {
     String? chequeNumber,
+    String? receiverName,
   }) async {
     isUploadDelivery.value = Status.loading;
+    submitStatusMessage.value = '';
+    isSubmitStatusError.value = false;
     try {
       final success = await deliveryRepo.uploadDeliveryRepo(
         shipmentID,
@@ -209,16 +228,23 @@ class DeliveryController extends GetxController {
         date,
         amtPaid,
         cashAmount,
-        paymentMode,
+        normalizePaymentModeValue(paymentMode),
         subPaymentMode,
         deliveryOtp,
         chequeNumber: chequeNumber,
+        receiverName: receiverName,
       );
 
       if (success == true) {
+        final successMessage =
+            deliveryRepo.apiMessage?.trim().isNotEmpty == true
+                ? deliveryRepo.apiMessage!.trim()
+                : 'Delivery uploaded successfully';
+        submitStatusMessage.value = successMessage;
+        isSubmitStatusError.value = false;
         Get.snackbar(
           'Success',
-          'Delivery uploaded successfully',
+          successMessage,
           backgroundColor: themes.darkCyanBlue,
           colorText: themes.whiteColor,
         );
@@ -227,23 +253,37 @@ class DeliveryController extends GetxController {
         final historyController = Get.find<HistoryController>();
         historyController.getDeliveryHistory();
         otpController.clear();
+        getOtpController(shipmentID.toString()).clear();
+        getChequeController(shipmentID.toString()).clear();
+        getSelectedSubPaymentMode(shipmentID.toString()).value = null;
+        isOtpSent.value = false;
+        otpStatusMessage.value = '';
+        return true;
       } else {
+        final message = _buildDeliveryFailureMessage(deliveryRepo.apiMessage);
+        submitStatusMessage.value = message;
+        isSubmitStatusError.value = true;
         Get.snackbar(
           'Failed',
-          'Delivery uploaded failed',
+          message,
           backgroundColor: themes.redColor,
           colorText: themes.whiteColor,
         );
         isUploadDelivery.value = Status.error;
+        return false;
       }
     } catch (e) {
+      final message = _buildDeliveryFailureMessage(e.toString());
+      submitStatusMessage.value = message;
+      isSubmitStatusError.value = true;
       Get.snackbar(
         'Failed',
-        e.toString(),
+        message,
         backgroundColor: themes.redColor,
         colorText: themes.whiteColor,
       );
       isUploadDelivery.value = Status.error;
+      return false;
     }
   }
 
@@ -265,7 +305,7 @@ class DeliveryController extends GetxController {
       if (response.statusCode == 200 && response.data['status'] == 'success') {
         final data = PaymentModesResponse.fromJson(response.data);
 
-        subPaymentModes.value = data.data.subPaymentModes;
+        subPaymentModes.value = _withContractMode(data.data.subPaymentModes);
       } else {
         Get.snackbar('Error', 'Failed to fetch payment modes');
       }
@@ -282,5 +322,50 @@ class DeliveryController extends GetxController {
     initializeUserId();
     // historyController.getDeliveryHistory('0');
     super.onInit();
+  }
+
+  String normalizePaymentModeValue(dynamic paymentMode) {
+    final rawValue = paymentMode?.toString().trim() ?? '';
+    final normalized =
+        rawValue.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (normalized == 'topay') {
+      return 'topay';
+    }
+    return rawValue;
+  }
+
+  bool isToPayPaymentMode(dynamic paymentMode) =>
+      normalizePaymentModeValue(paymentMode) == 'topay';
+
+  List<PaymentMode> _withContractMode(List<PaymentMode> modes) {
+    final hasContract = modes.any(
+      (mode) =>
+          mode.id.toLowerCase() == 'contract' ||
+          mode.name.toLowerCase() == 'contract',
+    );
+    if (hasContract) {
+      return modes;
+    }
+    return [
+      ...modes,
+      PaymentMode(id: 'contract', name: 'Contract'),
+    ];
+  }
+
+  String _buildDeliveryFailureMessage(String? rawMessage) {
+    final message = (rawMessage ?? '').trim();
+    if (message.isEmpty) {
+      return 'Delivery uploaded failed';
+    }
+
+    final normalized = message.toLowerCase();
+    final isOtpFailure =
+        (normalized.contains('invalid') || normalized.contains('invailid')) &&
+            normalized.contains('delivery otp');
+    if (isOtpFailure || normalized.contains('expired delivery otp')) {
+      return 'Your OTP is wrong or expired.';
+    }
+
+    return message;
   }
 }

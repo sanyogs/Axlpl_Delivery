@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
-
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/messnager_model.dart';
 import 'package:axlpl_delivery/app/data/models/payment_mode_model.dart';
@@ -72,6 +70,8 @@ class PickupController extends GetxController {
   var isTransferSuccess = false.obs;
   var isPaymentLoading = Status.initial.obs;
   var isOtpLoading = Status.initial.obs;
+  final isOtpSent = false.obs;
+  final otpStatusMessage = ''.obs;
 
   RxInt isSelected = 0.obs;
   var selectedPay = Rxn<String>();
@@ -193,7 +193,7 @@ class PickupController extends GetxController {
     }
   }
 
-  Future<void> uploadPickup(
+  Future<bool> uploadPickup(
     final shipmentID,
     final shipmentStatus,
     final date,
@@ -228,9 +228,11 @@ class PickupController extends GetxController {
         final historyController = Get.find<HistoryController>();
         historyController.getPickupHistory();
         otpController.clear();
-        Future.delayed(const Duration(seconds: 1), () {
-          Get.back(); // Navigate back on success
-        });
+        getOtpController(shipmentID.toString()).clear();
+        getSelectedSubPaymentMode(shipmentID.toString()).value = null;
+        isOtpSent.value = false;
+        otpStatusMessage.value = '';
+        return true;
       } else {
         Get.snackbar(
           'Failed',
@@ -239,6 +241,7 @@ class PickupController extends GetxController {
           backgroundColor: themes.redColor,
         );
         isUploadPickup.value = Status.error;
+        return false;
       }
     } catch (e) {
       Get.snackbar(
@@ -248,6 +251,7 @@ class PickupController extends GetxController {
         backgroundColor: themes.redColor,
       );
       isUploadPickup.value = Status.error;
+      return false;
     }
   }
 
@@ -262,19 +266,19 @@ class PickupController extends GetxController {
       if (success == true) {
         // start cooldown timer
         _startResendCooldown();
-        Get.snackbar(
-          'OTP',
-          'OTP sent successfully!',
-          backgroundColor: themes.darkCyanBlue,
-          colorText: themes.whiteColor,
-        );
+        isOtpSent.value = true;
+        otpStatusMessage.value = 'OTP sent successfully';
         isOtpLoading.value = Status.success;
       } else {
+        isOtpSent.value = false;
+        otpStatusMessage.value = '';
         Get.snackbar('Error', 'Failed to send OTP',
             backgroundColor: themes.redColor, colorText: themes.whiteColor);
         isOtpLoading.value = Status.error;
       }
     } catch (e) {
+      isOtpSent.value = false;
+      otpStatusMessage.value = '';
       Get.snackbar('Error', 'Failed to send OTP',
           backgroundColor: themes.redColor, colorText: themes.whiteColor);
       isOtpLoading.value = Status.error;
@@ -283,6 +287,15 @@ class PickupController extends GetxController {
         isOtpLoading.value = Status.initial;
       }
     }
+  }
+
+  void resetOtpState() {
+    _resendTimer?.cancel();
+    secondsLeft.value = 0;
+    canResend.value = true;
+    isOtpLoading.value = Status.initial;
+    isOtpSent.value = false;
+    otpStatusMessage.value = '';
   }
 
   void _startResendCooldown() {

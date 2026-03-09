@@ -1,8 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/payment_mode_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/modules/delivery/controllers/delivery_controller.dart';
-import 'package:axlpl_delivery/app/modules/history/controllers/history_controller.dart';
-import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_dropdown.dart';
 import 'package:axlpl_delivery/common_widget/common_textfiled.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -21,8 +19,8 @@ class DeliveryDialog extends StatelessWidget {
   final TextEditingController otpController;
   final String dropdownHintTxt;
   final String btnTxt;
-  final VoidCallback? onConfirmCallback;
-  final VoidCallback? onSendOtpCallback;
+  final Future<bool> Function()? onConfirmCallback;
+  final Future<void> Function()? onSendOtpCallback;
 
   DeliveryDialog({
     required this.shipmentID,
@@ -38,9 +36,10 @@ class DeliveryDialog extends StatelessWidget {
     // required this.onlineNumberController,
   });
 
-  final deliveryController = Get.put(DeliveryController());
-  final pickupController = Get.find<PickupController>();
-  final historyController = Get.put(HistoryController());
+  final DeliveryController deliveryController =
+      Get.isRegistered<DeliveryController>()
+          ? Get.find<DeliveryController>()
+          : Get.put(DeliveryController());
 
   final defaultPinTheme = PinTheme(
     width: 56,
@@ -193,41 +192,88 @@ class DeliveryDialog extends StatelessWidget {
               }),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Enter OTP'),
+                  Text(
+                    'Enter OTP',
+                    style: themes.fontSize14_500.copyWith(
+                      color: themes.blackColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   Obx(() {
                     final loading =
                         deliveryController.isOtpLoading.value == Status.loading;
                     final canResend = deliveryController.canResend.value;
                     final secs = deliveryController.secondsLeft.value;
+                    final label = canResend ? 'Send OTP' : 'Resend in ${secs}s';
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 44,
-                          child: loading
-                              ? const Center(
-                                  child: CircularProgressIndicator.adaptive())
-                              : TextButton(
-                                  onPressed: canResend
-                                      ? () =>
-                                          deliveryController.getOtp(shipmentID)
-                                      : null, // disabled during cooldown
-                                  child: Text(
-                                    canResend
-                                        ? 'Send OTP'
-                                        : 'Resend in ${secs}s',
-                                    style: themes.fontSize14_500
-                                        .copyWith(color: themes.darkCyanBlue),
-                                  ),
-                                ),
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canResend
+                            ? themes.darkCyanBlue
+                            : themes.grayColor.withValues(alpha: 0.45),
+                        foregroundColor: themes.whiteColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ],
+                      ),
+                      onPressed: (!canResend || loading)
+                          ? null
+                          : () async {
+                              final sendOtp = onSendOtpCallback ??
+                                  () => deliveryController.getOtp(shipmentID);
+                              await sendOtp();
+                            },
+                      child: loading
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              label,
+                              style: themes.fontSize14_500.copyWith(
+                                color: themes.whiteColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     );
-                  })
+                  }),
                 ],
               ),
+              Obx(() {
+                if (!deliveryController.isOtpSent.value ||
+                    deliveryController.otpStatusMessage.value.trim().isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Text(
+                  deliveryController.otpStatusMessage.value,
+                  style: themes.fontSize14_500.copyWith(
+                    color: Colors.green.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }),
+              Obx(() {
+                final message =
+                    deliveryController.submitStatusMessage.value.trim();
+                if (message.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Text(
+                  message,
+                  style: themes.fontSize14_500.copyWith(
+                    color: deliveryController.isSubmitStatusError.value
+                        ? themes.redColor
+                        : Colors.green.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }),
               SizedBox(
                 width: double.infinity,
                 child: Pinput(
@@ -261,29 +307,60 @@ class DeliveryDialog extends StatelessWidget {
             backgroundColor: themes.whiteColor,
             side: BorderSide(color: themes.darkCyanBlue),
           ),
-          onPressed: () => Get.back(),
+          onPressed: () =>
+              Navigator.of(Get.overlayContext!, rootNavigator: true).pop(false),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: themes.darkCyanBlue,
-            foregroundColor: themes.whiteColor,
-          ),
-          onPressed: () async {
-            if (otpController.text.length != 4) {
-              Get.snackbar('Invalid OTP', 'Please enter all 4 digits.',
-                  colorText: themes.whiteColor,
-                  backgroundColor: themes.redColor);
-              return;
-            }
+        Obx(() {
+          final isSubmitting =
+              deliveryController.isUploadDelivery.value == Status.loading;
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: themes.darkCyanBlue,
+              foregroundColor: themes.whiteColor,
+              elevation: isSubmitting ? 8 : 2,
+              shadowColor: themes.darkCyanBlue.withValues(alpha: 0.35),
+            ),
+            onPressed: isSubmitting
+                ? null
+                : () async {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                    if (otpController.text.length != 4) {
+                      Get.snackbar('Invalid OTP', 'Please enter all 4 digits.',
+                          colorText: themes.whiteColor,
+                          backgroundColor: themes.redColor);
+                      return;
+                    }
 
-            if (onConfirmCallback != null) {
-              onConfirmCallback!();
-              Get.back(); // Close dialog after upload completes
-            }
-          },
-          child: Text(btnTxt),
-        ),
+                    if (onConfirmCallback != null) {
+                      final isSuccess = await onConfirmCallback!();
+                      if (!isSuccess) {
+                        return;
+                      }
+                      if (Get.overlayContext != null) {
+                        Navigator.of(Get.overlayContext!, rootNavigator: true)
+                            .pop(true);
+                      }
+                    }
+                  },
+            child: isSubmitting
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    btnTxt,
+                    style: themes.fontSize14_500.copyWith(
+                      color: themes.whiteColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          );
+        }),
       ],
     );
   }

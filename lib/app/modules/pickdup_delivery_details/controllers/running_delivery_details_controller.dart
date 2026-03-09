@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/app/data/models/stepper_model.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/models/transtion_history_model.dart';
 import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
@@ -339,7 +338,49 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
+  bool get isDeliveredSelected =>
+      (selectedStatus.value?.status ?? '').trim().toLowerCase() == 'delivered';
+
+  StatusUpdateResult? validateStatusSelection() {
+    final selected = selectedStatus.value;
+    if (selected == null) {
+      return const StatusUpdateResult(
+        isSuccess: false,
+        message: 'Please select a status.',
+      );
+    }
+
+    if (isNegative.value) {
+      if (selectedNegativeStatus.value == null) {
+        return const StatusUpdateResult(
+          isSuccess: false,
+          message: 'Please select a negative status.',
+        );
+      }
+      if (negativeRemarkController.text.trim().isEmpty) {
+        return const StatusUpdateResult(
+          isSuccess: false,
+          message: 'Please enter a remark.',
+        );
+      }
+    }
+
+    if (isDeliveredSelected && receiverNameController.text.trim().isEmpty) {
+      return const StatusUpdateResult(
+        isSuccess: false,
+        message: 'Please enter receiver name.',
+      );
+    }
+
+    return null;
+  }
+
   Future<StatusUpdateResult> updateShipmentStatus(String shipmentId) async {
+    final validationResult = validateStatusSelection();
+    if (validationResult != null) {
+      return validationResult;
+    }
+
     final selected = selectedStatus.value;
     final statusText = (selected?.status ?? '').trim().toLowerCase();
     final isDelivered = statusText == 'delivered';

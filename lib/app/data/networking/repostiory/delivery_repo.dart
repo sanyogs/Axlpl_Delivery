@@ -2,7 +2,6 @@ import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/common_model.dart';
 import 'package:axlpl_delivery/app/data/models/history_delivery_model.dart';
 import 'package:axlpl_delivery/app/data/models/history_pickup_model.dart';
-import 'package:axlpl_delivery/app/data/models/lat_long_model.dart';
 import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/models/status_model.dart';
 import 'package:axlpl_delivery/app/data/models/update_status_model.dart';
@@ -11,6 +10,7 @@ import 'package:axlpl_delivery/utils/utils.dart';
 
 class DeliveryRepo {
   final ApiServices _apiServices = ApiServices();
+  String? apiMessage;
 
   Future<List<HistoryDelivery>?> deliveryHistoryRepo(
     final zipcode,
@@ -102,14 +102,17 @@ class DeliveryRepo {
     subPaymentMode,
     deliveryOtp, {
     String? chequeNumber,
+    String? receiverName,
   }) async {
     try {
+      apiMessage = null;
       final userData = await LocalStorage().getUserLocalData();
       final userID = userData?.messangerdetail?.id?.toString();
       final token =
           userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
       if (userID == null || userID.isEmpty) {
+        apiMessage = "User ID is null or empty.";
         Utils().logError("User ID is null or empty, cannot upload pickup.");
         return false;
       }
@@ -117,7 +120,7 @@ class DeliveryRepo {
       final response = await _apiServices.uploadDelivery(
         shipmentID,
         shipmentStatus,
-        id,
+        userID,
         date,
         '0',
         '0',
@@ -128,6 +131,7 @@ class DeliveryRepo {
         deliveryOtp,
         token.toString(),
         chequeNumber: chequeNumber,
+        receiverName: receiverName,
       );
 
       bool isSuccess = false;
@@ -135,6 +139,7 @@ class DeliveryRepo {
       response.when(
         success: (body) {
           final data = CommonModel.fromJson(body);
+          apiMessage = data.message?.trim();
           if (data.status == 'success') {
             Utils().log(data.toJson());
             isSuccess = true;
@@ -145,12 +150,14 @@ class DeliveryRepo {
           }
         },
         error: (error) {
+          apiMessage = error.message;
           Utils().logError(error.toString());
           isSuccess = false;
         },
       );
       return isSuccess;
     } catch (e) {
+      apiMessage = e.toString();
       Utils().logError(e.toString());
       return false;
     }
