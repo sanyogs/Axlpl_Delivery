@@ -18,8 +18,10 @@ Future<bool?> showOtpDialog({
   RxString? submitStatusMessage,
   RxBool? isSubmitStatusError,
   String title = 'Enter OTP',
-  String confirmText = 'Enter OTP',
+  String confirmText = 'Submit',
 }) {
+  Future.microtask(onOtpCallback);
+
   final defaultPinTheme = PinTheme(
     width: 56,
     height: 60,
@@ -70,7 +72,7 @@ Future<bool?> showOtpDialog({
               final loading = otpLoading.value == Status.loading;
               final enabled = canResend.value;
               final label =
-                  enabled ? 'Send OTP' : 'Resend in ${secondsLeft.value}s';
+                  enabled ? 'Resend OTP' : 'Resend in ${secondsLeft.value}s';
 
               return SizedBox(
                 width: double.infinity,

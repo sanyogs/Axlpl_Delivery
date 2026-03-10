@@ -21,7 +21,7 @@ class PickDialog extends StatelessWidget {
   final dropdownHintTxt;
   final btnTxt;
   final VoidCallback onConfirmCallback;
-  final VoidCallback? onSendOtpCallback;
+  final Future<void> Function()? onSendOtpCallback;
 
   const PickDialog({
     required this.shipmentID,
@@ -145,11 +145,11 @@ class PickDialog extends StatelessWidget {
                     pickupController.isOtpLoading.value == Status.loading;
                 final canResend = pickupController.canResend.value;
                 final secs = pickupController.secondsLeft.value;
+                final label = canResend ? 'Resend OTP' : 'Resend in ${secs}s';
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Send / Resend button
                     SizedBox(
                       height: 44,
                       child: loading
@@ -157,10 +157,15 @@ class PickDialog extends StatelessWidget {
                               child: CircularProgressIndicator.adaptive())
                           : TextButton(
                               onPressed: canResend
-                                  ? () => pickupController.getOtp(shipmentID)
-                                  : null, // disabled during cooldown
+                                  ? () async {
+                                      final sendOtp = onSendOtpCallback ??
+                                          () => pickupController
+                                              .getOtp(shipmentID);
+                                      await sendOtp();
+                                    }
+                                  : null,
                               child: Text(
-                                canResend ? 'Send OTP' : 'Resend in ${secs}s',
+                                label,
                                 style: themes.fontSize14_500
                                     .copyWith(color: themes.darkCyanBlue),
                               ),
@@ -241,9 +246,16 @@ void showPickupDialog({
   required String dropdownHintTxt,
   required String btnTxt,
   required VoidCallback onConfirmCallback,
-  VoidCallback? onSendOtpCallback,
+  Future<void> Function()? onSendOtpCallback,
 }) {
   BuildContext context = Get.context!;
+  final pickupController = Get.find<PickupController>();
+
+  Future.microtask(() async {
+    final sendOtp =
+        onSendOtpCallback ?? () => pickupController.getOtp(shipmentID);
+    await sendOtp();
+  });
 
   showDialog(
     context: context,

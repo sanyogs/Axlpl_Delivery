@@ -1119,6 +1119,10 @@ void showStatusDialog(
         await deliveryController.fetchPaymentModes();
       }
 
+      Future.microtask(() async {
+        await deliveryController.getOtp(shipmentId);
+      });
+
       final dialogResult = await showDialog<bool>(
         context: Get.overlayContext ?? Get.context!,
         builder: (_) => DeliveryDialog(

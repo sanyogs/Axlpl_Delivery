@@ -336,6 +336,11 @@ class DeliveryView extends GetView<DeliveryController> {
                                                   .fetchPaymentModes();
                                             }
 
+                                            Future.microtask(() async {
+                                              await deliveryController
+                                                  .getOtp(shipmentId);
+                                            });
+
                                             await showDialog<bool>(
                                               context: context,
                                               builder: (_) => DeliveryDialog(

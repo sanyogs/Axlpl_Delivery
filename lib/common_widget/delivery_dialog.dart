@@ -195,7 +195,8 @@ class DeliveryDialog extends StatelessWidget {
                         deliveryController.isOtpLoading.value == Status.loading;
                     final canResend = deliveryController.canResend.value;
                     final secs = deliveryController.secondsLeft.value;
-                    final label = canResend ? 'Send OTP' : 'Resend in ${secs}s';
+                    final label =
+                        canResend ? 'Resend OTP' : 'Resend in ${secs}s';
 
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(
