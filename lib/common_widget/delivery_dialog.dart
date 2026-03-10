@@ -73,34 +73,15 @@ class DeliveryDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              CommonTextfiled(
-                controller: amountController,
-                obscureText: false,
-                hintTxt: 'Enter Amount',
-                lableText: 'Enter Amount',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
-                  }
-                  final amount = int.tryParse(value);
-                  if (amount == null) {
-                    return 'Please enter a valid number';
-                  }
-                  if (amount < 1) {
-                    return 'Amount must be at least 1';
-                  }
-                  return null;
-                },
-              ),
-              dropdownText('Sub Payment Mode'),
+              dropdownText('Payment Mode'),
               Obx(() {
                 if (deliveryController.isLoadingPayment.value) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
                 return Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade400),
@@ -123,72 +104,80 @@ class DeliveryDialog extends StatelessWidget {
                                 child: Text(mode.name),
                               ))
                           .toList(),
-                      onChanged: (val) => deliveryController
-                          .setSelectedSubPaymentMode(shipmentID, val),
+                      onChanged: (val) {
+                        deliveryController.setSelectedSubPaymentMode(
+                          shipmentID,
+                          val,
+                        );
+
+                        if (val == null ||
+                            val.id == 'cash' ||
+                            deliveryController.isContractSubPaymentMode(val)) {
+                          chequeNumberController.clear();
+                        }
+                      },
                     ),
                   ),
                 );
               }),
-              // Obx(() {
-              //   final selectedMode = selectedSubPaymentMode.value;
-
-              //   if (selectedMode?.id == 'account') {
-              //     return Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         dropdownText('Transaction ID'),
-              //         CommonTextfiled(
-              //           controller: accountNumberController,
-              //           hintTxt: 'Enter Transaction ID',
-              //           keyboardType: TextInputType.text,
-              //         ),
-              //       ],
-              //     );
-              //   }
-              //   return const SizedBox.shrink();
-              // }),
-
-              // Obx(() {
-              //   final selectedMode = selectedSubPaymentMode.value;
-
-              //   if (selectedMode?.id == 'online') {
-              //     return Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         dropdownText('Transaction ID'),
-              //         CommonTextfiled(
-              //           controller: onlineNumberController,
-              //           hintTxt: 'Enter Transaction ID',
-              //           keyboardType: TextInputType.text,
-              //         ),
-              //       ],
-              //     );
-              //   }
-              //   return const SizedBox.shrink();
-              // }),
               Obx(() {
                 final selectedMode = selectedSubPaymentMode.value;
+                final isContractMode =
+                    deliveryController.isContractSubPaymentMode(selectedMode);
 
-                if (selectedMode?.id != 'cash') {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      dropdownText(
-                        selectedMode?.id == 'cheque'
-                            ? 'Cheque Number'
-                            : 'Transaction ID',
-                      ),
-                      CommonTextfiled(
-                        controller: chequeNumberController,
-                        hintTxt: selectedMode?.id == 'cheque'
-                            ? 'Enter Cheque Number'
-                            : 'Enter Transaction ID',
-                        keyboardType: TextInputType.text,
-                      ),
-                    ],
-                  );
+                if (isContractMode) {
+                  return const SizedBox.shrink();
                 }
-                return const SizedBox.shrink();
+
+                return CommonTextfiled(
+                  controller: amountController,
+                  obscureText: false,
+                  hintTxt: 'Enter Amount',
+                  lableText: 'Enter Amount',
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an amount';
+                    }
+                    final amount = int.tryParse(value);
+                    if (amount == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (amount < 1) {
+                      return 'Amount must be at least 1';
+                    }
+                    return null;
+                  },
+                );
+              }),
+              Obx(() {
+                final selectedMode = selectedSubPaymentMode.value;
+                final isContractMode =
+                    deliveryController.isContractSubPaymentMode(selectedMode);
+
+                if (selectedMode == null ||
+                    selectedMode.id == 'cash' ||
+                    isContractMode) {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    dropdownText(
+                      selectedMode.id == 'cheque'
+                          ? 'Cheque Number'
+                          : 'Transaction ID',
+                    ),
+                    CommonTextfiled(
+                      controller: chequeNumberController,
+                      hintTxt: selectedMode.id == 'cheque'
+                          ? 'Enter Cheque Number'
+                          : 'Enter Transaction ID',
+                      keyboardType: TextInputType.text,
+                    ),
+                  ],
+                );
               }),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

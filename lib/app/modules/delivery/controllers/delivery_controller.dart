@@ -337,6 +337,16 @@ class DeliveryController extends GetxController {
   bool isToPayPaymentMode(dynamic paymentMode) =>
       normalizePaymentModeValue(paymentMode) == 'topay';
 
+  bool isContractSubPaymentMode(PaymentMode? mode) {
+    if (mode == null) {
+      return false;
+    }
+
+    final normalizedId = mode.id.trim().toLowerCase();
+    final normalizedName = mode.name.trim().toLowerCase();
+    return normalizedId == 'contract' || normalizedName == 'contract';
+  }
+
   List<PaymentMode> _withContractMode(List<PaymentMode> modes) {
     final hasContract = modes.any(
       (mode) =>

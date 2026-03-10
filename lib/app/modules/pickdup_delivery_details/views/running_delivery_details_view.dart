@@ -1128,12 +1128,14 @@ void showStatusDialog(
           chequeNumberController: transactionController,
           otpController: otpController,
           dropdownHintTxt: 'Select Payment Mode',
-          btnTxt: 'Delivery',
+          btnTxt: 'Submit',
           onConfirmCallback: () async {
-            final subPaymentMode = deliveryController
+            final selectedSubPaymentMode = deliveryController
                 .getSelectedSubPaymentMode(shipmentId.toString())
-                .value
-                ?.id;
+                .value;
+            final subPaymentMode = selectedSubPaymentMode?.id;
+            final isContractMode = deliveryController
+                .isContractSubPaymentMode(selectedSubPaymentMode);
 
             final didUpload = await deliveryController.uploadDelivery(
               shipmentId,
@@ -1141,11 +1143,11 @@ void showStatusDialog(
               deliveryController.currentUserId.value,
               DateTime.now().toIso8601String(),
               shipmentDetails?.totalCharges?.toString() ?? '0',
-              amountController.text,
+              isContractMode ? '0' : amountController.text,
               shipmentDetails?.paymentMode,
               subPaymentMode,
               otpController.text,
-              chequeNumber: transactionController.text,
+              chequeNumber: isContractMode ? '0' : transactionController.text,
               receiverName: controller.receiverNameController.text.trim(),
             );
 

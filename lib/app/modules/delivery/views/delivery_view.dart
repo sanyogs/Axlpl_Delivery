@@ -349,15 +349,20 @@ class DeliveryView extends GetView<DeliveryController> {
                                                 otpController: otpController,
                                                 dropdownHintTxt:
                                                     'Select Payment Mode',
-                                                btnTxt: 'Delivery',
+                                                btnTxt: 'Submit',
                                                 onConfirmCallback: () async {
-                                                  // Get the selected sub payment mode inside the callback
-                                                  final subPaymentMode =
+                                                  final selectedSubPaymentMode =
                                                       deliveryController
                                                           .getSelectedSubPaymentMode(
                                                               shipmentId)
-                                                          .value
+                                                          .value;
+                                                  final subPaymentMode =
+                                                      selectedSubPaymentMode
                                                           ?.id;
+                                                  final isContractMode =
+                                                      deliveryController
+                                                          .isContractSubPaymentMode(
+                                                              selectedSubPaymentMode);
 
                                                   return deliveryController
                                                       .uploadDelivery(
@@ -368,12 +373,15 @@ class DeliveryView extends GetView<DeliveryController> {
                                                     deliveryData.date,
                                                     deliveryData.totalCharges
                                                         .toString(),
-                                                    amountController.text,
+                                                    isContractMode
+                                                        ? '0'
+                                                        : amountController.text,
                                                     deliveryData.paymentMode,
                                                     subPaymentMode,
                                                     otpController.text,
-                                                    chequeNumber:
-                                                        chequeController.text,
+                                                    chequeNumber: isContractMode
+                                                        ? '0'
+                                                        : chequeController.text,
                                                   );
                                                 },
                                                 onSendOtpCallback: () async {
