@@ -33,7 +33,7 @@ class DeliveryController extends GetxController {
   final secondsLeft = 0.obs; // 0 means no active timer
   final canResend = true.obs; // allowed when no timer running
   Timer? _resendTimer;
-  static const int _cooldownSecs = 30;
+  static const int _cooldownSecs = 120;
 
   final deliveryList = <RunningDelivery>[].obs;
   final RxList<RunningDelivery> filteredDeliveryList = <RunningDelivery>[].obs;
@@ -139,7 +139,7 @@ class DeliveryController extends GetxController {
         // start cooldown timer
         _startResendCooldown();
         isOtpSent.value = true;
-        otpStatusMessage.value = 'OTP sent successfully';
+        otpStatusMessage.value = '';
         isOtpLoading.value = Status.success;
       } else {
         isOtpSent.value = false;

@@ -137,7 +137,7 @@ class DeliveryView extends GetView<DeliveryController> {
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: Text(
-                                "Delivery",
+                                "Deliver",
                                 textAlign: TextAlign.center,
                                 style: themes.fontSize14_500.copyWith(
                                     color:
@@ -447,7 +447,7 @@ class DeliveryView extends GetView<DeliveryController> {
                                         trasferTap: () {},
                                         transferBorderColor:
                                             themes.darkCyanBlue,
-                                        pickupTxt: 'Delivery',
+                                        pickupTxt: 'Deliver',
                                       ),
                                     );
                                   },
@@ -593,7 +593,7 @@ class DeliveryView extends GetView<DeliveryController> {
                                           trasferTap: () {},
                                           transferBorderColor:
                                               themes.darkCyanBlue,
-                                          pickupTxt: 'Delivery',
+                                          pickupTxt: 'Deliver',
                                         ),
                                       ),
                                     );

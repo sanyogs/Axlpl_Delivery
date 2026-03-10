@@ -70,14 +70,7 @@ class PickDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 10),
-          CommonTextfiled(
-            controller: amountController,
-            obscureText: false,
-            hintTxt: 'Enter Amount',
-            lableText: 'Enter Amount',
-            keyboardType: TextInputType.number,
-          ),
-          dropdownText('Sub Payment Mode'),
+          dropdownText('Payment Mode'),
           Obx(() {
             if (pickupController.isLoadingPayment.value) {
               return const Center(child: CircularProgressIndicator());
@@ -113,6 +106,13 @@ class PickDialog extends StatelessWidget {
               ),
             );
           }),
+          CommonTextfiled(
+            controller: amountController,
+            obscureText: false,
+            hintTxt: 'Enter Amount',
+            lableText: 'Enter Amount',
+            keyboardType: TextInputType.number,
+          ),
           Obx(() {
             final selectedMode = selectedSubPaymentMode.value;
             if (selectedMode?.id != 'cash') {
@@ -136,45 +136,16 @@ class PickDialog extends StatelessWidget {
             }
             return const SizedBox.shrink();
           }),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Enter OTP'),
-              Obx(() {
-                final loading =
-                    pickupController.isOtpLoading.value == Status.loading;
-                final canResend = pickupController.canResend.value;
-                final secs = pickupController.secondsLeft.value;
-                final label = canResend ? 'Resend OTP' : 'Resend in ${secs}s';
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 44,
-                      child: loading
-                          ? const Center(
-                              child: CircularProgressIndicator.adaptive())
-                          : TextButton(
-                              onPressed: canResend
-                                  ? () async {
-                                      final sendOtp = onSendOtpCallback ??
-                                          () => pickupController
-                                              .getOtp(shipmentID);
-                                      await sendOtp();
-                                    }
-                                  : null,
-                              child: Text(
-                                label,
-                                style: themes.fontSize14_500
-                                    .copyWith(color: themes.darkCyanBlue),
-                              ),
-                            ),
-                    ),
-                  ],
-                );
-              })
-            ],
+          Text(
+            'OTP sent to registered mobile number',
+            style: themes.fontSize14_500.copyWith(
+              color: themes.blackColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            'Enter OTP',
+            style: themes.fontSize14_500.copyWith(color: themes.grayColor),
           ),
           SizedBox(
             width: double.infinity,
@@ -197,6 +168,47 @@ class PickDialog extends StatelessWidget {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Obx(() {
+              final loading =
+                  pickupController.isOtpLoading.value == Status.loading;
+              final canResend = pickupController.canResend.value;
+              final secs = pickupController.secondsLeft.value;
+              final label = canResend ? 'Resend OTP' : 'Resend in ${secs}s';
+
+              return TextButton(
+                onPressed: canResend
+                    ? () async {
+                        final sendOtp = onSendOtpCallback ??
+                            () => pickupController.getOtp(shipmentID);
+                        await sendOtp();
+                      }
+                    : null,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: themes.darkCyanBlue,
+                ),
+                child: loading
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        label,
+                        style: themes.fontSize14_500.copyWith(
+                          color: canResend
+                              ? themes.darkCyanBlue
+                              : themes.grayColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              );
+            }),
+          ),
           const SizedBox(height: 16),
         ],
       ),
@@ -205,29 +217,59 @@ class PickDialog extends StatelessWidget {
     // Return dialog without platform-specific handling
     return AlertDialog(
       backgroundColor: themes.whiteColor,
-      title: Text('Enter Payment Details', style: themes.fontReboto16_600),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Text('Collect Payment', style: themes.fontReboto16_600),
       content: SingleChildScrollView(
         child: dialogContent,
       ),
       actions: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: themes.darkCyanBlue,
-            backgroundColor: themes.whiteColor,
-            side: BorderSide(color: themes.darkCyanBlue),
-          ),
-          onPressed: () => Get.back(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: themes.darkCyanBlue,
-            foregroundColor: themes.whiteColor,
-          ),
-          onPressed: () {
-            onConfirmCallback.call();
-          },
-          child: Text(btnTxt),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: themes.darkCyanBlue,
+                  side: BorderSide(color: themes.darkCyanBlue),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Get.back(),
+                child: Text(
+                  'Cancel',
+                  style: themes.fontSize14_500.copyWith(
+                    color: themes.darkCyanBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: themes.darkCyanBlue,
+                  foregroundColor: themes.whiteColor,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  onConfirmCallback.call();
+                },
+                child: Text(
+                  btnTxt,
+                  style: themes.fontSize14_500.copyWith(
+                    color: themes.whiteColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
