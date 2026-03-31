@@ -87,6 +87,8 @@ class ShipnowController extends GetxController {
         allShipmentData.addAll(newItems);
       }
 
+      filterShipmentData(shipmentIDController.text.trim());
+
       // Check if we have more data to load
       hasMoreData = newItems.length >= pageSize;
     } catch (e) {

@@ -853,28 +853,17 @@ class HomeView extends GetView<HomeController> {
                         child: CircularProgressIndicator.adaptive());
                   }
 
-                  // Parse today's shipments
-                  final allShipments = shipnowController.allShipmentData;
-                  final today = DateTime.now();
-                  final todayShipments = allShipments.where((shipment) {
-                    final created = shipment.createdDate;
-                    if (created == null) return false;
+                  final activeShipments = shipnowController.allShipmentData;
 
-                    // Normalize (compare only year, month, day)
-                    return created.year == today.year &&
-                        created.month == today.month &&
-                        created.day == today.day;
-                  }).toList();
-
-                  if (todayShipments.isNotEmpty) {
+                  if (activeShipments.isNotEmpty) {
                     return ListView.separated(
                       physics: const ScrollPhysics(),
                       shrinkWrap: true,
-                      itemCount: todayShipments.length,
+                      itemCount: activeShipments.length,
                       separatorBuilder: (context, index) =>
                           SizedBox(height: 15.h),
                       itemBuilder: (context, index) {
-                        final shipment = todayShipments[index];
+                        final shipment = activeShipments[index];
                         return Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
@@ -932,7 +921,7 @@ class HomeView extends GetView<HomeController> {
 
                   return Center(
                       child: Text(
-                    "No shipments created today",
+                    "No active shipments found",
                     style: themes.fontSize14_500,
                   ));
                 }),
