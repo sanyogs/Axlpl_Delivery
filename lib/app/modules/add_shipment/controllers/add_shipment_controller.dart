@@ -804,51 +804,94 @@ class AddShipmentController extends GetxController {
     }
   }
 
+  int _parseIntValue(dynamic value, [int fallback = 0]) {
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  int _parseIntFromController(TextEditingController controller,
+      [int fallback = 0]) {
+    return int.tryParse(controller.text.trim()) ?? fallback;
+  }
+
+  double _parseDoubleFromController(TextEditingController controller,
+      [double fallback = 0.0]) {
+    return double.tryParse(controller.text.trim()) ?? fallback;
+  }
+
+  bool _validateSubmitState() {
+    if (selectedPaymentMode.value == null) {
+      Get.snackbar(
+        'Payment Required',
+        'Please select a payment mode before submitting.',
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+      return false;
+    }
+
+    if (shipmentChargeController.text.trim().isEmpty ||
+        grandeChargeController.text.trim().isEmpty) {
+      Get.snackbar(
+        'Charges Missing',
+        'Please select a payment mode and wait for shipment charges to load.',
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
   Future<void> submitShipment() async {
+    if (!_validateSubmitState()) {
+      return;
+    }
+
     final userData = await LocalStorage().getUserLocalData();
     final userID = userData?.messangerdetail?.id?.toString() ??
         userData?.customerdetail?.id.toString();
     isShipmentAdd.value = Status.loading;
     try {
+      final isDifferentAddress = diffrentAddressType.value == 1;
       final shipment = ShipmentModel(
         shipmentId: '',
-        customerId: int.tryParse(selectedCustomer.value ?? '') ??
-            int.tryParse(userID.toString()),
-        categoryId: int.tryParse(selectedCategory.value) ?? 0,
-        productId: int.tryParse(selectedCommodity.value) ?? 0,
-        netWeight: int.tryParse(netWeightController.text) ?? 0,
-        grossWeight: int.tryParse(grossWeightController.text) ?? 0,
-        paymentMode: selectedPaymentMode.value?.id.toString() ?? 'prepaid',
-        serviceId: int.tryParse(selectedServiceType.value) ?? 0,
-        invoiceValue: int.tryParse(invoiceNoController.text) ?? 0,
+        customerId:
+            _parseIntValue(selectedCustomer.value, _parseIntValue(userID)),
+        categoryId: _parseIntValue(selectedCategory.value),
+        productId: _parseIntValue(selectedCommodity.value),
+        netWeight: _parseIntFromController(netWeightController),
+        grossWeight: _parseIntFromController(grossWeightController),
+        paymentMode: selectedPaymentMode.value?.id,
+        serviceId: _parseIntValue(selectedServiceType.value),
+        invoiceValue: _parseIntFromController(invoiceValueController),
         axlplInsurance: insuranceType.value,
-        policyNo: insuranceType.value == 0 ? 0 : policyNoController.text,
+        policyNo: insuranceType.value == 0 ? 0 : policyNoController.text.trim(),
         expDate: insuranceType.value == 0
             ? ''
             : DateFormat('yyyy-MM-dd').format(expireDate.value),
         insuranceValue: insuranceType.value == 0
             ? 0
-            : double.tryParse(insuranceValueController.text) ?? 0.0,
+            : _parseDoubleFromController(insuranceValueController),
         shipmentStatus: '',
         calculationStatus: 'custom',
         addedBy: 1,
         addedByType: 1,
         preAlertShipment: 0,
-        shipmentInvoiceNo: int.tryParse(invoiceNoController.text) ?? 0,
+        shipmentInvoiceNo: _parseIntFromController(invoiceNoController),
         isAmtEditedByUser: 0,
-        remark: remarkController.text,
+        remark: remarkController.text.trim(),
         billTo: 2,
-        numberOfParcel: int.tryParse(noOfParcelController.text) ?? 0,
+        numberOfParcel: _parseIntFromController(noOfParcelController),
         additionalAxlplInsurance: 0.0,
-        shipmentCharges: double.tryParse(shipmentChargeController.text) ?? 0.0,
-        insuranceCharges:
-        double.tryParse(insuranceChargeController.text) ?? 0.0,
-        invoiceCharges: double.tryParse(insuranceValueController.text) ?? 0.0,
-        handlingCharges: double.tryParse(handlingChargeController.text) ?? 0.0,
-        tax: double.tryParse(gstChargeController.text) ?? 0.0,
-        totalCharges: double.tryParse(totalChargeController.text) ?? 0.0,
-        grandTotal: double.tryParse(grandeChargeController.text) ?? 0.0,
-        docketNo: docketNoController.text,
+        shipmentCharges: _parseDoubleFromController(shipmentChargeController),
+        insuranceCharges: _parseDoubleFromController(insuranceChargeController),
+        invoiceCharges: _parseDoubleFromController(invoiceValueController),
+        handlingCharges: _parseDoubleFromController(headlingChargeController),
+        tax: _parseDoubleFromController(gstChargeController),
+        totalCharges: _parseDoubleFromController(totalChargeController),
+        grandTotal: _parseDoubleFromController(grandeChargeController),
+        docketNo: docketNoController.text.trim(),
         shipmentDate: DateFormat('yyyy-MM-dd').format(selectedDate.value),
 
         senderName: senderAddressType.value == 0
@@ -868,8 +911,8 @@ class AddShipmentController extends GetxController {
             ? selectedSenderAreaId.value
             : selectedExistingSenderAreaId.value,
         senderPincode: senderAddressType.value == 0
-            ? int.tryParse(senderInfoZipController.text)
-            : existingSenderInfoZipController.text,
+            ? _parseIntFromController(senderInfoZipController)
+            : _parseIntFromController(existingSenderInfoZipController),
         senderAddress1: senderAddressType.value == 0
             ? senderInfoAddress1Controller.text
             : existingSenderInfoAddress1Controller.text,
@@ -887,8 +930,8 @@ class AddShipmentController extends GetxController {
         senderGstNo: senderAddressType.value == 0
             ? senderInfoGstNoController.text
             : existingSenderInfoGstNoController.text,
-        senderCustomerId: int.tryParse(selectedCustomer.value ?? '') ??
-            int.tryParse(userID.toString()),
+        senderCustomerId:
+            _parseIntValue(selectedCustomer.value, _parseIntValue(userID)),
         receiverName: receviverAddressType.value == 0
             ? receiverInfoCompanyNameController.text
             : receiverExistingNameController.text,
@@ -906,8 +949,8 @@ class AddShipmentController extends GetxController {
             ? selectedReceiverAreaId.value
             : selectedExistingReceiverAreaId.value,
         receiverPincode: receviverAddressType.value == 0
-            ? int.tryParse(receiverInfoZipController.text)
-            : int.tryParse(receiverExistingZipController.text),
+            ? _parseIntFromController(receiverInfoZipController)
+            : _parseIntFromController(receiverExistingZipController),
         receiverAddress1: receviverAddressType.value == 0
             ? receiverInfoAddress1Controller.text
             : receiverExistingAddress1Controller.text,
@@ -925,15 +968,19 @@ class AddShipmentController extends GetxController {
         receiverGstNo: receviverAddressType.value == 0
             ? receiverInfoGstNoController.text
             : receiverExistingGstNoController.text,
-        receiverCustomerId: selectedReceiverCustomer.value ?? userID,
-        isDiffAdd: 0,
-        diffReceiverCountry: diffrentAddressType.value,
-        diffReceiverState: selectedDiffStateId.value,
-        diffReceiverCity: selectedDiffCityId.value,
-        diffReceiverArea: selectedDiffAreaId.value,
-        diffReceiverPincode: int.tryParse(diffrentZipController.text) ?? 0,
-        diffReceiverAddress1: diffrentAddress1Controller.text,
-        diffReceiverAddress2: diffrentAddress2Controller.text,
+        receiverCustomerId:
+            _parseIntValue(selectedReceiverCustomer.value, _parseIntValue(userID)),
+        isDiffAdd: diffrentAddressType.value,
+        diffReceiverCountry: isDifferentAddress ? 1 : 0,
+        diffReceiverState: isDifferentAddress ? selectedDiffStateId.value : 0,
+        diffReceiverCity: isDifferentAddress ? selectedDiffCityId.value : 0,
+        diffReceiverArea: isDifferentAddress ? selectedDiffAreaId.value : 0,
+        diffReceiverPincode:
+            isDifferentAddress ? _parseIntFromController(diffrentZipController) : 0,
+        diffReceiverAddress1:
+            isDifferentAddress ? diffrentAddress1Controller.text.trim() : '',
+        diffReceiverAddress2:
+            isDifferentAddress ? diffrentAddress2Controller.text.trim() : '',
       );
 
       final response =
@@ -954,14 +1001,22 @@ class AddShipmentController extends GetxController {
         Get.offAllNamed(Routes.HOME, arguments: userData);
       } else {
         isShipmentAdd.value = Status.error;
-        Get.snackbar('Error', 'Failed to add shipment');
+        Get.snackbar(
+          'Error',
+          addShipmentRepo.getApiErrorMessage() ?? 'Failed to add shipment',
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
       }
     } catch (e) {
       isShipmentAdd.value = Status.error;
-      Get.snackbar('Error', 'Unexpected error occurred');
+      Get.snackbar(
+        'Error',
+        addShipmentRepo.getApiErrorMessage() ?? 'Unexpected error occurred',
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
       Utils().logError('Shipment submission error: $e');
-    } finally {
-      isShipmentAdd.value = Status.success;
     }
   }
 

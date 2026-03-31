@@ -16,7 +16,12 @@ import 'package:axlpl_delivery/utils/utils.dart';
 class AddShipmentRepo {
   final ApiServices _apiServices = ApiServices();
   final Utils _utils = Utils();
-  final LocalStorage _localStorage = LocalStorage();
+  String? apiMessage;
+
+  String? getApiErrorMessage() {
+    return apiMessage;
+  }
+
   Future<List<CustomersList>?> customerListRepo(
       final search, final nextID) async {
     try {
@@ -222,6 +227,7 @@ class AddShipmentRepo {
   Future<bool?> addShipmentRepo({
     required ShipmentModel shipmentModel,
   }) async {
+    apiMessage = null;
     final userData = await LocalStorage().getUserLocalData();
     if (userData == null) return false;
 
@@ -242,17 +248,26 @@ class AddShipmentRepo {
         token: token,
       );
 
-      response.when(
-        success: (success) {
-          log("Shipment Add Success: ${response.toString()}");
+      return response.when(
+        success: (body) {
+          final data = CommonModel.fromJson(body);
+          apiMessage = data.message?.trim();
+
+          if (data.status == 'success') {
+            log("Shipment Add Success: ${data.toJson()}");
+            return true;
+          }
+
+          log("Shipment Add Failed: ${data.toJson()}");
+          return false;
         },
         error: (error) {
+          apiMessage = error.message;
           throw Exception("Shipment add failed: ${error.toString()}");
         },
       );
-
-      return true;
     } catch (e) {
+      apiMessage ??= e.toString();
       _utils.logError(e.toString());
       return false;
     }
