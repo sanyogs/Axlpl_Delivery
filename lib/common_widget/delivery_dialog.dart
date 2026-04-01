@@ -343,6 +343,18 @@ class DeliveryDialog extends StatelessWidget {
                                 rootNavigator: true,
                               ).pop(true);
                             }
+                            final successMessage = deliveryController
+                                .submitStatusMessage.value
+                                .trim();
+                            if (successMessage.isNotEmpty) {
+                              Future.delayed(const Duration(milliseconds: 120),
+                                  () {
+                                Utils().showTopNotification(
+                                  title: 'Success',
+                                  message: successMessage,
+                                );
+                              });
+                            }
                           }
                         },
                   child: isSubmitting

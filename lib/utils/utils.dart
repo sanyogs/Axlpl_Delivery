@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'package:axlpl_delivery/app/data/models/lat_long_model.dart';
 import 'package:axlpl_delivery/utils/theme.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -19,6 +21,8 @@ final player = AudioPlayer();
 class Utils {
   Utils._privateConstructor();
   static final Utils instance = Utils._privateConstructor();
+  static OverlayEntry? _topNotificationEntry;
+  static Timer? _topNotificationTimer;
 
   Utils._internal();
   static final Utils _instance = Utils._internal();
@@ -55,6 +59,149 @@ class Utils {
     dynamic info,
   ) {
     // logger.d(info);
+  }
+
+  Future<void> showTopNotification({
+    String? title,
+    required String message,
+    bool isError = false,
+  }) async {
+    final normalizedMessage = message.trim();
+    if (normalizedMessage.isEmpty) {
+      return;
+    }
+
+    final normalizedTitle = title?.trim().isNotEmpty == true
+        ? title!.trim()
+        : isError
+            ? 'Failed'
+            : 'Success';
+
+    _insertTopNotification(
+      title: normalizedTitle,
+      message: normalizedMessage,
+      isError: isError,
+      attempt: 0,
+    );
+  }
+
+  void _insertTopNotification({
+    required String title,
+    required String message,
+    required bool isError,
+    required int attempt,
+  }) {
+    final overlayState = _resolveOverlayState();
+    if (overlayState == null) {
+      if (attempt < 5) {
+        Future.delayed(const Duration(milliseconds: 120), () {
+          _insertTopNotification(
+            title: title,
+            message: message,
+            isError: isError,
+            attempt: attempt + 1,
+          );
+        });
+      } else {
+        Fluttertoast.cancel();
+        Fluttertoast.showToast(
+          msg: '$title\n$message',
+          gravity: ToastGravity.TOP,
+          backgroundColor: isError ? themes.redColor : themes.darkCyanBlue,
+          textColor: themes.whiteColor,
+          fontSize: 16.0,
+          toastLength: Toast.LENGTH_LONG,
+        );
+      }
+      return;
+    }
+
+    final backgroundColor = isError ? themes.redColor : themes.darkCyanBlue;
+    _removeTopNotification();
+
+    _topNotificationEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        child: SafeArea(
+          bottom: false,
+          child: Material(
+            color: Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlayState.insert(_topNotificationEntry!);
+    _topNotificationTimer = Timer(
+      const Duration(seconds: 3),
+      _removeTopNotification,
+    );
+  }
+
+  OverlayState? _resolveOverlayState() {
+    final navigatorOverlay = Get.key.currentState?.overlay;
+    if (navigatorOverlay != null) {
+      return navigatorOverlay;
+    }
+
+    if (Get.overlayContext != null) {
+      final overlay = Overlay.maybeOf(Get.overlayContext!, rootOverlay: true);
+      if (overlay != null) {
+        return overlay;
+      }
+    }
+
+    if (Get.context != null) {
+      final overlay = Overlay.maybeOf(Get.context!, rootOverlay: true);
+      if (overlay != null) {
+        return overlay;
+      }
+    }
+
+    return null;
+  }
+
+  static void _removeTopNotification() {
+    _topNotificationTimer?.cancel();
+    _topNotificationTimer = null;
+    _topNotificationEntry?.remove();
+    _topNotificationEntry = null;
   }
 
   String? validatePhone(String? value) {

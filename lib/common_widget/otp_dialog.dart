@@ -198,6 +198,21 @@ Future<bool?> showOtpDialog({
                               rootNavigator: true,
                             ).pop(true);
                           }
+
+                          final successMessage = submitStatusMessage != null &&
+                                  isSubmitStatusError != null &&
+                                  !isSubmitStatusError.value
+                              ? submitStatusMessage.value.trim()
+                              : '';
+                          if (successMessage.isNotEmpty) {
+                            Future.delayed(const Duration(milliseconds: 120),
+                                () {
+                              Utils().showTopNotification(
+                                title: 'Success',
+                                message: successMessage,
+                              );
+                            });
+                          }
                         },
                   child: isSubmitting
                       ? const SizedBox(

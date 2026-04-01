@@ -242,12 +242,6 @@ class DeliveryController extends GetxController {
                 : 'Delivery uploaded successfully';
         submitStatusMessage.value = successMessage;
         isSubmitStatusError.value = false;
-        Get.snackbar(
-          'Success',
-          successMessage,
-          backgroundColor: themes.darkCyanBlue,
-          colorText: themes.whiteColor,
-        );
         isUploadDelivery.value = Status.success;
         getDeliveryData();
         final historyController = Get.find<HistoryController>();
@@ -263,11 +257,10 @@ class DeliveryController extends GetxController {
         final message = _buildDeliveryFailureMessage(deliveryRepo.apiMessage);
         submitStatusMessage.value = message;
         isSubmitStatusError.value = true;
-        Get.snackbar(
-          'Failed',
-          message,
-          backgroundColor: themes.redColor,
-          colorText: themes.whiteColor,
+        Utils().showTopNotification(
+          title: 'Failed',
+          message: message,
+          isError: true,
         );
         isUploadDelivery.value = Status.error;
         return false;
@@ -276,11 +269,10 @@ class DeliveryController extends GetxController {
       final message = _buildDeliveryFailureMessage(e.toString());
       submitStatusMessage.value = message;
       isSubmitStatusError.value = true;
-      Get.snackbar(
-        'Failed',
-        message,
-        backgroundColor: themes.redColor,
-        colorText: themes.whiteColor,
+      Utils().showTopNotification(
+        title: 'Failed',
+        message: message,
+        isError: true,
       );
       isUploadDelivery.value = Status.error;
       return false;
