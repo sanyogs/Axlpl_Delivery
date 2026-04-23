@@ -1314,7 +1314,7 @@ void showStatusDialog(
                             'status-none',
                       ),
                       isExpanded: true,
-                      initialValue: controller.selectedStatus.value,
+                      value: controller.selectedStatus.value,
                       items: list.map((status) {
                         return DropdownMenuItem<StatusModel>(
                           value: status,
@@ -1411,7 +1411,7 @@ void showStatusDialog(
                                 'negative-status-none',
                           ),
                           isExpanded: true,
-                          initialValue: controller.selectedNegativeStatus.value,
+                          value: controller.selectedNegativeStatus.value,
                           items: negativeList.map((status) {
                             return DropdownMenuItem<NegativeStatusModel>(
                               value: status,

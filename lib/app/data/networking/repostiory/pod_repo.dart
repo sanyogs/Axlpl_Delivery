@@ -28,8 +28,6 @@ class PodRepo {
     apiMessage = null;
 
     final userData = await _localStorage.getUserLocalData();
-    final userID = userData?.messangerdetail?.id?.toString() ??
-        userData?.customerdetail?.id?.toString();
     final token =
         userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
@@ -54,21 +52,17 @@ class PodRepo {
         success: (body) {
           log("API Success Body: $body");
           final apiStatus = CommonModel.fromJson(body);
+          apiMessage = apiStatus.message?.trim();
 
-          if (apiStatus.status != 'success') {
-            throw Exception(
-                apiStatus.message ?? "Pod Upload Failed: Unknown Error");
-          } else {
-            apiMessage = apiStatus.message;
-          }
-
-          return true;
+          return apiStatus.status == 'success';
         },
         error: (exception) {
-          throw Exception("Pod Upload Failed: ${exception.toString()}");
+          apiMessage = exception.message;
+          return false;
         },
       );
     } catch (e) {
+      apiMessage ??= e.toString();
       final errorMessage = "Unexpected Error: $e";
       Utils.instance.log(errorMessage);
       return false;
@@ -83,24 +77,25 @@ class PodRepo {
         userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
     try {
       final response = await apiServices.getShipmentRecord(shipmentID, token);
-      response.when(
+      return response.when(
         success: (success) {
           final data = ShipmentRecordModel.fromJson(success);
-          if (data.status == 'success') {
-            return data;
-          } else {
-            Utils().logInfo(
-                'API call successful but status is not "success" : ${data.status}');
+          apiMessage = data.message?.trim();
+
+          if (data.status == 'success' && data.shipmentRecordList != null) {
+            return [data.shipmentRecordList!];
           }
+
+          return <ShipmentRecordList>[];
         },
         error: (error) {
-          throw Exception(error.toString());
+          apiMessage = error.message;
+          throw error;
         },
       );
     } catch (e) {
       rethrow;
     }
-    return [];
   }
 
   Future<ShipmentRecordData> shipmentRecordRepo(final shipmentID) async {
