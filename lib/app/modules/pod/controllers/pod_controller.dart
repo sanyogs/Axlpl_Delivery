@@ -95,6 +95,8 @@ class PodController extends GetxController {
     try {
       isPod.value = Status.loading;
       message.value = '';
+      // Allow the UI to repaint loading state before starting the upload work.
+      await Future<void>.delayed(Duration.zero);
 
       final result = await _repo.uploadPodRepo(
         shipmentIdController.text,
@@ -108,22 +110,27 @@ class PodController extends GetxController {
         message.value = _repo.apiMessage ?? 'Upload successful';
         shipmentIdController.clear();
 
-        Get.snackbar("Success", message.value,
-            backgroundColor: themes.darkCyanBlue, colorText: themes.whiteColor);
+        Utils().showTopNotification(
+          title: 'Success',
+          message: message.value,
+        );
         imageFile.value = null;
       } else {
         isPod.value = Status.error;
         message.value = _repo.apiMessage ?? 'Upload failed';
-        Get.snackbar("Error", message.value,
-            backgroundColor: themes.redColor, colorText: themes.whiteColor);
+        Utils().showTopNotification(
+          title: 'Failed',
+          message: message.value,
+          isError: true,
+        );
       }
     } catch (e) {
       isPod.value = Status.error;
       message.value = 'Unexpected error: $e';
-      Get.snackbar(
-        "Error",
-        message.value,
-        backgroundColor: themes.redColor,
+      Utils().showTopNotification(
+        title: 'Failed',
+        message: message.value,
+        isError: true,
       );
     }
   }
@@ -156,9 +163,10 @@ class PodController extends GetxController {
 
         shipmentRecordList.clear();
         isShipmentRecord.value = Status.error;
-        shipmentLookupMessage.value = _repo.apiMessage?.trim().isNotEmpty == true
-            ? _repo.apiMessage!.trim()
-            : 'No shipment found for this ID';
+        shipmentLookupMessage.value =
+            _repo.apiMessage?.trim().isNotEmpty == true
+                ? _repo.apiMessage!.trim()
+                : 'No shipment found for this ID';
         return;
       } catch (e) {
         Utils().logError(e.toString());
@@ -181,9 +189,8 @@ class PodController extends GetxController {
 
         shipmentRecordList.clear();
         isShipmentRecord.value = Status.error;
-        shipmentLookupMessage.value = msg?.isNotEmpty == true
-            ? msg!
-            : 'Unable to fetch shipment details';
+        shipmentLookupMessage.value =
+            msg?.isNotEmpty == true ? msg! : 'Unable to fetch shipment details';
         return;
       }
     }

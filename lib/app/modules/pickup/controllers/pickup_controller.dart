@@ -217,11 +217,9 @@ class PickupController extends GetxController {
       );
 
       if (success == true) {
-        Get.snackbar(
-          'Success',
-          'Upload pickup successful!',
-          colorText: themes.whiteColor,
-          backgroundColor: themes.darkCyanBlue,
+        Utils().showTopNotification(
+          title: 'Success',
+          message: pickupRepo.apiMessage ?? 'Upload pickup successful!',
         );
         isUploadPickup.value = Status.success;
         getPickupData();
@@ -234,21 +232,20 @@ class PickupController extends GetxController {
         otpStatusMessage.value = '';
         return true;
       } else {
-        Get.snackbar(
-          'Failed',
-          'Upload pickup failed. Please try again.',
-          colorText: themes.whiteColor,
-          backgroundColor: themes.redColor,
+        Utils().showTopNotification(
+          title: 'Failed',
+          message: pickupRepo.apiMessage ??
+              'Upload pickup failed. Please try again.',
+          isError: true,
         );
         isUploadPickup.value = Status.error;
         return false;
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'An unexpected error occurred.',
-        colorText: themes.whiteColor,
-        backgroundColor: themes.redColor,
+      Utils().showTopNotification(
+        title: 'Failed',
+        message: pickupRepo.apiMessage ?? 'An unexpected error occurred.',
+        isError: true,
       );
       isUploadPickup.value = Status.error;
       return false;

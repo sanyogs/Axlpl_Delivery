@@ -1,10 +1,8 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:axlpl_delivery/app/data/models/payment_mode_model.dart';
 import 'package:axlpl_delivery/app/data/models/shipment_record_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
-import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
@@ -27,7 +25,6 @@ class PodView extends GetView<PodController> {
   const PodView({super.key});
   @override
   Widget build(BuildContext context) {
-    final pickupController = Get.find<PickupController>();
     return CommonScaffold(
         appBar: commonAppbar('Upload POD'),
         body: Padding(
@@ -110,8 +107,7 @@ class PodView extends GetView<PodController> {
                               SizedBox(
                                 width: 16.w,
                                 height: 16.w,
-                                child:
-                                    const CircularProgressIndicator.adaptive(
+                                child: const CircularProgressIndicator.adaptive(
                                   strokeWidth: 2,
                                 ),
                               ),
@@ -308,19 +304,31 @@ class PodView extends GetView<PodController> {
                 //     return SizedBox.shrink();
                 //   }
                 // }),
-                CommonButton(
-                  title: 'Upload',
-                  isLoading: controller.isPod.value == Status.loading,
-                  onPressed: () async {
-                    controller.uploadPod(
-                      shipmentStatus: 'Delivered',
-                      shipmentOtp: '0000',
-                      file: File(
-                        controller.imageFile.value?.path ?? '',
-                      ),
-                    );
-                  },
-                )
+                Obx(() {
+                  final isUploading = controller.isPod.value == Status.loading;
+                  return CommonButton(
+                    title: 'Upload',
+                    isLoading: isUploading,
+                    onPressed: isUploading
+                        ? null
+                        : () async {
+                            if (controller.imageFile.value == null) {
+                              Utils().showTopNotification(
+                                title: 'Failed',
+                                message: 'Please upload your file here',
+                                isError: true,
+                              );
+                              return;
+                            }
+
+                            controller.uploadPod(
+                              shipmentStatus: 'Delivered',
+                              shipmentOtp: '0000',
+                              file: File(controller.imageFile.value!.path),
+                            );
+                          },
+                  );
+                })
               ],
             ),
           ),
