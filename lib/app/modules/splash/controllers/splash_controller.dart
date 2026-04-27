@@ -1,16 +1,16 @@
 import 'dart:developer';
 
+import 'package:axlpl_delivery/common_widget/force_update_dialog.dart';
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/app/data/networking/repostiory/auth_repo.dart';
+import 'package:axlpl_delivery/const/app_update_config.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/local_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashController extends GetxController {
   //TODO: Implement SplashController
-  final AuthRepo _authRepo = AuthRepo();
   @override
   void onInit() {
     // TODO: implement onInit
@@ -24,6 +24,23 @@ class SplashController extends GetxController {
       // Optional: show a local notification
       NotificationService.showNotification(message);
     });
+    _checkAppVersion();
+  }
+
+  Future<void> _checkAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion =
+          '${packageInfo.version}+${packageInfo.buildNumber}';
+
+      if (AppUpdateConfig.requiresUpdate(currentVersion)) {
+        showForceUpdateDialog();
+        return;
+      }
+    } catch (e) {
+      log('Version check failed: $e');
+    }
+
     keepLogin();
   }
 
@@ -31,8 +48,6 @@ class SplashController extends GetxController {
     Future.delayed(const Duration(seconds: 3), () async {
       final userData = await LocalStorage().getUserLocalData();
       final role = await storage.read(key: LocalStorage().userRole);
-      final token = await storage.read(
-          key: LocalStorage().tokenKey); // ✅ check secure token
 
       if (userData == null || role == null) {
         Get.offAllNamed(Routes.AUTH);
