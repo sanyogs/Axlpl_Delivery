@@ -10,14 +10,12 @@ import 'package:axlpl_delivery/app/data/networking/repostiory/delivery_repo.dart
 import 'package:axlpl_delivery/app/data/networking/repostiory/pickup_repo.dart';
 import 'package:axlpl_delivery/app/modules/history/controllers/history_controller.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class DeliveryController extends GetxController {
   final pickupRepo = PickupRepo();
   final deliveryRepo = DeliveryRepo();
-  final Dio dio = Dio();
   ApiClient apiClient = ApiClient();
   final historyController = Get.put(HistoryController());
   //TODO: Implement DeliveryController
@@ -292,15 +290,16 @@ class DeliveryController extends GetxController {
   Future<void> fetchPaymentModes() async {
     isLoadingPayment.value = true;
     try {
-      final response = await dio.get(apiClient.baseUrl + getPaymentModePoint);
-
-      if (response.statusCode == 200 && response.data['status'] == 'success') {
-        final data = PaymentModesResponse.fromJson(response.data);
-
-        subPaymentModes.value = _withContractMode(data.data.subPaymentModes);
-      } else {
-        Get.snackbar('Error', 'Failed to fetch payment modes');
-      }
+      final response = await apiClient.get(getPaymentModePoint);
+      response.when(
+        success: (body) {
+          final data = PaymentData.fromJson(body as Map<String, dynamic>);
+          subPaymentModes.value = _withContractMode(data.subPaymentModes);
+        },
+        error: (error) {
+          Get.snackbar('Error', error.message);
+        },
+      );
     } catch (e) {
       Get.snackbar('Error', 'Dio Error: $e');
     } finally {

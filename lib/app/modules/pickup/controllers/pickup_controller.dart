@@ -13,11 +13,9 @@ import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:dio/dio.dart';
 
 class PickupController extends GetxController {
   //TODO: Implement PickupController
-  final Dio dio = Dio();
   ApiClient apiClient = ApiClient();
   final pickupRepo = PickupRepo();
   final shipmentRepo = ShipnowRepo();
@@ -177,15 +175,17 @@ class PickupController extends GetxController {
   Future<void> fetchPaymentModes() async {
     isLoadingPayment.value = true;
     try {
-      final response = await dio.get(apiClient.baseUrl + getPaymentModePoint);
-
-      if (response.statusCode == 200 && response.data['status'] == 'success') {
-        final data = PaymentModesResponse.fromJson(response.data);
-        paymentModes.value = data.data.paymentModes;
-        subPaymentModes.value = data.data.subPaymentModes;
-      } else {
-        Get.snackbar('Error', 'Failed to fetch payment modes');
-      }
+      final response = await apiClient.get(getPaymentModePoint);
+      response.when(
+        success: (body) {
+          final data = PaymentData.fromJson(body as Map<String, dynamic>);
+          paymentModes.value = data.paymentModes;
+          subPaymentModes.value = data.subPaymentModes;
+        },
+        error: (error) {
+          Get.snackbar('Error', error.message);
+        },
+      );
     } catch (e) {
       Get.snackbar('Error', 'Dio Error: $e');
     } finally {
