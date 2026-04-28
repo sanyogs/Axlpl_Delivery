@@ -34,7 +34,10 @@ class BottombarController extends GetxController {
 
   @override
   void onInit() {
-    // TODO: implement onInit
+    final arguments = Get.arguments;
+    if (arguments is LoginModel) {
+      userData.value = arguments;
+    }
     loadUserData();
     super.onInit();
   }

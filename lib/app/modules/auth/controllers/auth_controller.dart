@@ -1,17 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/app/data/models/login_model.dart';
-import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/auth_repo.dart';
-import 'package:axlpl_delivery/app/modules/bottombar/controllers/bottombar_controller.dart';
-import 'package:axlpl_delivery/app/modules/pickup/controllers/pickup_controller.dart';
 import 'package:axlpl_delivery/app/modules/profile/controllers/profile_controller.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
-import 'package:axlpl_delivery/const/const.dart';
 import 'package:axlpl_delivery/utils/theme.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -215,20 +209,6 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<bool> _requestPermissions() async {
-    if (Platform.isAndroid) {
-      var status = await Permission.storage.status;
-      if (status.isGranted) {
-        return true;
-      } else {
-        status = await Permission.storage.request();
-        return status.isGranted;
-      }
-    }
-    // For other platforms like iOS, assume permission is granted or handled elsewhere.
-    return true;
-  }
-
   @override
   void onInit() {
     // TODO: implement onInit
@@ -296,5 +276,18 @@ class AuthController extends GetxController {
   void _cancelTimer() {
     _timer?.cancel();
     secondsLeft.value = 0;
+  }
+
+  Future<bool> requestPermissions() async {
+    if (Platform.isAndroid) {
+      var status = await Permission.storage.status;
+      if (status.isGranted) {
+        return true;
+      } else {
+        status = await Permission.storage.request();
+        return status.isGranted;
+      }
+    }
+    return true;
   }
 }

@@ -72,11 +72,11 @@ class AddShipmentController extends GetxController {
   final PageController pageController = PageController();
 
   List<GlobalKey<FormState>> formKeys =
-  List.generate(5, (index) => GlobalKey<FormState>());
+      List.generate(5, (index) => GlobalKey<FormState>());
 
   final TextEditingController searchController = TextEditingController();
   final TextEditingController searchCommodityController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController netWeightController = TextEditingController();
   final TextEditingController grossWeightController = TextEditingController();
   final TextEditingController noOfParcelController = TextEditingController();
@@ -84,121 +84,121 @@ class AddShipmentController extends GetxController {
   final TextEditingController invoiceNoController = TextEditingController();
   final TextEditingController invoiceValueController = TextEditingController();
   final TextEditingController insuranceValueController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController remarkController = TextEditingController();
 
   final TextEditingController senderInfoNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoEmailController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoCompanyNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoZipController = TextEditingController();
 
   final TextEditingController senderInfoStateController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoAreaController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController senderInfoCityController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoGstNoController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoAddress1Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoAddress2Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoMobileController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController senderInfoExitingEmailController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController existingSenderInfoNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoCompanyNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoZipController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoStateController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoCityController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoGstNoController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoAddress1Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoAddress2Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoMobileController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoEmailController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController existingSenderInfoAreaController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController receiverInfoNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoCompanyNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoZipController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController receiverInfoStateController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoCityController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoGstNoController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoAddress1Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoAddress2Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoMobileController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoEmailController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverInfoAreaController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingCompanyNameController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingZipController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController receiverExistingStateController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingCityController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingGstNoController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingAddress1Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingAddress2Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingMobileController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingEmailController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController receiverExistingAreaController =
-  TextEditingController();
+      TextEditingController();
 
   final TextEditingController diffrentZipController = TextEditingController();
   final TextEditingController diffrentStateController = TextEditingController();
   final TextEditingController diffrentCityController = TextEditingController();
   final TextEditingController diffrentAeraController = TextEditingController();
   final TextEditingController diffrentAddress1Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController diffrentAddress2Controller =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController shipmentChargeController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController insuranceChargeController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController odaChargeController = TextEditingController();
   final TextEditingController holidayChargeController = TextEditingController();
   final TextEditingController headlingChargeController =
-  TextEditingController();
+      TextEditingController();
   final TextEditingController totalChargeController = TextEditingController();
   final TextEditingController grandeChargeController = TextEditingController();
   final TextEditingController gstChargeController = TextEditingController();
@@ -420,8 +420,8 @@ class AddShipmentController extends GetxController {
   }
 
   Future<void> loadMoreReceiverCustomers() async {
-    if (!hasMoreReceiverCustomers.value ||
-        isLoadingMoreReceiverCustomers.value) return;
+    if (!hasMoreReceiverCustomers.value || isLoadingMoreReceiverCustomers.value)
+      return;
 
     if (customerReceiverList.isNotEmpty) {
       final lastCustomer = customerReceiverList.last;
@@ -475,7 +475,8 @@ class AddShipmentController extends GetxController {
     }
   }
 
-  Future commodityListData(final search, final cateID, [String nextID = '']) async {
+  Future commodityListData(final search, final cateID,
+      [String nextID = '']) async {
     if (cateID.isEmpty) return;
     try {
       if (nextID == '0' || nextID.isEmpty) {
@@ -526,9 +527,15 @@ class AddShipmentController extends GetxController {
   }
 
   Future<void> getContractDetails(final customerID, final categoryId) async {
+    if ((customerID?.toString().isEmpty ?? true) ||
+        (categoryId?.toString().isEmpty ?? true)) {
+      contractsList.value = [];
+      return;
+    }
     isContractDetails(Status.loading);
     try {
-      final data = await addShipmentRepo.getContractDetailsRepo(customerID, categoryId);
+      final data =
+          await addShipmentRepo.getContractDetailsRepo(customerID, categoryId);
       contractsList.value = data;
       isContractDetails(Status.success);
     } catch (error) {
@@ -681,21 +688,21 @@ class AddShipmentController extends GetxController {
   }
 
   Future<void> shipmentCal(
-      final custID,
-      final cateID,
-      final commID,
-      final netWeight,
-      final grossWeight,
-      final paymentMode,
-      final invoiceValue,
-      final insuranceByAxlpl,
-      final policyNo,
-      final numberOfParcel,
-      final expDate,
-      final policyValue,
-      final senderZip,
-      final receiverZip,
-      ) async {
+    final custID,
+    final cateID,
+    final commID,
+    final netWeight,
+    final grossWeight,
+    final paymentMode,
+    final invoiceValue,
+    final insuranceByAxlpl,
+    final policyNo,
+    final numberOfParcel,
+    final expDate,
+    final policyValue,
+    final senderZip,
+    final receiverZip,
+  ) async {
     isShipmentCal.value = Status.loading;
     try {
       final data = await addShipmentRepo.shipmentCalculationRepo(
@@ -736,13 +743,21 @@ class AddShipmentController extends GetxController {
   }
 
   Future<void> grossCalculation(
-      final netWeight,
-      final grossWeight,
-      final status,
-      final productID,
-      final contractWeight,
-      final contractRate,
-      ) async {
+    final netWeight,
+    final grossWeight,
+    final status,
+    final productID,
+    final contractWeight,
+    final contractRate,
+  ) async {
+    final weightValue = contractWeight?.toString().trim() ?? '';
+    final rateValue = contractRate?.toString().trim() ?? '';
+    if (weightValue.isEmpty || rateValue.isEmpty) {
+      errorMessage.value = 'Contract details unavailable for selected category';
+      isGorsssCal.value = Status.error;
+      return;
+    }
+
     isGorsssCal.value = Status.loading;
     try {
       var data = await addShipmentRepo.gorssCalculationRepo(
@@ -750,8 +765,8 @@ class AddShipmentController extends GetxController {
         grossWeight,
         status,
         productID,
-        contractWeight,
-        contractRate,
+        weightValue,
+        rateValue,
       );
 
       if (data != null) {
@@ -968,15 +983,16 @@ class AddShipmentController extends GetxController {
         receiverGstNo: receviverAddressType.value == 0
             ? receiverInfoGstNoController.text
             : receiverExistingGstNoController.text,
-        receiverCustomerId:
-            _parseIntValue(selectedReceiverCustomer.value, _parseIntValue(userID)),
+        receiverCustomerId: _parseIntValue(
+            selectedReceiverCustomer.value, _parseIntValue(userID)),
         isDiffAdd: diffrentAddressType.value,
         diffReceiverCountry: isDifferentAddress ? 1 : 0,
         diffReceiverState: isDifferentAddress ? selectedDiffStateId.value : 0,
         diffReceiverCity: isDifferentAddress ? selectedDiffCityId.value : 0,
         diffReceiverArea: isDifferentAddress ? selectedDiffAreaId.value : 0,
-        diffReceiverPincode:
-            isDifferentAddress ? _parseIntFromController(diffrentZipController) : 0,
+        diffReceiverPincode: isDifferentAddress
+            ? _parseIntFromController(diffrentZipController)
+            : 0,
         diffReceiverAddress1:
             isDifferentAddress ? diffrentAddress1Controller.text.trim() : '',
         diffReceiverAddress2:

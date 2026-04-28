@@ -1,4 +1,3 @@
-import 'package:axlpl_delivery/app/data/models/login_model.dart';
 import 'package:axlpl_delivery/utils/assets.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +12,6 @@ class BottombarView extends GetView<BottombarController> {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(BottombarController());
-    // final LoginModel? usersData = Get.arguments as LoginModel?;
 
     return Scaffold(
       body: Obx(() =>
