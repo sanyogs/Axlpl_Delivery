@@ -7,12 +7,12 @@ import 'package:axlpl_delivery/app/data/networking/interceptor/retry_interceptor
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:talker_dio_logger/talker_dio_logger.dart';
-import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ApiClient {
   late Dio _dio;
-  final String baseUrl = 'https://my.axlpl.com/messenger/services_v7/';
+  final String baseUrl = 'https://my.axlpl.com/messenger/services_v8/';
+  late final Future<String> _appVersionFuture = _loadAppVersion();
 
   ApiClient() {
     _dio = Dio();
@@ -55,6 +55,30 @@ class ApiClient {
     // }
   }
 
+  Future<String> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      return packageInfo.version;
+    } catch (e) {
+      debugPrint('Unable to read app version: $e');
+      return '0.0.0';
+    }
+  }
+
+  Future<Map<String, String>> _buildHeaders({
+    required String content,
+    String? token,
+  }) async {
+    final appVersion = await _appVersionFuture;
+
+    return {
+      'accept': '*/*',
+      'Content-Type': content,
+      'X-App-Version': appVersion,
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
   Future<APIResponse> post(
     String path,
     dynamic body, {
@@ -87,11 +111,7 @@ class ApiClient {
 
     try {
       // ✅ Step 4: Define Headers
-      final headers = {
-        'accept': '*/*',
-        'Content-Type': content,
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
+      final headers = await _buildHeaders(content: content, token: token);
 
       // ✅ Step 5: Make the API Request
       final response = await _dio.post(
@@ -200,14 +220,7 @@ class ApiClient {
 
     try {
       // Setup headers with an optional authorization token
-      final headers = {
-        'accept': '*/*',
-        'Content-Type': content,
-      };
-
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token'; // Add token if needed
-      }
+      final headers = await _buildHeaders(content: content, token: token);
 
       // Perform the GET request
       final response = await _dio.get(
@@ -278,6 +291,44 @@ class ApiClient {
       log("Unexpected error: ${e.toString()}");
       return APIResponse.error(
           AppException.errorWithMessage("Unexpected error occurred"));
+    }
+  }
+
+  Future<Response<dynamic>?> getRaw(
+    String path, {
+    String? newBaseUrl,
+    String? token,
+    Map<String, dynamic>? query,
+    ContentType contentType = ContentType.urlEncoded,
+  }) async {
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return null;
+      }
+    } catch (e) {
+      log("Connectivity check failed: ${e.toString()}");
+      return null;
+    }
+
+    final url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
+    final content = contentType == ContentType.json
+        ? 'application/json; charset=utf-8'
+        : 'application/x-www-form-urlencoded';
+
+    try {
+      final headers = await _buildHeaders(content: content, token: token);
+      return await _dio.get(
+        url,
+        queryParameters: query,
+        options: Options(validateStatus: (status) => true, headers: headers),
+      );
+    } on DioException catch (e) {
+      log("Raw GET DioException: ${e.message}");
+      return e.response;
+    } catch (e) {
+      log("Raw GET unexpected error: ${e.toString()}");
+      return null;
     }
   }
 }

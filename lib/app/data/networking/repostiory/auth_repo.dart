@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/app/data/models/lat_long_model.dart';
 import 'package:axlpl_delivery/app/data/models/login_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_services.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -29,7 +28,7 @@ class AuthRepo {
     String? fcmToken = await storage.read(key: _localStorage.fcmToken);
     log("fcmToken ${fcmToken.toString()}");
     final packageInfo = await PackageInfo.fromPlatform();
-    final appVersion = "${packageInfo.version}-${packageInfo.buildNumber}";
+    final appVersion = packageInfo.version;
     // final deviceId = await MobileDeviceIdentifier().getDeviceId();
     // log("device id : ===> $deviceId");
     final deviceId = await _utils.getDeviceId();
@@ -85,8 +84,6 @@ class AuthRepo {
     apiMessage = null;
     String? fcmToken = await storage.read(key: _localStorage.fcmToken);
     log("fcmToken ${fcmToken.toString()}");
-    final packageInfo = await PackageInfo.fromPlatform();
-    final appVersion = "${packageInfo.version}-${packageInfo.buildNumber}";
     // final deviceId = await MobileDeviceIdentifier().getDeviceId();
     // log("device id : ===> $deviceId");
     final deviceId = await _utils.getDeviceId();

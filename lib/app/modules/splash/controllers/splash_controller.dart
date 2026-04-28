@@ -1,16 +1,18 @@
 import 'dart:developer';
 
+import 'package:axlpl_delivery/app/data/networking/api_client.dart';
+import 'package:axlpl_delivery/app/data/networking/api_endpoint.dart';
 import 'package:axlpl_delivery/common_widget/force_update_dialog.dart';
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/const/app_update_config.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/local_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashController extends GetxController {
   //TODO: Implement SplashController
+  final ApiClient _apiClient = ApiClient();
+
   @override
   void onInit() {
     // TODO: implement onInit
@@ -29,12 +31,16 @@ class SplashController extends GetxController {
 
   Future<void> _checkAppVersion() async {
     try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final currentVersion =
-          '${packageInfo.version}+${packageInfo.buildNumber}';
+      final response = await _apiClient.getRaw(getPaymentModePoint);
+      final responseData = response?.data;
 
-      if (AppUpdateConfig.requiresUpdate(currentVersion)) {
-        showForceUpdateDialog();
+      if (response?.statusCode == 426 &&
+          responseData is Map<String, dynamic> &&
+          responseData['force_update'] == true) {
+        showForceUpdateDialog(
+          message: responseData['message']?.toString(),
+          updateUrl: responseData['update_url']?.toString(),
+        );
         return;
       }
     } catch (e) {

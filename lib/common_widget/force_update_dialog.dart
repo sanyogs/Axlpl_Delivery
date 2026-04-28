@@ -7,13 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void showForceUpdateDialog() {
+void showForceUpdateDialog({
+  String? message,
+  String? updateUrl,
+}) {
   if (Get.isDialogOpen == true) {
     return;
   }
 
   final themes = Themes();
-  final storeUrl = AppUpdateConfig.storeUrl;
+  final storeUrl = updateUrl?.trim().isNotEmpty == true
+      ? updateUrl!.trim()
+      : AppUpdateConfig.fallbackUpdateUrl;
+  final updateMessage = message?.trim().isNotEmpty == true
+      ? message!.trim()
+      : AppUpdateConfig.fallbackUpdateMessage;
 
   Get.dialog(
     PopScope(
@@ -23,7 +31,7 @@ void showForceUpdateDialog() {
               title: const Text(AppUpdateConfig.updateTitle),
               content: Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(AppUpdateConfig.updateMessage),
+                child: Text(updateMessage),
               ),
               actions: [
                 CupertinoDialogAction(
@@ -49,7 +57,7 @@ void showForceUpdateDialog() {
                   ),
                 ],
               ),
-              content: const Text(AppUpdateConfig.updateMessage),
+              content: Text(updateMessage),
               contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               actionsPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
