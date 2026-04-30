@@ -50,11 +50,20 @@ class AuthController extends GetxController {
     String password,
   ) async {
     isLoading.value = true;
+    errorMessage.value = '';
     try {
-      await _authRepo.loginRepo(
+      final isLoggedIn = await _authRepo.loginRepo(
         mobile,
         password,
       );
+      if (!isLoggedIn) {
+        errorMessage.value = _authRepo.apiMessage ?? 'Login failed';
+        log(errorMessage.value);
+        formKey.currentState?.validate();
+        return;
+      }
+      errorMessage.value = '';
+
       final role = await storage.read(key: localStorage.userRole);
       if (role == 'messanger') {
         // Get.offAllNamed(Routes.BOTTOMBAR, arguments: '');
@@ -68,10 +77,7 @@ class AuthController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString();
       log(errorMessage.value);
-      Get.snackbar('', errorMessage.value,
-          colorText: themes.whiteColor,
-          backgroundColor: themes.redColor,
-          snackPosition: SnackPosition.BOTTOM);
+      formKey.currentState?.validate();
     } finally {
       isLoading.value = false;
     }
@@ -125,12 +131,20 @@ class AuthController extends GetxController {
     String otp,
   ) async {
     isVerifyingOtp.value = true;
+    verifyOtpmessage.value = '';
 
     try {
-      await _authRepo.verifyLoginOtpRepo(
+      final isVerified = await _authRepo.verifyLoginOtpRepo(
         mobile,
         otp,
       );
+      if (!isVerified) {
+        verifyOtpmessage.value =
+            _authRepo.apiMessage ?? 'OTP verification failed';
+        return;
+      }
+      verifyOtpmessage.value = '';
+
       final role = await storage.read(key: localStorage.userRole);
       if (role == 'messanger') {
         Get.offAllNamed(Routes.HOME);
@@ -141,15 +155,6 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       verifyOtpmessage.value = e.toString();
-
-      Get.snackbar(
-        'Error',
-        verifyOtpmessage.value,
-        colorText: themes.whiteColor,
-        backgroundColor: themes.redColor,
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
-      );
     } finally {
       isVerifyingOtp.value = false;
     }

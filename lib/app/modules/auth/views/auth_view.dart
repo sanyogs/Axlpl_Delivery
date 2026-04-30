@@ -67,6 +67,8 @@ class AuthView extends GetView<AuthController> {
                     textInputAction: TextInputAction.next,
                     validator: utils.validateText,
                     onChanged: (value) {
+                      authController.errorMessage.value = '';
+                      authController.verifyOtpmessage.value = '';
                       // This will trigger UI rebuild when mobile field changes
                       authController.mobileController.notifyListeners();
                     },
@@ -84,7 +86,21 @@ class AuthView extends GetView<AuthController> {
                             controller: authController.passwordController,
                             textInputAction: TextInputAction.done,
                             hintTxt: 'Enter your password',
-                            validator: utils.validatePassword,
+                            validator: (value) {
+                              final requiredError =
+                                  utils.validatePassword(value);
+                              if (requiredError != null) {
+                                return requiredError;
+                              }
+
+                              final backendError =
+                                  authController.errorMessage.value.trim();
+                              return backendError.isEmpty ? null : backendError;
+                            },
+                            onChanged: (value) {
+                              authController.errorMessage.value = '';
+                              return null;
+                            },
                             onSubmit: (value) =>
                                 FocusScope.of(context).unfocus(),
                             sufixIcon: InkWell(
@@ -301,6 +317,7 @@ class AuthView extends GetView<AuthController> {
                               ? () async {
                                   FocusScope.of(context).unfocus();
 
+                                  authController.errorMessage.value = '';
                                   if (authController.formKey.currentState
                                           ?.validate() ==
                                       true) {

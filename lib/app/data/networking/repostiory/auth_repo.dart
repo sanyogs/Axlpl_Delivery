@@ -20,6 +20,15 @@ class AuthRepo {
     return apiMessage;
   }
 
+  String? _backendMessage(dynamic body) {
+    if (body is! Map) return null;
+    final message = body['message']?.toString().trim();
+    if (message != null && message.isNotEmpty) return message;
+    final reason = body['reason']?.toString().trim();
+    if (reason != null && reason.isNotEmpty) return reason;
+    return null;
+  }
+
   Future<bool> loginRepo(
     String mobile,
     String password,
@@ -42,10 +51,12 @@ class AuthRepo {
           final apiStatus = LoginModel.fromJson(body);
           _utils.logInfo(fcmToken.toString());
           log('device id ${deviceId.toString()}');
+          apiMessage = _backendMessage(body);
           if (apiStatus.status != "success") {
-            throw apiStatus.message ?? "Login Failed: Unknown Error";
-          } else {
-            apiMessage = apiStatus.message;
+            apiMessage = apiMessage?.isNotEmpty == true
+                ? apiMessage
+                : "Login Failed: Unknown Error";
+            return false;
           }
 
           // Utils().logInfo("repo login data : ${loginData.toJson()}");
@@ -67,11 +78,14 @@ class AuthRepo {
           return true;
         },
         error: (error) {
-          throw Exception("Login Failed: ${error.toString()}");
+          apiMessage =
+              error.message.isNotEmpty ? error.message : "Login Failed";
+          return false;
         },
       );
     } catch (e) {
-      final errorMessage = "Unexpected Error: $e";
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      apiMessage = errorMessage.isNotEmpty ? errorMessage : "Login Failed";
       Utils.instance.log(errorMessage);
       return false;
     }
@@ -97,10 +111,12 @@ class AuthRepo {
           _utils.logInfo(fcmToken.toString());
           log('device id ${deviceId.toString()}');
 
+          apiMessage = _backendMessage(body);
           if (apiStatus.status != "success") {
-            throw apiStatus.message ?? "Login Failed: Unknown Error";
-          } else {
-            apiMessage = apiStatus.message;
+            apiMessage = apiMessage?.isNotEmpty == true
+                ? apiMessage
+                : "Login Failed: Unknown Error";
+            return false;
           }
           // Utils().logInfo("repo login data : ${loginData.toJson()}");
           await storage.write(
@@ -121,11 +137,14 @@ class AuthRepo {
           return true;
         },
         error: (error) {
-          throw Exception("Login Failed: ${error.toString()}");
+          apiMessage =
+              error.message.isNotEmpty ? error.message : "Login Failed";
+          return false;
         },
       );
     } catch (e) {
-      final errorMessage = "Unexpected Error: $e";
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      apiMessage = errorMessage.isNotEmpty ? errorMessage : "Login Failed";
       Utils.instance.log(errorMessage);
       return false;
     }
