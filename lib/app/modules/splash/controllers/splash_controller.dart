@@ -34,12 +34,11 @@ class SplashController extends GetxController {
       final response = await _apiClient.getRaw(getPaymentModePoint);
       final responseData = response?.data;
 
-      if (response?.statusCode == 426 &&
-          responseData is Map<String, dynamic> &&
-          responseData['force_update'] == true) {
+      if (_isForceUpdatePayload(responseData)) {
+        final payload = _extractForceUpdatePayload(responseData);
         showForceUpdateDialog(
-          message: responseData['message']?.toString(),
-          updateUrl: responseData['update_url']?.toString(),
+          message: payload['message']?.toString(),
+          updateUrl: payload['update_url']?.toString(),
         );
         return;
       }
@@ -48,6 +47,48 @@ class SplashController extends GetxController {
     }
 
     keepLogin();
+  }
+
+  bool _isTruthy(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == '1' ||
+          normalized == 'true' ||
+          normalized == 'yes' ||
+          normalized == 'y';
+    }
+    return false;
+  }
+
+  bool _isForceUpdatePayload(dynamic raw) {
+    if (raw is! Map) return false;
+    final payload = _extractForceUpdatePayload(raw);
+    final status = payload['status']?.toString().trim().toLowerCase();
+    final forceUpdate = _isTruthy(payload['force_update']);
+    return status == 'fail' && forceUpdate;
+  }
+
+  Map<String, dynamic> _extractForceUpdatePayload(Map source) {
+    final topLevel = <String, dynamic>{};
+    source.forEach((key, value) {
+      topLevel[key.toString()] = value;
+    });
+
+    final nestedDataRaw = topLevel['data'];
+    if (nestedDataRaw is Map) {
+      final nested = <String, dynamic>{};
+      nestedDataRaw.forEach((key, value) {
+        nested[key.toString()] = value;
+      });
+      return {
+        ...nested,
+        ...topLevel,
+      };
+    }
+
+    return topLevel;
   }
 
   void keepLogin() {

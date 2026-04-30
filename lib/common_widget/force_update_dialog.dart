@@ -7,14 +7,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+bool _isForceUpdateDialogVisible = false;
+
 void showForceUpdateDialog({
   String? message,
   String? updateUrl,
 }) {
-  if (Get.isDialogOpen == true) {
+  if (_isForceUpdateDialogVisible) {
     return;
   }
 
+  if (Get.isDialogOpen == true) {
+    Get.back();
+  }
+
+  _isForceUpdateDialogVisible = true;
   final themes = Themes();
   final storeUrl = updateUrl?.trim().isNotEmpty == true
       ? updateUrl!.trim()
@@ -81,7 +88,9 @@ void showForceUpdateDialog({
             ),
     ),
     barrierDismissible: false,
-  );
+  ).whenComplete(() {
+    _isForceUpdateDialogVisible = false;
+  });
 }
 
 Future<void> _openStore(String storeUrl) async {

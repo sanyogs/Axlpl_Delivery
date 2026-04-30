@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
+import 'package:axlpl_delivery/common_widget/force_update_dialog.dart';
 import 'package:axlpl_delivery/app/data/networking/interceptor/dio_connectivity_request_retry.dart';
 import 'package:axlpl_delivery/app/data/networking/interceptor/retry_interceptor.dart';
 import 'package:dio/dio.dart';
@@ -65,18 +66,123 @@ class ApiClient {
     }
   }
 
+  String get _appPlatform {
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isAndroid) return 'android';
+    return 'unknown';
+  }
+
   Future<Map<String, String>> _buildHeaders({
     required String content,
     String? token,
   }) async {
     final appVersion = await _appVersionFuture;
+    final appPlatform = _appPlatform;
 
     return {
       'accept': '*/*',
       'Content-Type': content,
       'X-App-Version': appVersion,
+      'X-App-Platform': appPlatform,
+      'X-Platform': appPlatform,
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  Map<String, dynamic>? _appendPlatformToQuery(Map<String, dynamic>? query) {
+    if (query == null) {
+      return {'platform': _appPlatform};
+    }
+    final updated = <String, dynamic>{...query};
+    updated.putIfAbsent('platform', () => _appPlatform);
+    return updated;
+  }
+
+  dynamic _appendPlatformToBody(dynamic body) {
+    if (body is Map) {
+      final updated = <String, dynamic>{};
+      body.forEach((key, value) {
+        updated[key.toString()] = value;
+      });
+      updated.putIfAbsent('platform', () => _appPlatform);
+      return updated;
+    }
+
+    if (body is FormData) {
+      final hasPlatform = body.fields.any((field) => field.key == 'platform');
+      if (!hasPlatform) {
+        body.fields.add(MapEntry('platform', _appPlatform));
+      }
+      return body;
+    }
+
+    return body;
+  }
+
+  bool _isTruthy(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == '1' ||
+          normalized == 'true' ||
+          normalized == 'yes' ||
+          normalized == 'y';
+    }
+    return false;
+  }
+
+  Map<String, dynamic> _asStringKeyedMap(dynamic source) {
+    final map = <String, dynamic>{};
+    if (source is Map) {
+      source.forEach((key, value) {
+        map[key.toString()] = value;
+      });
+    }
+    return map;
+  }
+
+  APIResponse? _handleForceUpdateResponse(dynamic payload) {
+    final topLevel = _asStringKeyedMap(payload);
+    if (topLevel.isEmpty) return null;
+
+    final nestedData = _asStringKeyedMap(topLevel['data']);
+
+    dynamic pick(List<String> keys) {
+      for (final key in keys) {
+        if (topLevel.containsKey(key) && topLevel[key] != null) {
+          return topLevel[key];
+        }
+      }
+      for (final key in keys) {
+        if (nestedData.containsKey(key) && nestedData[key] != null) {
+          return nestedData[key];
+        }
+      }
+      return null;
+    }
+
+    final status = pick(['status'])?.toString().trim().toLowerCase();
+    final shouldForceUpdate = _isTruthy(pick(['force_update', 'forceUpdate']));
+    if (status != 'fail' || !shouldForceUpdate) {
+      return null;
+    }
+
+    final message = pick(['message'])?.toString().trim();
+    final updateUrl = pick(['update_url', 'updateUrl'])?.toString().trim();
+
+    showForceUpdateDialog(
+      message: message,
+      updateUrl: updateUrl,
+    );
+
+    return APIResponse.error(
+      AppException.errorWithMessage(
+        (message != null && message.isNotEmpty)
+            ? message
+            : 'Please update your app to continue.',
+      ),
+    );
   }
 
   Future<APIResponse> post(
@@ -95,6 +201,10 @@ class ApiClient {
 
     // ✅ Step 2: ruct URL
     String url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
+    final requestBody = _appendPlatformToBody(body);
+    final queryParameters = _appendPlatformToQuery(
+      query == null ? null : Map<String, dynamic>.from(query),
+    );
 
     // ✅ Step 3: Define Content Type
     String content;
@@ -116,8 +226,8 @@ class ApiClient {
       // ✅ Step 5: Make the API Request
       final response = await _dio.post(
         url,
-        data: body,
-        queryParameters: query,
+        data: requestBody,
+        queryParameters: queryParameters,
         options: Options(
           contentType: contentType == ContentType.multipart
               ? 'multipart/form-data'
@@ -133,6 +243,11 @@ class ApiClient {
       if (response.statusCode == null) {
         // debugPrint('Status Code is Null. Response: ${response.toString()}');
         return APIResponse.error(AppException.connectivity());
+      }
+
+      final forceUpdateResponse = _handleForceUpdateResponse(response.data);
+      if (forceUpdateResponse != null) {
+        return forceUpdateResponse;
       }
 
       if (response.statusCode! < 300) {
@@ -212,6 +327,7 @@ class ApiClient {
 
     // Determine the URL to use
     String url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
+    final queryParameters = _appendPlatformToQuery(query);
 
     // Simplify content-type assignment
     final content = contentType == ContentType.json
@@ -225,13 +341,18 @@ class ApiClient {
       // Perform the GET request
       final response = await _dio.get(
         url,
-        queryParameters: query,
+        queryParameters: queryParameters,
         options: Options(validateStatus: (status) => true, headers: headers),
       );
 
       // Handle response based on status code
       if (response.statusCode == null) {
         return APIResponse.error(AppException.connectivity());
+      }
+
+      final forceUpdateResponse = _handleForceUpdateResponse(response.data);
+      if (forceUpdateResponse != null) {
+        return forceUpdateResponse;
       }
 
       if (response.statusCode! < 300) {
@@ -312,19 +433,23 @@ class ApiClient {
     }
 
     final url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
+    final queryParameters = _appendPlatformToQuery(query);
     final content = contentType == ContentType.json
         ? 'application/json; charset=utf-8'
         : 'application/x-www-form-urlencoded';
 
     try {
       final headers = await _buildHeaders(content: content, token: token);
-      return await _dio.get(
+      final response = await _dio.get(
         url,
-        queryParameters: query,
+        queryParameters: queryParameters,
         options: Options(validateStatus: (status) => true, headers: headers),
       );
+      _handleForceUpdateResponse(response.data);
+      return response;
     } on DioException catch (e) {
       log("Raw GET DioException: ${e.message}");
+      _handleForceUpdateResponse(e.response?.data);
       return e.response;
     } catch (e) {
       log("Raw GET unexpected error: ${e.toString()}");
