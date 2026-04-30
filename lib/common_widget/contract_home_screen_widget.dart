@@ -6,6 +6,7 @@ class ContractCard extends StatelessWidget {
   final String title;
   final used;
   final total;
+  final String? endDate;
   final onTap;
 
   const ContractCard({
@@ -13,12 +14,27 @@ class ContractCard extends StatelessWidget {
     required this.title,
     required this.used,
     required this.total,
+    this.endDate,
     this.onTap,
   });
 
+  String _formatDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return 'N/A';
+    try {
+      final parsed = DateTime.parse(raw);
+      final day = parsed.day.toString().padLeft(2, '0');
+      final month = parsed.month.toString().padLeft(2, '0');
+      return '$day/$month/${parsed.year}';
+    } catch (_) {
+      return raw;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double percent = (used / total);
+    final usedAmount = used is num ? used.toDouble() : 0.0;
+    final totalAmount = total is num ? total.toDouble() : 0.0;
+    final percent = totalAmount <= 0 ? 0.0 : usedAmount / totalAmount;
     double displayedPercent = percent.clamp(0.0, 1.0);
     return InkWell(
       onTap: onTap,
@@ -35,7 +51,7 @@ class ContractCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Contract :$title",
+                    Text("Contract",
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             )),
@@ -47,14 +63,14 @@ class ContractCard extends StatelessWidget {
                     // ),
                     const SizedBox(height: 8),
                     Text(
-                      "Used",
+                      "Used / Total",
                       style: TextStyle(
                         color: themes.grayColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      "₹${used.toStringAsFixed(2)} ",
+                      "₹${usedAmount.toStringAsFixed(2)} / ₹${totalAmount.toStringAsFixed(2)}",
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
@@ -62,14 +78,14 @@ class ContractCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Total ",
+                      "End Date",
                       style: TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      "₹${total.toStringAsFixed(2)}",
+                      _formatDate(endDate),
                       style: const TextStyle(
                           color: Colors.black87,
                           fontWeight: FontWeight.bold,

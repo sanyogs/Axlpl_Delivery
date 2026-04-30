@@ -18,7 +18,6 @@ import 'package:axlpl_delivery/common_widget/contract_home_screen_widget.dart';
 import 'package:axlpl_delivery/common_widget/contract_list.dart';
 import 'package:axlpl_delivery/common_widget/home_container.dart';
 import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
-import 'package:axlpl_delivery/common_widget/my_invoices_list.dart';
 import 'package:axlpl_delivery/common_widget/used_contract_shipment.dart';
 import 'package:axlpl_delivery/const/const.dart';
 import 'package:axlpl_delivery/utils/assets.dart';
@@ -313,6 +312,7 @@ class HomeView extends GetView<HomeController> {
                                       total: double.tryParse(
                                               item?.assignedValue ?? '0') ??
                                           0,
+                                      endDate: item?.endDate,
                                     ),
                                   );
                                 },
@@ -667,30 +667,7 @@ class HomeView extends GetView<HomeController> {
                 Obx(
                   () => bottomController.userData.value?.role == 'messanger'
                       ? SizedBox.shrink()
-                      : SizedBox(
-                          width: 100.w,
-                          child: HomeIconContainer(
-                            title: 'My Invoices',
-                            Img: invoiceLogo,
-                            OnTap: () {
-                              homeController.invoiceList();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => MyInvoicesList()
-                                    // PdfViewerPage(
-                                    //   pdfUrl: homeController
-                                    //           .contractDataModel
-                                    //           .value
-                                    //           ?.contracts?[0]
-                                    //           .viewLink ??
-                                    //       '',
-                                    // ),
-                                    ),
-                              );
-                            },
-                          ),
-                        ),
+                      : SizedBox.shrink(),
                 ),
                 Obx(() {
                   final imageUrl = () {
