@@ -1044,4 +1044,461 @@ class ApiServices {
       contentType: ContentType.urlEncoded,
     );
   }
+
+  // =========================
+  // Outbound — Hub scan
+  // =========================
+
+  Future<APIResponse> hubScan({
+    required String token,
+    required String docketNo,
+    required String branchId,
+    required String userId,
+    required String status,
+  }) async {
+    final body = {
+      'docket_no': docketNo,
+      'branch_id': branchId,
+      'user_id': userId,
+      'status': status,
+    };
+    return _api.post(
+      hubScanPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getHubScanLogs({
+    required String token,
+    required String branchId,
+    required int limit,
+  }) async {
+    return _api.get(
+      getHubScanLogsPoint,
+      token: token,
+      query: {
+        'branch_id': branchId,
+        'limit': limit,
+      },
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getShipmentScanHistory({
+    required String token,
+    required String docketNo,
+  }) async {
+    return _api.get(
+      getShipmentScanHistoryPoint,
+      token: token,
+      query: {'docket_no': docketNo},
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  // =========================
+  // Outbound — Bagging
+  // =========================
+
+  Future<APIResponse> createBag({
+    required String token,
+    required String originBranchId,
+    required String destinationBranchId,
+    required String bagCode,
+    required String userId,
+  }) async {
+    final body = {
+      'origin_branch_id': originBranchId,
+      'destination_branch_id': destinationBranchId,
+      'bag_code': bagCode,
+      'user_id': userId,
+    };
+    return _api.post(
+      createBagPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> addShipmentToBag({
+    required String token,
+    required String bagId,
+    required String docketNo,
+    required String branchId,
+    required String userId,
+    Map<String, String>? extraFields,
+  }) async {
+    final body = <String, String>{
+      'bag_id': bagId,
+      'docket_no': docketNo,
+      'branch_id': branchId,
+      'user_id': userId,
+      if (extraFields != null) ...extraFields,
+    };
+    return _api.post(
+      addShipmentToBagPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getBagDetails({
+    required String token,
+    required String bagId,
+  }) async {
+    return getBagDetailsQuery(token: token, query: {'bag_id': bagId});
+  }
+
+  Future<APIResponse> getBagDetailsQuery({
+    required String token,
+    required Map<String, String> query,
+  }) async {
+    return _api.get(
+      getBagDetailsPoint,
+      token: token,
+      query: query,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> listBags({
+    required String token,
+    required String branchId,
+  }) async {
+    return _api.get(
+      listBagsPoint,
+      token: token,
+      query: {'branch_id': branchId},
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> removeShipmentFromBag({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.post(
+      removeShipmentFromBagPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> lockBag({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.post(
+      lockBagPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> rebagShipment({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.post(
+      rebagShipmentPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> baggingReport({
+    required String token,
+    required String startDate,
+    required String endDate,
+  }) async {
+    return _api.get(
+      baggingReportPoint,
+      token: token,
+      query: {
+        'start_date': startDate,
+        'end_date': endDate,
+      },
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  // =========================
+  // Outbound — Manifest
+  // =========================
+
+  Future<APIResponse> createManifest({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.post(
+      createManifestPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getManifestDetails({
+    required String token,
+    required String manifestId,
+  }) async {
+    return getManifestDetailsQuery(
+      token: token,
+      query: {'manifest_id': manifestId},
+    );
+  }
+
+  Future<APIResponse> getManifestDetailsQuery({
+    required String token,
+    required Map<String, String> query,
+  }) async {
+    return _api.get(
+      getManifestDetailsPoint,
+      token: token,
+      query: query,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> listManifests({
+    required String token,
+    required String branchId,
+  }) async {
+    return _api.get(
+      listManifestsPoint,
+      token: token,
+      query: {'branch_id': branchId},
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> manifestReport({
+    required String token,
+    required String startDate,
+    required String endDate,
+  }) async {
+    return _api.get(
+      manifestReportPoint,
+      token: token,
+      query: {
+        'start_date': startDate,
+        'end_date': endDate,
+      },
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> printManifestData({
+    required String token,
+    required String manifestId,
+  }) async {
+    return printManifestDataQuery(
+      token: token,
+      query: {'manifest_id': manifestId},
+    );
+  }
+
+  Future<APIResponse> printManifestDataQuery({
+    required String token,
+    required Map<String, String> query,
+  }) async {
+    return _api.get(
+      printManifestDataPoint,
+      token: token,
+      query: query,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  // =========================
+  // Outbound — Linehaul
+  // =========================
+
+  Future<APIResponse> assignLinehaul({
+    required String token,
+    required String manifestIdsCommaSeparated,
+    required String vehicleNo,
+    required String driverName,
+    required String userId,
+  }) async {
+    final body = {
+      'manifest_ids': manifestIdsCommaSeparated,
+      'vehicle_no': vehicleNo,
+      'driver_name': driverName,
+      'user_id': userId,
+    };
+    return _api.post(
+      assignLinehaulPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> listLinehauls({
+    required String token,
+    required String status,
+  }) async {
+    return _api.get(
+      listLinehaulsPoint,
+      token: token,
+      query: {'status': status},
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getLinehaulDetails({
+    required String token,
+    required String linehaulId,
+  }) async {
+    return getLinehaulDetailsQuery(
+      token: token,
+      query: {'linehaul_id': linehaulId},
+    );
+  }
+
+  Future<APIResponse> getLinehaulDetailsQuery({
+    required String token,
+    required Map<String, String> query,
+  }) async {
+    return _api.get(
+      getLinehaulDetailsPoint,
+      token: token,
+      query: query,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> updateLinehaulStatus({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.post(
+      updateLinehaulStatusPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> linehaulReport({
+    required String token,
+    required String startDate,
+    required String endDate,
+  }) async {
+    return _api.get(
+      linehaulReportPoint,
+      token: token,
+      query: {
+        'start_date': startDate,
+        'end_date': endDate,
+      },
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  // =========================
+  // Outbound — Sector pickup
+  // =========================
+
+  Future<APIResponse> sectorPickupScan({
+    required String token,
+    required String pickupId,
+    required String docketNo,
+    required String status,
+    required String remarks,
+    required String userId,
+    required String branchId,
+  }) async {
+    final body = {
+      'pickup_id': pickupId,
+      'docket_no': docketNo,
+      'status': status,
+      'remarks': remarks,
+      'user_id': userId,
+      'branch_id': branchId,
+    };
+    return _api.post(
+      sectorPickupScanPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getPickupListOutbound({
+    required String token,
+  }) async {
+    return _api.get(
+      getPickupListPoint,
+      token: token,
+      query: null,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> markNotPicked({
+    required String token,
+    required String pickupId,
+    required String docketNo,
+    required String remarks,
+    required String userId,
+    required String branchId,
+  }) async {
+    final body = {
+      'pickup_id': pickupId,
+      'docket_no': docketNo,
+      'remarks': remarks,
+      'user_id': userId,
+      'branch_id': branchId,
+    };
+    return _api.post(
+      markNotPickedPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> addMissedShipment({
+    required String token,
+    required String pickupId,
+    required String docketNo,
+    required String remarks,
+  }) async {
+    final body = {
+      'pickup_id': pickupId,
+      'docket_no': docketNo,
+      'remarks': remarks,
+    };
+    return _api.post(
+      addMissedShipmentPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> pickupReportOutbound({
+    required String token,
+    required String startDate,
+    required String endDate,
+  }) async {
+    return _api.get(
+      pickupReportPoint,
+      token: token,
+      query: {
+        'start_date': startDate,
+        'end_date': endDate,
+      },
+      contentType: ContentType.urlEncoded,
+    );
+  }
 }

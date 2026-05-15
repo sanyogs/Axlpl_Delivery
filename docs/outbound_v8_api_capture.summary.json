@@ -1,0 +1,358 @@
+{
+  "meta": {
+    "base": "https://my.axlpl.com/messenger/services_v8/",
+    "had_bearer_token": true,
+    "token_source": "OUTBOUND_LOGIN_MOBILE",
+    "login_attempted": true,
+    "login_succeeded": true,
+    "mutation_capture_mode": false,
+    "skip_createbag": true,
+    "default_branch_id_used": "27",
+    "login_branch_id": "2",
+    "probe_branches": [
+      "2",
+      "27",
+      "5"
+    ],
+    "destination_branch_id": "27",
+    "valid_bag_id_available": true,
+    "ids_used": {
+      "bag_id": "BAG20260515154014",
+      "manifest_id": "MUM075",
+      "linehaul_id": "LH1778842087",
+      "docket_no": "990831778839479",
+      "pickup_id": "122",
+      "user_id": "143"
+    },
+    "note": "valid_posts uses discovered ids and non-empty POST bodies when bearer is set; OUTBOUND_CAPTURE_MUTATIONS=1 is optional for extra writes. createbag may return success with bag_id 0 — see valid_bag_id_available.",
+    "discovered_ids": {
+      "docket_no": "149311778836750",
+      "discovery_branch_id": "27",
+      "pickup_id": "122",
+      "mawb_no": "mum4321",
+      "user_id": "143",
+      "linehaul_id": "LH1778842087",
+      "linehaul_id_source": "trip_no (assignlinehaul returned linehaul_id 0)"
+    },
+    "valid_posts": true,
+    "working_fine_by_path": {
+      "hubscan": "Yes",
+      "gethubscanlogs": "Yes",
+      "getshipmentscanhistory": "Yes",
+      "createbag": "No",
+      "listbags": "Yes",
+      "getbagdetails": "Partial",
+      "addshipmenttobag": "Partial",
+      "removeshipmentfrombag": "Partial",
+      "lockbag": "Partial",
+      "rebagshipment": "Partial",
+      "baggingreport": "Yes",
+      "listmanifests": "Yes",
+      "createmanifest": "Partial",
+      "getmanifestdetails": "Partial",
+      "manifestreport": "Yes",
+      "printmanifestdata": "Partial",
+      "listlinehauls": "Yes",
+      "assignlinehaul": "Yes",
+      "getlinehauldetails": "Partial",
+      "updatelinehaulstatus": "Partial",
+      "linehaulreport": "Yes",
+      "getpickuplist": "Yes",
+      "sectorpickupscan": "Partial",
+      "marknotpicked": "Partial",
+      "addmissedshipment": "Yes",
+      "pickupreport": "Yes"
+    },
+    "summary_for": "/Users/apple/Desktop/flutter_project/axlpl_delivery/docs/outbound_v8_api_capture.json"
+  },
+  "rows": [
+    {
+      "capture_name": "01_hubscan",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Shipment scanned successfully as Hub In",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [
+        "docket_no",
+        "shipment_id"
+      ],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "02_gethubscanlogs",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Hub scan logs retrieved",
+      "error_code": null,
+      "data_kind": "list",
+      "data_length": 50,
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "03_getshipmentscanhistory",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Shipment scan history retrieved",
+      "error_code": null,
+      "data_kind": "list",
+      "data_length": 7,
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "04_createbag",
+      "http_status": null,
+      "skipped": true,
+      "message": "Skipped by default (OUTBOUND_SKIP_CREATEBAG=1). The live createbag endpoint often returns status success with bag_id 0 even for invalid or incomplete payloads, so HTTP capture is misleading. Set OUTBOUND_SKIP_CREATEBAG=0 to record the real response body.",
+      "working_fine": "No"
+    },
+    {
+      "capture_name": "07_listbags",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Bags retrieved",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "06_getbagdetails",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Bag ID required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "05_addshipmenttobag",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Bag ID and Docket Number required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "08_removeshipmentfrombag",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Bag ID and Docket Number required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "09_lockbag",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Bag ID required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "10_rebagshipment",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "New Bag ID and Docket Number required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "11_baggingreport",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Bagging report generated",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "14_listmanifests",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Manifests retrieved",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "12_createmanifest",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Invalid Bag IDs format",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "13_getmanifestdetails",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Manifest ID required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "15_manifestreport",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Manifest report generated",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "16_printmanifestdata",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Manifest ID required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "18_listlinehauls",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Linehauls retrieved",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "17_assignlinehaul",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Linehaul assigned",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [
+        "linehaul_id",
+        "trip_no"
+      ],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "19_getlinehauldetails",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Linehaul ID required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "20_updatelinehaulstatus",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Linehaul ID and Status required",
+      "error_code": 400,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "21_linehaulreport",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Linehaul report generated",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "23_getpickuplist",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Pickup list retrieved",
+      "error_code": null,
+      "data_kind": "list",
+      "data_length": 50,
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "22_sectorpickupscan",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Shipment already scanned for this pickup",
+      "error_code": 422,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "24_marknotpicked",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "fail",
+      "message": "Shipment already scanned for this pickup",
+      "error_code": 422,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Partial"
+    },
+    {
+      "capture_name": "25_addmissedshipment",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Missed shipment added",
+      "error_code": null,
+      "data_kind": "map",
+      "data_keys": [],
+      "working_fine": "Yes"
+    },
+    {
+      "capture_name": "26_pickupreport",
+      "http_status": 200,
+      "skipped": false,
+      "api_status": "success",
+      "message": "Pickup report generated",
+      "error_code": null,
+      "data_kind": "list",
+      "data_length": 2,
+      "working_fine": "Yes"
+    }
+  ]
+}

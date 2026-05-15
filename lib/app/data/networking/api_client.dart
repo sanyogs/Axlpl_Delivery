@@ -1,8 +1,11 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
+import 'package:axlpl_delivery/app/data/networking/api_endpoint.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/common_widget/force_update_dialog.dart';
+import 'package:axlpl_delivery/app/data/networking/interceptor/api_http_log_interceptor.dart';
 import 'package:axlpl_delivery/app/data/networking/interceptor/dio_connectivity_request_retry.dart';
 import 'package:axlpl_delivery/app/data/networking/interceptor/retry_interceptor.dart';
 import 'package:dio/dio.dart';
@@ -29,6 +32,9 @@ class ApiClient {
         ),
       ),
     );
+    if (ApiHttpLogInterceptor.enabled) {
+      _dio.interceptors.add(ApiHttpLogInterceptor());
+    }
     // if (kDebugMode) {
     //   _dio.interceptors.add(TalkerDioLogger(
     //     settings: const TalkerDioLoggerSettings(
@@ -142,6 +148,20 @@ class ApiClient {
     return map;
   }
 
+  /// Success body: unwrap `data` when top-level JSON is a map; pass through strings / lists.
+  dynamic _unwrapSuccessPayload(dynamic raw) {
+    if (raw is! Map) return raw;
+    final top = _asStringKeyedMap(raw);
+    return top['data'] != null ? top['data'] : raw;
+  }
+
+  String? _messageFromUnknownBody(dynamic data) {
+    if (data is Map) {
+      return data['message'] as String?;
+    }
+    return null;
+  }
+
   APIResponse? _handleForceUpdateResponse(dynamic payload) {
     final topLevel = _asStringKeyedMap(payload);
     if (topLevel.isEmpty) return null;
@@ -181,6 +201,45 @@ class ApiClient {
         (message != null && message.isNotEmpty)
             ? message
             : 'Please update your app to continue.',
+      ),
+    );
+  }
+
+  /// Outbound: HTTP 200 + `status: success` but invalid mutation payload (e.g. `bag_id: 0`).
+  APIResponse? _handleMisleadingOutboundSuccess(String path, dynamic payload) {
+    if (path != createBagPoint) return null;
+    final topLevel = _asStringKeyedMap(payload);
+    if (topLevel.isEmpty) return null;
+    final status = topLevel['status']?.toString().trim().toLowerCase();
+    if (status != 'success') return null;
+    final inner = topLevel['data'];
+    final result = OutboundMutationResult.fromDynamic(inner);
+    if (!result.hasInvalidBagId) return null;
+    final message = topLevel['message']?.toString().trim();
+    return APIResponse.error(
+      AppException.errorWithMessage(
+        (message != null && message.isNotEmpty)
+            ? '$message (invalid bag_id)'
+            : 'Bag was not created (invalid bag_id).',
+      ),
+    );
+  }
+
+  /// V8 envelope: HTTP 200 with `{ "status": "fail", "message": "..." }` must not be treated as success.
+  /// Runs after [_handleForceUpdateResponse] (which handles `fail` + `force_update`).
+  APIResponse? _handleBusinessStatusFailure(dynamic payload) {
+    final topLevel = _asStringKeyedMap(payload);
+    if (topLevel.isEmpty) return null;
+    final status = topLevel['status']?.toString().trim().toLowerCase();
+    if (status != 'fail' && status != 'error') return null;
+    if (_isTruthy(topLevel['force_update']) ||
+        _isTruthy(_asStringKeyedMap(topLevel['data'])['force_update'])) {
+      return null;
+    }
+    final message = topLevel['message']?.toString().trim();
+    return APIResponse.error(
+      AppException.errorWithMessage(
+        (message != null && message.isNotEmpty) ? message : 'Request failed',
       ),
     );
   }
@@ -250,10 +309,18 @@ class ApiClient {
         return forceUpdateResponse;
       }
 
+      final businessFail = _handleBusinessStatusFailure(response.data);
+      if (businessFail != null) {
+        return businessFail;
+      }
+
+      final misleading = _handleMisleadingOutboundSuccess(path, response.data);
+      if (misleading != null) {
+        return misleading;
+      }
+
       if (response.statusCode! < 300) {
-        return response.data['data'] != null
-            ? APIResponse.success(response.data['data'])
-            : APIResponse.success(response.data);
+        return APIResponse.success(_unwrapSuccessPayload(response.data));
       } else {
         return _handleErrorResponse(response);
       }
@@ -279,7 +346,7 @@ class ApiClient {
       case 500:
         return APIResponse.error(AppException.serverError());
       default:
-        final message = response.data['message'] as String?;
+        final message = _messageFromUnknownBody(response.data);
         return message != null
             ? APIResponse.error(AppException.errorWithMessage(message))
             : APIResponse.error(AppException.error());
@@ -300,7 +367,7 @@ class ApiClient {
       return APIResponse.error(AppException.connectivity());
     }
 
-    final message = e.response?.data['message'] as String?;
+    final message = _messageFromUnknownBody(e.response?.data);
     return message != null
         ? APIResponse.error(AppException.errorWithMessage(message))
         : APIResponse.error(AppException.errorWithMessage(e.message ?? ''));
@@ -355,10 +422,13 @@ class ApiClient {
         return forceUpdateResponse;
       }
 
+      final businessFail = _handleBusinessStatusFailure(response.data);
+      if (businessFail != null) {
+        return businessFail;
+      }
+
       if (response.statusCode! < 300) {
-        return response.data['data'] != null
-            ? APIResponse.success(response.data['data'])
-            : APIResponse.success(response.data);
+        return APIResponse.success(_unwrapSuccessPayload(response.data));
       } else {
         switch (response.statusCode) {
           case 401:
@@ -372,7 +442,7 @@ class ApiClient {
           case 500:
             return APIResponse.error(AppException.serverError());
           default:
-            final message = response.data['message'] as String?;
+            final message = _messageFromUnknownBody(response.data);
             return message != null
                 ? APIResponse.error(AppException.errorWithMessage(message))
                 : APIResponse.error(AppException.error());
@@ -396,7 +466,7 @@ class ApiClient {
         final statusCode = e.response?.statusCode;
         log("BadResponseException: ${e.message}, statusCode: $statusCode");
         final errorMessage =
-            e.response?.data['message'] as String? ?? 'Something went wrong.';
+            _messageFromUnknownBody(e.response?.data) ?? 'Something went wrong.';
         return APIResponse.error(AppException.errorWithMessage(errorMessage));
       }
 

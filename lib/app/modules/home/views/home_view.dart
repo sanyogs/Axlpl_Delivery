@@ -543,6 +543,23 @@ class HomeView extends GetView<HomeController> {
                             )),
                           ],
                         ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: HomeIconContainer(
+                                title: 'Outbound',
+                                Img: barcodeIcon,
+                                OnTap: () =>
+                                    Get.toNamed(Routes.OUTBOUND_MENU),
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            const Expanded(child: SizedBox()),
+                            SizedBox(width: 10.w),
+                            const Expanded(child: SizedBox()),
+                          ],
+                        ),
                       ],
                     );
                   } else {

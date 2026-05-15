@@ -18,6 +18,20 @@ import '../modules/myorders/bindings/myorders_binding.dart';
 import '../modules/myorders/views/myorders_view.dart';
 import '../modules/notification/bindings/notification_binding.dart';
 import '../modules/notification/views/notification_view.dart';
+import '../modules/outbound_bagging/bindings/outbound_bagging_binding.dart';
+import '../modules/outbound_bagging/views/outbound_bagging_view.dart';
+import '../modules/outbound_hub_scan/bindings/outbound_hub_scan_binding.dart';
+import '../modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
+import '../modules/outbound_linehaul/bindings/outbound_linehaul_binding.dart';
+import '../modules/outbound_linehaul/views/outbound_linehaul_view.dart';
+import '../modules/outbound_manifest/bindings/outbound_manifest_binding.dart';
+import '../modules/outbound_manifest/views/outbound_manifest_view.dart';
+import '../modules/outbound_menu/bindings/outbound_menu_binding.dart';
+import '../modules/outbound_menu/views/outbound_menu_view.dart';
+import '../modules/outbound_remote_detail/bindings/outbound_remote_detail_binding.dart';
+import '../modules/outbound_remote_detail/views/outbound_remote_detail_view.dart';
+import '../modules/outbound_sector_pickup/bindings/outbound_sector_pickup_binding.dart';
+import '../modules/outbound_sector_pickup/views/outbound_sector_pickup_view.dart';
 import '../modules/pickdup_delivery_details/bindings/running_delivery_details_binding.dart';
 import '../modules/pickdup_delivery_details/views/running_delivery_details_view.dart';
 import '../modules/pickup/bindings/pickup_binding.dart';
@@ -32,8 +46,6 @@ import '../modules/register/views/register_view.dart';
 import '../modules/shipment_record/bindings/shipment_record_binding.dart';
 import '../modules/shipment_record/views/shipment_record_view.dart';
 import '../modules/shipnow/bindings/shipnow_binding.dart';
-import '../modules/shipnow/bindings/shipnow_binding.dart';
-import '../modules/shipnow/views/shipnow_view.dart';
 import '../modules/shipnow/views/shipnow_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
@@ -137,6 +149,41 @@ class AppPages {
       name: _Paths.REGISTER,
       page: () => const RegisterView(),
       binding: RegisterBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_MENU,
+      page: () => const OutboundMenuView(),
+      binding: OutboundMenuBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_HUB_SCAN,
+      page: () => const OutboundHubScanView(),
+      binding: OutboundHubScanBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_BAGGING,
+      page: () => const OutboundBaggingView(),
+      binding: OutboundBaggingBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_MANIFEST,
+      page: () => const OutboundManifestView(),
+      binding: OutboundManifestBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_LINEHAUL,
+      page: () => const OutboundLinehaulView(),
+      binding: OutboundLinehaulBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_SECTOR_PICKUP,
+      page: () => const OutboundSectorPickupView(),
+      binding: OutboundSectorPickupBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_REMOTE_DETAIL,
+      page: () => const OutboundRemoteDetailView(),
+      binding: OutboundRemoteDetailBinding(),
     ),
   ];
 }

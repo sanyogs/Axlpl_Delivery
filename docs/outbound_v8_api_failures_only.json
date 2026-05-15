@@ -1,0 +1,416 @@
+{
+  "meta": {
+    "base": "https://my.axlpl.com/messenger/services_v8/",
+    "had_bearer_token": true,
+    "token_source": "OUTBOUND_LOGIN_MOBILE",
+    "login_attempted": true,
+    "login_succeeded": true,
+    "mutation_capture_mode": false,
+    "skip_createbag": true,
+    "default_branch_id_used": "27",
+    "login_branch_id": "2",
+    "probe_branches": [
+      "2",
+      "27",
+      "5"
+    ],
+    "destination_branch_id": "27",
+    "valid_bag_id_available": true,
+    "ids_used": {
+      "bag_id": "BAG20260515154014",
+      "manifest_id": "MUM075",
+      "linehaul_id": "LH1778842087",
+      "docket_no": "990831778839479",
+      "pickup_id": "122",
+      "user_id": "143"
+    },
+    "note": "valid_posts uses discovered ids and non-empty POST bodies when bearer is set; OUTBOUND_CAPTURE_MUTATIONS=1 is optional for extra writes. createbag may return success with bag_id 0 — see valid_bag_id_available.",
+    "discovered_ids": {
+      "docket_no": "149311778836750",
+      "discovery_branch_id": "27",
+      "pickup_id": "122",
+      "mawb_no": "mum4321",
+      "user_id": "143",
+      "linehaul_id": "LH1778842087",
+      "linehaul_id_source": "trip_no (assignlinehaul returned linehaul_id 0)"
+    },
+    "valid_posts": true,
+    "working_fine_by_path": {
+      "hubscan": "Yes",
+      "gethubscanlogs": "Yes",
+      "getshipmentscanhistory": "Yes",
+      "createbag": "No",
+      "listbags": "Yes",
+      "getbagdetails": "Partial",
+      "addshipmenttobag": "Partial",
+      "removeshipmentfrombag": "Partial",
+      "lockbag": "Partial",
+      "rebagshipment": "Partial",
+      "baggingreport": "Yes",
+      "listmanifests": "Yes",
+      "createmanifest": "Partial",
+      "getmanifestdetails": "Partial",
+      "manifestreport": "Yes",
+      "printmanifestdata": "Partial",
+      "listlinehauls": "Yes",
+      "assignlinehaul": "Yes",
+      "getlinehauldetails": "Partial",
+      "updatelinehaulstatus": "Partial",
+      "linehaulreport": "Yes",
+      "getpickuplist": "Yes",
+      "sectorpickupscan": "Partial",
+      "marknotpicked": "Partial",
+      "addmissedshipment": "Yes",
+      "pickupreport": "Yes"
+    }
+  },
+  "generated_from": "/Users/apple/Desktop/flutter_project/axlpl_delivery/docs/outbound_v8_api_capture.json",
+  "count": 13,
+  "entries": [
+    {
+      "capture_name": "04_createbag",
+      "path": "createbag",
+      "method": "POST",
+      "url": null,
+      "skipped": true,
+      "http_status": null,
+      "api_status": null,
+      "message": null,
+      "error_code": null,
+      "request": {
+        "query": null,
+        "form": null
+      },
+      "response_json": null,
+      "raw_body": null,
+      "note": "Skipped by default (OUTBOUND_SKIP_CREATEBAG=1). The live createbag endpoint often returns status success with bag_id 0 even for invalid or incomplete payloads, so HTTP capture is misleading. Set OUTBOUND_SKIP_CREATEBAG=0 to record the real response body."
+    },
+    {
+      "capture_name": "05_addshipmenttobag",
+      "path": "addshipmenttobag",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Bag ID and Docket Number required",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "bag_id": "BAG20260515154014",
+          "docket_no": "990831778839479",
+          "branch_id": "27",
+          "user_id": "143"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Bag ID and Docket Number required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "06_getbagdetails",
+      "path": "getbagdetails",
+      "method": "GET",
+      "url": "https://my.axlpl.com/messenger/services_v8/getbagdetails?bag_id=BAG20260515154014&platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Bag ID required",
+      "error_code": 400,
+      "request": {
+        "query": {
+          "bag_id": "BAG20260515154014",
+          "platform": "android"
+        },
+        "form": null
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Bag ID required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "08_removeshipmentfrombag",
+      "path": "removeshipmentfrombag",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Bag ID and Docket Number required",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "bag_id": "BAG20260515154014",
+          "docket_no": "990831778839479",
+          "branch_id": "27",
+          "user_id": "143"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Bag ID and Docket Number required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "09_lockbag",
+      "path": "lockbag",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/lockbag?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Bag ID required",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "bag_id": "BAG20260515154014"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Bag ID required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "10_rebagshipment",
+      "path": "rebagshipment",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/rebagshipment?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "New Bag ID and Docket Number required",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "new_bag_id": "BAG20260515154014",
+          "docket_no": "990831778839479",
+          "user_id": "143"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "New Bag ID and Docket Number required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "12_createmanifest",
+      "path": "createmanifest",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/createmanifest?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Invalid Bag IDs format",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "bag_ids": "BAG20260515154014",
+          "origin_branch_id": "27",
+          "destination_branch_id": "27",
+          "user_id": "143"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Invalid Bag IDs format",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "13_getmanifestdetails",
+      "path": "getmanifestdetails",
+      "method": "GET",
+      "url": "https://my.axlpl.com/messenger/services_v8/getmanifestdetails?manifest_id=MUM075&platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Manifest ID required",
+      "error_code": 400,
+      "request": {
+        "query": {
+          "manifest_id": "MUM075",
+          "platform": "android"
+        },
+        "form": null
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Manifest ID required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "16_printmanifestdata",
+      "path": "printmanifestdata",
+      "method": "GET",
+      "url": "https://my.axlpl.com/messenger/services_v8/printmanifestdata?manifest_id=MUM075&platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Manifest ID required",
+      "error_code": 400,
+      "request": {
+        "query": {
+          "manifest_id": "MUM075",
+          "platform": "android"
+        },
+        "form": null
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Manifest ID required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "19_getlinehauldetails",
+      "path": "getlinehauldetails",
+      "method": "GET",
+      "url": "https://my.axlpl.com/messenger/services_v8/getlinehauldetails?linehaul_id=LH1778842087&platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Linehaul ID required",
+      "error_code": 400,
+      "request": {
+        "query": {
+          "linehaul_id": "LH1778842087",
+          "platform": "android"
+        },
+        "form": null
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Linehaul ID required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "20_updatelinehaulstatus",
+      "path": "updatelinehaulstatus",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/updatelinehaulstatus?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Linehaul ID and Status required",
+      "error_code": 400,
+      "request": {
+        "query": null,
+        "form": {
+          "linehaul_id": "LH1778842087",
+          "status": "ARRIVED",
+          "user_id": "143",
+          "branch_id": "27"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Linehaul ID and Status required",
+        "data": {},
+        "error_code": 400
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "22_sectorpickupscan",
+      "path": "sectorpickupscan",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/sectorpickupscan?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Shipment already scanned for this pickup",
+      "error_code": 422,
+      "request": {
+        "query": null,
+        "form": {
+          "pickup_id": "122",
+          "docket_no": "990831778839479",
+          "status": "Picked",
+          "remarks": "",
+          "user_id": "143",
+          "branch_id": "27"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Shipment already scanned for this pickup",
+        "data": {},
+        "error_code": 422
+      },
+      "raw_body": null,
+      "note": null
+    },
+    {
+      "capture_name": "24_marknotpicked",
+      "path": "marknotpicked",
+      "method": "POST",
+      "url": "https://my.axlpl.com/messenger/services_v8/marknotpicked?platform=android",
+      "skipped": false,
+      "http_status": 200,
+      "api_status": "fail",
+      "message": "Shipment already scanned for this pickup",
+      "error_code": 422,
+      "request": {
+        "query": null,
+        "form": {
+          "pickup_id": "122",
+          "docket_no": "990831778839479",
+          "remarks": "api_capture_script_test",
+          "user_id": "143",
+          "branch_id": "27"
+        }
+      },
+      "response_json": {
+        "status": "fail",
+        "message": "Shipment already scanned for this pickup",
+        "data": {},
+        "error_code": 422
+      },
+      "raw_body": null,
+      "note": null
+    }
+  ]
+}

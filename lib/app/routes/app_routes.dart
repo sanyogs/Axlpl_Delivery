@@ -23,6 +23,13 @@ abstract class Routes {
   static const SHIPMENT_RECORD = _Paths.SHIPMENT_RECORD;
   // static const REGISTAR = _Paths.REGISTAR;
   static const REGISTER = _Paths.REGISTER;
+  static const OUTBOUND_MENU = _Paths.OUTBOUND_MENU;
+  static const OUTBOUND_HUB_SCAN = _Paths.OUTBOUND_HUB_SCAN;
+  static const OUTBOUND_BAGGING = _Paths.OUTBOUND_BAGGING;
+  static const OUTBOUND_MANIFEST = _Paths.OUTBOUND_MANIFEST;
+  static const OUTBOUND_LINEHAUL = _Paths.OUTBOUND_LINEHAUL;
+  static const OUTBOUND_SECTOR_PICKUP = _Paths.OUTBOUND_SECTOR_PICKUP;
+  static const OUTBOUND_REMOTE_DETAIL = _Paths.OUTBOUND_REMOTE_DETAIL;
 }
 
 abstract class _Paths {
@@ -47,4 +54,11 @@ abstract class _Paths {
   static const SHIPMENT_RECORD = '/shipment-record';
   // static const REGISTAR = '/registar';
   static const REGISTER = '/register';
+  static const OUTBOUND_MENU = '/outbound-menu';
+  static const OUTBOUND_HUB_SCAN = '/outbound-hub-scan';
+  static const OUTBOUND_BAGGING = '/outbound-bagging';
+  static const OUTBOUND_MANIFEST = '/outbound-manifest';
+  static const OUTBOUND_LINEHAUL = '/outbound-linehaul';
+  static const OUTBOUND_SECTOR_PICKUP = '/outbound-sector-pickup';
+  static const OUTBOUND_REMOTE_DETAIL = '/outbound-remote-detail';
 }
