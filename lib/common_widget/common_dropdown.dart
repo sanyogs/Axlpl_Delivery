@@ -1,12 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:developer';
-
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:axlpl_delivery/utils/utils.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
 
 Widget dropdownText(String text) {
   return Padding(
@@ -50,21 +47,48 @@ class CommonDropdown<T> extends StatelessWidget {
     this.isSearchable,
   }) : super(key: key);
 
+  String? _labelForSelectedValue() {
+    final id = selectedValue?.trim();
+    if (id == null || id.isEmpty || items.isEmpty) return null;
+    for (final item in items) {
+      if (itemValue(item) == id) return itemLabel(item);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DropdownSearch(
+    if (isLoading) {
+      return InputDecorator(
+        decoration: InputDecoration(
+          labelText: hint,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        child: Text(
+          'Loading…',
+          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+        ),
+      );
+    }
+    if (items.isEmpty) {
+      return InputDecorator(
+        decoration: InputDecoration(
+          labelText: hint,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        child: Text(
+          'No options',
+          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+        ),
+      );
+    }
+    return DropdownSearch<String>(
       items: items.map(itemLabel).toList(),
-      selectedItem: selectedValue != null
-          ? () {
-              try {
-                return itemLabel(items.firstWhere(
-                  (e) => itemValue(e) == selectedValue,
-                ));
-              } catch (_) {
-                return itemLabel(items.first);
-              }
-            }()
-          : null,
+      selectedItem: _labelForSelectedValue(),
       dropdownDecoratorProps: DropDownDecoratorProps(
         dropdownSearchDecoration: InputDecoration(
           labelText: hint,
@@ -76,19 +100,24 @@ class CommonDropdown<T> extends StatelessWidget {
       popupProps: PopupProps.menu(
         fit: FlexFit.loose,
         showSearchBox: isSearchable ?? false,
-        searchFieldProps: TextFieldProps(
-          decoration: const InputDecoration(
+        searchFieldProps: const TextFieldProps(
+          decoration: InputDecoration(
             hintText: 'Search...',
             border: OutlineInputBorder(),
           ),
         ),
       ),
       onChanged: (label) {
-        final matchedItem = items.firstWhere(
-          (item) => itemLabel(item) == label,
-          orElse: () => items.first, // return first item to match T type
-        );
-        onChanged(itemValue(matchedItem));
+        if (label == null || label.trim().isEmpty) {
+          onChanged(null);
+          return;
+        }
+        for (final item in items) {
+          if (itemLabel(item) == label) {
+            onChanged(itemValue(item));
+            return;
+          }
+        }
       },
     );
   }

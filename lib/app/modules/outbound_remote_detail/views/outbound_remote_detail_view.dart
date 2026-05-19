@@ -1,6 +1,9 @@
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_remote_detail/controllers/outbound_remote_detail_controller.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class OutboundRemoteDetailView extends GetView<OutboundRemoteDetailController> {
@@ -8,71 +11,60 @@ class OutboundRemoteDetailView extends GetView<OutboundRemoteDetailController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: themes.lightWhite,
-      appBar: AppBar(
-        title: Obx(() => Text(controller.title.value)),
-        backgroundColor: themes.whiteColor,
-        actions: [
-          Obx(
-            () => IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: controller.isLoading.value ? null : controller.reload,
+    return Obx(() {
+      final busy = controller.isLoading.value;
+      return OutboundScreen(
+        title: controller.title.value,
+        busy: busy,
+        onRefresh: controller.reload,
+        children: [
+          if (controller.errorMessage.value.isNotEmpty)
+            _ErrorBanner(message: controller.errorMessage.value),
+          if (!busy && controller.bagDetail.value != null)
+            OutboundBagDetailBody(detail: controller.bagDetail.value!),
+          if (!busy && controller.manifestDetail.value != null)
+            OutboundManifestDetailBody(
+              detail: controller.manifestDetail.value!,
             ),
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator.adaptive());
-        }
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: SelectionArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (controller.summaryLines.isNotEmpty) ...[
-                    Text(
-                      'Summary',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      color: themes.whiteColor,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: controller.summaryLines
-                              .map(
-                                (line) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: SelectableText(line),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  Text(
-                    'Raw response',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  SelectableText(
-                    controller.detailText.value,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+          if (!busy && controller.linehaulDetail.value != null)
+            OutboundLinehaulDetailBody(
+              detail: controller.linehaulDetail.value!,
+            ),
+          if (!busy &&
+              controller.errorMessage.value.isEmpty &&
+              controller.bagDetail.value == null &&
+              controller.manifestDetail.value == null &&
+              controller.linehaulDetail.value == null)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.h),
+              child: Center(
+                child: Text(
+                  'No detail data.',
+                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                ),
               ),
             ),
-          ),
-        );
-      }),
+        ],
+      );
+    });
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: themes.redColor.withValues(alpha: 0.08),
+      child: Padding(
+        padding: EdgeInsets.all(12.w),
+        child: Text(
+          message,
+          style: themes.fontSize14_400.copyWith(color: themes.redColor),
+        ),
+      ),
     );
   }
 }

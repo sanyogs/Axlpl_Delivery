@@ -1,33 +1,63 @@
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 
-/// Row from `listlinehauls` inner `data`.
+/// Row from `listlinehauls` (raw JSON array).
 class OutboundLinehaulRow {
-  const OutboundLinehaulRow(this.raw);
+  const OutboundLinehaulRow({
+    this.linehaulId,
+    this.tripNo,
+    this.vehicleNo,
+    this.driverName,
+    this.status,
+  });
 
-  final Map<String, dynamic> raw;
+  final String? linehaulId;
+  final String? tripNo;
+  final String? vehicleNo;
+  final String? driverName;
+  final String? status;
 
-  factory OutboundLinehaulRow.fromJson(Map<String, dynamic> json) =>
-      OutboundLinehaulRow(json);
+  String? get effectiveRef {
+    if (tripNo != null && tripNo!.isNotEmpty) return tripNo;
+    if (linehaulId != null && linehaulId!.isNotEmpty && linehaulId != '0') {
+      return linehaulId;
+    }
+    return null;
+  }
 
-  String? get linehaulId => OutboundDataParse.firstNonEmptyString(
-        raw,
-        const ['linehaul_id', 'id', 'linehaulId'],
-      );
+  factory OutboundLinehaulRow.fromJson(Map<String, dynamic> json) {
+    return OutboundLinehaulRow(
+      linehaulId: OutboundDataParse.firstNonEmptyString(json, const [
+        'linehaul_id',
+        'id',
+        'linehaulId',
+      ]),
+      tripNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'trip_no',
+        'tripNo',
+      ]),
+      vehicleNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'vehicle_no',
+        'vehicleNo',
+        'vehicle',
+      ]),
+      driverName: OutboundDataParse.firstNonEmptyString(json, const [
+        'driver_name',
+        'driverName',
+        'driver',
+      ]),
+      status: OutboundDataParse.optionalString(json, 'status'),
+    );
+  }
 
-  String? get vehicleNo => OutboundDataParse.firstNonEmptyString(
-        raw,
-        const ['vehicle_no', 'vehicleNo', 'vehicle'],
-      );
+  Map<String, dynamic> toJson() => {
+        if (linehaulId != null) 'linehaul_id': linehaulId,
+        if (tripNo != null) 'trip_no': tripNo,
+        if (vehicleNo != null) 'vehicle_no': vehicleNo,
+        if (driverName != null) 'driver_name': driverName,
+        if (status != null) 'status': status,
+      };
 
-  String? get driverName => OutboundDataParse.firstNonEmptyString(
-        raw,
-        const ['driver_name', 'driverName', 'driver'],
-      );
-
-  String? get status =>
-      OutboundDataParse.firstNonEmptyString(raw, const ['status']);
-
-  Map<String, dynamic> get asMap => raw;
+  Map<String, dynamic> get asMap => toJson();
 
   static List<OutboundLinehaulRow> listFromDynamic(dynamic data) =>
       OutboundDataParse.mapListFromDynamic(data, OutboundLinehaulRow.fromJson);

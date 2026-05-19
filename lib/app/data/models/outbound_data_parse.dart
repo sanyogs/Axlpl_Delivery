@@ -76,4 +76,31 @@ class OutboundDataParse {
     }
     return null;
   }
+
+  /// Optional string field; empty strings become `null`.
+  static String? optionalString(Map<String, dynamic> json, String key) {
+    final v = json[key];
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  /// Optional int field from numeric or string JSON values.
+  static int? optionalInt(Map<String, dynamic> json, String key) {
+    final v = json[key];
+    if (v == null) return null;
+    if (v is int) return v;
+    return int.tryParse(v.toString().trim());
+  }
+
+  /// Parses `"0"`/`"1"` or bool flags used by outbound V8 list rows.
+  static bool? boolFromZeroOne(Map<String, dynamic> json, String key) {
+    final v = json[key];
+    if (v == null) return null;
+    if (v is bool) return v;
+    final s = v.toString().trim().toLowerCase();
+    if (s == '0' || s == 'false') return false;
+    if (s == '1' || s == 'true') return true;
+    return null;
+  }
 }

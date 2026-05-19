@@ -1,0 +1,197 @@
+# Outbound — Sarvesh QA verified curls
+
+Gateway: `api.php?request=<action>` · iOS headers · **no** `platform` param · POST = `--form` multipart.
+
+QA: hub docket `558751776258671`, bagging docket `825411779084407`, remove/rebag docket `442291776257551`, bag `BAG20260518152744831`, list branch `75`, manifest origin `37` dest `75`.
+
+Regenerate: `./docs/run_sarvesh_qa_curls.sh`
+
+---
+
+## getshipmentscanhistory
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getshipmentscanhistory&docket_no=558751776258671' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+[{"id":"1952575","s_id":"558751776258671","status":"Hub In","is_exception":"0","branch_id":"73","created_by":"1","u_type":null,"remark":"","created_date":"2026-05-18 18:19:15","modified_date":"2026-05-18 18:19:15","sequence_no":"0","is_negative":"0","negative_remark":null,"receiver_name":null},{"id":"1867757","s_id":"558751776258671","status":"Approved","is_exception":"0","branch_id":null,"created_by":"81","u_type":null,"remark":"","created_date":"2026-04-15 18:41:11","modified_date":"2026-04-15 18:41:11","sequence_no":"2","is_negative":"0","negative_remark":null,"receiver_name":null}]
+```
+
+**HTTP:** 200
+
+---
+
+## addshipmenttobag
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'bag_code=BAG20260518152744831' \
+  --form 'docket_no=825411779084407' \
+  --form 'branch_id=1' \
+  --form 'user_id=1'
+```
+
+**Response**
+```json
+{"status":"fail","message":"Shipment already bagged in Bag: BAG20260518152744831","data":{},"error_code":422}
+```
+
+**HTTP:** 422
+
+---
+
+## getbagdetails
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getbagdetails&bag_code=BAG20260518152744831' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{"id":"200","bag_code":"BAG20260518152744831","metal_seal_no":"MSeal825411779084407","origin_branch_id":"37","destination_sector_id":"95","created_by":"1","created_at":"2026-05-18 15:27:44","updated_at":null,"shipment_count":1,"manifest_status":"Not Manifested","items":[{"id":"1099","bag_id":"200","shipment_id":"825411779084407","created_at":"2026-05-18 15:27:44","updated_at":null,"shipment_invoice_no":"1","shipment_status":"Manifest Created"}]}
+```
+
+**HTTP:** 200
+
+---
+
+## listbags
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listbags&branch_id=75' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+[{"id":"184","bag_code":"BAG20260515222002","metal_seal_no":"VAL150526RPR","origin_branch_id":"75","destination_sector_id":"53","created_by":null,"created_at":"2026-05-15 22:20:02","updated_at":null},{"id":"183","bag_code":"BAG20260515221655","metal_seal_no":"VAL15052026JAI","origin_branch_id":"75","destination_sector_id":"41","created_by":null,"created_at":"2026-05-15 22:16:55","updated_at":null},{"id":"182","bag_code":"BAG20260515221522","metal_seal_no":"VAL150526HYD","origin_branch_id":"75","destination_sector_id":"49","created_by":null,"created_at":"2026-05-15 22:15:22","updated_at":null},{"id":"173","bag_code":"BAG20260515154014","metal_seal_no":"bag990831778839479","origin_branch_id":"75","destination_sector_id":"75","created_by":null,"created_at":"2026-05-15 15:40:14","updated_at":null},{"id":"170","bag_code":"BAG20260514224853","metal_seal_no":"VAL140526ATQ","origin_branch_id":"75","destination_sector_id":"39","created_by":null,"created_at":"2026-05-14 22:48:53","updated_at":null},{"id":"168","bag_code":"BAG20260514223720","metal_seal_no":"VAL140526BLR","origin_branch_id":"75","destination_sector_id":"31","created_by":null,"created_at":"2026-05-14 22:37:20","updated_at":null},{"id":"167","bag_code":"BAG20260514223551","metal_seal_no":"VAL140526CCU","origin_branch_id":"75","destination_sector_id":"37","created_by":null,"created_at":"2026-05-14 22:35:51","updated_at":null},{"id":"72","bag_code":"BAG20260505225124","metal_seal_no":"050526 bom to indore","origin_branch_id":"75","destination_sector_id":"79","created_by":null,"created_at":"2026-05-05 22:51:24","updated_at":null},{"id":"56","bag_code":"BAG20260504222101","metal_seal_no":"VAL040526MAA","origin_branch_id":"75","destination_sector_id":"29","created_by":null,"created_at":"2026-05-04 22:21:01","updated_at":null},{"id":"55","bag_code":"BAG20260504221655","metal_seal_no":"DEL040526VAL","origin_branch_id":"75","destination_sector_id":"27","created_by":null,"created_at":"2026-05-04 22:16:55","updated_at":null},{"id":"44","bag_code":"BAG20260430225738","metal_seal_no":"val300426 bom to atq","origin_branch_id":"75","destination_sector_id":"39","created_by":null,"created_at":"2026-04-30 22:57:38","updated_at":null},{"id":"43","bag_code":"BAG20260427225126","metal_seal_no":"val270426 agra","origin_branch_id":"75","destination_sector_id":"71","created_by":null,"created_at":"2026-04-27 22:51:26","updated_at":null},{"id":"42","bag_code":"BAG20260427224552","metal_seal_no":"val270426amd","origin_branch_id":"75","destination_sector_id":"61","created_by":null,"created_at":"2026-04-27 22:45:52","updated_at":null},{"id":"41","bag_code":"BAG20260425221234","metal_seal_no":"VAL250426LKO","origin_branch_id":"75","destination_sector_id":"57","created_by":null,"created_at":"2026-04-25 22:12:34","updated_at":null},{"id":"40","bag_code":"BAG20260425221156","metal_seal_no":"VAL250426VNS","origin_branch_id":"75","destination_sector_id":"83","created_by":null,"created_at":"2026-04-25 22:11:56","updated_at":null},{"id":"39","bag_code":"BAG20260425221107","metal_seal_no":"VAL250426RPR","origin_branch_id":"75","destination_sector_id":"53","created_by":null,"created_at":"2026-04-25 22:11:07","updated_at":null},{"id":"38","bag_code":"BAG20260424223010","metal_seal_no":"VAL240426CJB","origin_branch_id":"75","destination_sector_id":"51","created_by":null,"created_at":"2026-04-24 22:30:10","updated_at":null},{"id":"37","bag_code":"BAG20260424222057","metal_seal_no":"VAL240426HYD","origin_branch_id":"75","destination_sector_id":"49","created_by":null,"created_at":"2026-04-24 22:20:57","updated_at":null},{"id":"36","bag_code":"BAG20260423221907","metal_seal_no":"VAL230426IXC","origin_branch_id":"75","destination_sector_id":"35","created_by":null,"created_at":"2026-04-23 22:19:07","updated_at":null},{"id":"35","bag_code":"BAG20260423221515","metal_seal_no":"VAL230426CCU","origin_branch_id":"75","destination_sector_id":"37","created_by":null,"created_at":"2026-04-23 22:15:15","updated_at":null},{"id":"34","bag_code":"BAG20260420223639","metal_seal_no":"VAL200426JAI","origin_branch_id":"75","destination_sector_id":"41","created_by":null,"created_at":"2026-04-20 22:36:39","updated_at":null},{"id":"33","bag_code":"BAG20260420220826","metal_seal_no":"VAL200426MAA","origin_branch_id":"75","destination_sector_id":"29","created_by":null,"created_at":"2026-04-20 22:08:26","updated_at":null},{"id":"32","bag_code":"BAG20260420220614","metal_seal_no":"VAL200426DEL","origin_branch_id":"75","destination_sector_id":"27","created_by":null,"created_at":"2026-04-20 22:06:14","updated_at":null},{"id":"31","bag_code":"BAG20260418224157","metal_seal_no":"VAL1804STV","origin_branch_id":"75","destination_sector_id":"59","created_by":null,"created_at":"2026-04-18 22:41:57","updated_at":null},{"id":"30","bag_code":"BAG20260418222404","metal_seal_no":"VAL180426","origin_branch_id":"75","destination_sector_id":"31","created_by":null,"created_at":"2026-04-18 22:24:04","updated_at":null},{"id":"28","bag_code":"BAG20260418123406","metal_seal_no":"val1804","origin_branch_id":"75","destination_sector_id":"49","created_by":null,"created_at":"2026-04-18 12:34:06","updated_at":null},{"id":"27","bag_code":"BAG20260417223714","metal_seal_no":"val1704","origin_branch_id":"75","destination_sector_id":"39","created_by":null,"created_at":"2026-04-17 22:37:14","updated_at":null},{"id":"26","bag_code":"BAG20260417134356","metal_seal_no":"dummyval1704","origin_branch_id":"75","destination_sector_id":"39","created_by":null,"created_at":"2026-04-17 13:43:56","updated_at":null}]
+```
+
+**HTTP:** 200
+
+---
+
+## removeshipmentfrombag
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=removeshipmentfrombag' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'bag_code=BAG20260518152744831' \
+  --form 'docket_no=442291776257551' \
+  --form 'branch_id=1' \
+  --form 'user_id=1'
+```
+
+**Response**
+```json
+{"status":"fail","message":"Shipment is not in this bag","data":{},"error_code":404}
+```
+
+**HTTP:** 404
+
+---
+
+## lockbag
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=lockbag' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'bag_code=BAG20260518152744831'
+```
+
+**Response**
+```json
+{"bag_id":"200","bag_code":"BAG20260518152744831","status":"Locked"}
+```
+
+**HTTP:** 200
+
+---
+
+## rebagshipment
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=rebagshipment' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'new_bag_code=BAG20260518152744831' \
+  --form 'docket_no=442291776257551' \
+  --form 'user_id=1'
+```
+
+**Response**
+```json
+{"status":"fail","message":"Shipment is not currently in any bag","data":{},"error_code":422}
+```
+
+**HTTP:** 422
+
+---
+
+## baggingreport
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=baggingreport&start_date=2026-03-01&end_date=2026-05-18&bag_code=BAG20260518152744831' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{"id":"200","bag_code":"BAG20260518152744831","metal_seal_no":"MSeal825411779084407","origin_branch_id":"37","destination_sector_id":"95","created_by":"1","created_at":"2026-05-18 15:27:44","updated_at":null,"origin_branch_name":"KOLKATTA","destination_city_name":"Puttur","created_by_name":null,"items":[{"shipment_id":"825411779084407","shipment_invoice_no":"1","sender_name":"prajakta rajeshirke","receiver_name":"receiver_version","destination_city":"Mumbai","total_weight":"11.00","no_of_package":"1"}]}
+```
+
+**HTTP:** 200
+
+---
+
+## createmanifest
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'bag_codes=BAG20260518152744831' \
+  --form 'origin_branch_id=37' \
+  --form 'destination_branch_id=75' \
+  --form 'user_id=1'
+```
+
+**Response**
+```json
+{"status":"fail","message":"Bag BAG20260518152744831 is already manifested","data":{},"error_code":422}
+```
+
+**HTTP:** 422
+
+---
+

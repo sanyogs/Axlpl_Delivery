@@ -1,0 +1,100 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Outbound API Errors</title><style>body{font-family:system-ui;max-width:900px;margin:24px auto;padding:0 16px}.card{border:1px solid #ccc;border-radius:8px;margin:20px 0;padding:16px}h1{color:#0d47a1}h2{font-size:1.1rem;margin:0 0 12px}.reason{background:#ffebee;padding:12px;border-left:4px solid #c62828;margin:12px 0}pre{background:#1e293b;color:#eee;padding:12px;border-radius:6px;font-size:12px;white-space:pre-wrap}.lbl{font-weight:bold;color:#666;font-size:11px;text-transform:uppercase;margin-top:16px}</style></head><body><h1>AXLPL Outbound — Errors Report</h1><p>Generated 2026-05-18 12:09 UTC · api.php?request= · QA data</p><div class="card"><h2>1. <code>getmanifestdetails</code> (Manifest) — HTTP 500</h2><div class="reason"><strong>Reason:</strong> HTTP 500 server error — empty or invalid response</div><p class="lbl">Request curl</p><pre>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&amp;platform=android&amp;manifest_code=MUM075&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p class="lbl">Response</p><pre>(empty response body — HTTP 500)</pre></div><div class="card"><h2>2. <code>printmanifestdata</code> (Manifest) — HTTP 500</h2><div class="reason"><strong>Reason:</strong> HTTP 500 server error — empty or invalid response</div><p class="lbl">Request curl</p><pre>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=printmanifestdata&amp;platform=android&amp;manifest_code=MUM075&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p class="lbl">Response</p><pre>(empty response body — HTTP 500)</pre></div><div class="card"><h2>3. <code>addshipmenttobag</code> (Bagging) — HTTP 422</h2><div class="reason"><strong>Reason:</strong> Shipment already bagged in Bag: BAG20260518170911328</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already bagged in Bag: BAG20260518170911328&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre></div><div class="card"><h2>4. <code>removeshipmentfrombag</code> (Bagging) — HTTP 404</h2><div class="reason"><strong>Reason:</strong> Shipment is not in this bag</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=removeshipmentfrombag&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment is not in this bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre></div><div class="card"><h2>5. <code>rebagshipment</code> (Bagging) — HTTP 404</h2><div class="reason"><strong>Reason:</strong> Bag not found: BAG_N_1779106175</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=rebagshipment&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;new_bag_code=BAG_N_1779106175&amp;docket_no=990831778839479&amp;user_id=148&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;new_bag_code&quot;: &quot;BAG_N_1779106175&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: BAG_N_1779106175&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre></div><div class="card"><h2>6. <code>createmanifest</code> (Manifest) — HTTP 422</h2><div class="reason"><strong>Reason:</strong> Bag BAG20260515154014 is already manifested</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;bag_codes=BAG20260515154014&amp;origin_branch_id=27&amp;destination_branch_id=5&amp;user_id=148&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_codes&quot;: &quot;BAG20260515154014&quot;,
+    &quot;origin_branch_id&quot;: &quot;27&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag BAG20260515154014 is already manifested&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre></div><div class="card"><h2>7. <code>getlinehauldetails</code> (Linehaul) — HTTP 404</h2><div class="reason"><strong>Reason:</strong> Linehaul not found: LH1778842087</div><p class="lbl">Request curl</p><pre>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&amp;platform=android&amp;trip_no=LH1778842087&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre></div><div class="card"><h2>8. <code>updatelinehaulstatus</code> (Linehaul) — HTTP 404</h2><div class="reason"><strong>Reason:</strong> Linehaul not found: LH1778842087</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=updatelinehaulstatus&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;trip_no=LH1778842087&amp;status=Arrived&amp;user_id=148&amp;branch_id=27&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;,
+    &quot;status&quot;: &quot;Arrived&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre></div><div class="card"><h2>9. <code>sectorpickupscan</code> (Pickup) — HTTP 400</h2><div class="reason"><strong>Reason:</strong> Shipment already scanned for this pickup</div><p class="lbl">Request curl</p><pre>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=sectorpickupscan&amp;platform=android&#x27; -H &#x27;Authorization: Bearer $TOKEN&#x27; -H &#x27;X-App-Version: 22.3.0&#x27; -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; --data &#x27;pickup_id=122&amp;docket_no=990831778839479&amp;status=Picked&amp;remarks=t&amp;user_id=148&amp;branch_id=27&#x27;</pre><p class="lbl">Request params</p><pre>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;pickup_id&quot;: &quot;122&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;status&quot;: &quot;Picked&quot;,
+    &quot;remarks&quot;: &quot;t&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p class="lbl">Response</p><pre>{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already scanned for this pickup&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 400
+}</pre></div></body></html>

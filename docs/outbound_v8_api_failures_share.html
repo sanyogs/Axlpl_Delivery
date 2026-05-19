@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AXLPL Outbound V8 — Non-working APIs (Messenger)</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #fff;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --border: #dde3ea;
+      --accent: #0d47a1;
+      --fail: #c62828;
+      --partial: #e65100;
+      --no: #6d4c41;
+      --code-bg: #1e293b;
+      --code-fg: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      margin: 0;
+      padding: 24px 16px 48px;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    header {
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+      color: #fff;
+      padding: 28px 32px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    header h1 { margin: 0 0 8px; font-size: 1.5rem; font-weight: 700; }
+    header p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .meta-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .meta-card strong { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 4px; }
+    .meta-card span { font-size: 0.9rem; word-break: break-all; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 28px;
+      font-size: 0.88rem;
+    }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #eef2f7; font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-partial { background: #fff3e0; color: var(--partial); }
+    .badge-no { background: #efebe9; color: var(--no); }
+    section.api {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    section.api header {
+      background: #f8fafc;
+      color: var(--text);
+      padding: 16px 20px;
+      border-radius: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    section.api header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    section.api header .sub { margin: 6px 0 0; font-size: 0.85rem; color: var(--muted); font-weight: normal; }
+    .block { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .block:last-child { border-bottom: none; }
+    .block h3 {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    pre {
+      margin: 0;
+      padding: 14px 16px;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .ask {
+      background: #fff8e1;
+      border-left: 4px solid #f9a825;
+      padding: 12px 16px;
+      margin: 0 20px 16px;
+      font-size: 0.88rem;
+      border-radius: 0 6px 6px 0;
+    }
+    .note-box {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+    }
+    .note-box h3 { margin: 0 0 8px; font-size: 1rem; }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 32px;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      section.api { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Outbound Services V8 — Non-working / Partial APIs</h1>
+      <p>AXLPL Messenger app · Base: <code style="background:rgba(255,255,255,.15);padding:2px 6px;border-radius:4px">https://my.axlpl.com/messenger/services_v8/</code></p>
+      <p style="margin-top:8px;font-size:0.85rem">Captured 2026-05-15 · Replace <strong>$OUTBOUND_BEARER_TOKEN</strong> with messenger JWT from <code>login</code></p>
+    </header>
+
+    <div class="meta">
+      <div class="meta-card"><strong>Branch (hub)</strong><span>27</span></div>
+      <div class="meta-card"><strong>User ID</strong><span>143</span></div>
+      <div class="meta-card"><strong>Bag code</strong><span>BAG20260515154014</span></div>
+      <div class="meta-card"><strong>Manifest code</strong><span>MUM075</span></div>
+      <div class="meta-card"><strong>Docket</strong><span>990831778839479</span></div>
+      <div class="meta-card"><strong>Pickup ID</strong><span>122 (mawb mum4321)</span></div>
+    </div>
+
+    <div class="note-box">
+      <h3>Root cause (most Partial failures)</h3>
+      <p>App and admin UI use <strong>human-readable codes</strong> (bag <code>BAG…</code>, manifest <code>MUM075</code>, trip <code>LH…</code>). Several endpoints only accept <strong>numeric IDs</strong>. <code>listbags</code> / <code>listmanifests</code> return empty <code>{}</code>, so the app cannot discover numeric IDs. <code>assignlinehaul</code> returns <code>linehaul_id: 0</code> and only <code>trip_no</code>.</p>
+      <p><strong>Also missing:</strong> branch/hub dropdown API (Delhi, Chennai, etc.) for Hub Scan — not in the 26-endpoint list.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Path</th>
+          <th>Status</th>
+          <th>HTTP</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><code>createbag</code></td><td><span class="badge badge-no">No</span></td><td>—</td><td>Skipped; often success + bag_id 0</td></tr>
+        <tr><td>2</td><td><code>addshipmenttobag</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Bag ID and Docket Number required</td></tr>
+        <tr><td>3</td><td><code>getbagdetails</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Bag ID required</td></tr>
+        <tr><td>4</td><td><code>removeshipmentfrombag</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Bag ID and Docket Number required</td></tr>
+        <tr><td>5</td><td><code>lockbag</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Bag ID required</td></tr>
+        <tr><td>6</td><td><code>rebagshipment</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>New Bag ID and Docket Number required</td></tr>
+        <tr><td>7</td><td><code>createmanifest</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Invalid Bag IDs format</td></tr>
+        <tr><td>8</td><td><code>getmanifestdetails</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Manifest ID required</td></tr>
+        <tr><td>9</td><td><code>printmanifestdata</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Manifest ID required</td></tr>
+        <tr><td>10</td><td><code>getlinehauldetails</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Linehaul ID required</td></tr>
+        <tr><td>11</td><td><code>updatelinehaulstatus</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>Linehaul ID and Status required</td></tr>
+        <tr><td>12</td><td><code>sectorpickupscan</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>422 — already scanned</td></tr>
+        <tr><td>13</td><td><code>marknotpicked</code></td><td><span class="badge badge-partial">Partial</span></td><td>200</td><td>422 — already scanned</td></tr>
+      </tbody>
+    </table>
+
+    <section class="api" id="login">
+      <header>
+        <h2>Get bearer token — <code>login</code></h2>
+        <p class="sub">POST · Required for all calls below</p>
+      </header>
+      <div class="block">
+        <h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/login?platform=android' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'mobile=YOUR_MOBILE&amp;password=YOUR_PASSWORD&amp;fcm_token=x&amp;version=99.99.99&amp;latitude=0&amp;longitude=0&amp;device_id=x&amp;platform=android'</pre>
+      </div>
+      <div class="block">
+        <h3>Notes</h3>
+        <p style="margin:0;font-size:0.9rem">Use <code>Messangerdetail.token</code> from response as <code>Authorization: Bearer …</code>. All examples use headers: <code>X-App-Version: 99.99.99</code>, <code>X-App-Platform: android</code>.</p>
+      </div>
+    </section>
+
+    <section class="api" id="createbag">
+      <header>
+        <h2>1. createbag <span class="badge badge-no">No</span></h2>
+        <p class="sub">POST · Not reliably captured — misleading success with bag_id 0</p>
+      </header>
+      <div class="ask"><strong>Ask backend:</strong> Return real numeric <code>bag_id</code> for valid <code>bag_code</code>; fail clearly when invalid. Do not return <code>success</code> with <code>bag_id: 0</code>.</div>
+      <div class="block">
+        <h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/createbag?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'origin_branch_id=27&amp;destination_branch_id=5&amp;bag_code=BAG20260515154014&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block">
+        <h3>Response (capture note)</h3>
+        <pre>(skipped in capture) Live endpoint often returns:
+{"status":"success","message":"...","data":{"bag_id":0}}
+even for invalid or incomplete payloads.</pre>
+      </div>
+    </section>
+
+    <section class="api" id="addshipmenttobag">
+      <header>
+        <h2>2. addshipmenttobag <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST · Sent bag_id=BAG20260515154014 (code, not numeric id)</p>
+      </header>
+      <div class="ask"><strong>Ask backend:</strong> Accept <code>bag_code</code> or document that only numeric <code>bag_id</code> works.</div>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'bag_id=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Bag ID and Docket Number required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="getbagdetails">
+      <header>
+        <h2>3. getbagdetails <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">GET</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/getbagdetails?bag_id=BAG20260515154014&amp;platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Bag ID required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="removeshipmentfrombag">
+      <header>
+        <h2>4. removeshipmentfrombag <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'bag_id=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Bag ID and Docket Number required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="lockbag">
+      <header>
+        <h2>5. lockbag <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/lockbag?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'bag_id=BAG20260515154014&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Bag ID required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="rebagshipment">
+      <header>
+        <h2>6. rebagshipment <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/rebagshipment?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'new_bag_id=BAG20260515154014&amp;docket_no=990831778839479&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"New Bag ID and Docket Number required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="createmanifest">
+      <header>
+        <h2>7. createmanifest <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST · bag_ids sent as BAG code</p>
+      </header>
+      <div class="ask"><strong>Ask backend:</strong> Accept bag codes in <code>bag_ids</code> or return numeric ids from list/create.</div>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/createmanifest?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'bag_ids=BAG20260515154014&amp;origin_branch_id=27&amp;destination_branch_id=27&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Invalid Bag IDs format","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="getmanifestdetails">
+      <header>
+        <h2>8. getmanifestdetails <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">GET · manifest_id=MUM075 (display code)</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/getmanifestdetails?manifest_id=MUM075&amp;platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Manifest ID required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="printmanifestdata">
+      <header>
+        <h2>9. printmanifestdata <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">GET</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/printmanifestdata?manifest_id=MUM075&amp;platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Manifest ID required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="getlinehauldetails">
+      <header>
+        <h2>10. getlinehauldetails <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">GET · linehaul_id=LH1778842087 (trip_no, not numeric id)</p>
+      </header>
+      <div class="ask"><strong>Ask backend:</strong> Accept <code>trip_no</code> query param or return non-zero <code>linehaul_id</code> from assign.</div>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/getlinehauldetails?linehaul_id=LH1778842087&amp;platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Linehaul ID required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="updatelinehaulstatus">
+      <header>
+        <h2>11. updatelinehaulstatus <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/updatelinehaulstatus?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'linehaul_id=LH1778842087&amp;status=ARRIVED&amp;user_id=143&amp;branch_id=27&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Linehaul ID and Status required","data":{},"error_code":400}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="sectorpickupscan">
+      <header>
+        <h2>12. sectorpickupscan <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST · 422 duplicate state (API reachable)</p>
+      </header>
+      <div class="ask"><strong>Note:</strong> Retry with fresh pickup_id + docket if testing happy path.</div>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/sectorpickupscan?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'pickup_id=122&amp;docket_no=990831778839479&amp;status=Picked&amp;remarks=&amp;user_id=143&amp;branch_id=27&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Shipment already scanned for this pickup","data":{},"error_code":422}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="marknotpicked">
+      <header>
+        <h2>13. marknotpicked <span class="badge badge-partial">Partial</span></h2>
+        <p class="sub">POST · 422 duplicate state</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/marknotpicked?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'pickup_id=122&amp;docket_no=990831778839479&amp;remarks=api_capture_script_test&amp;user_id=143&amp;branch_id=27&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"fail","message":"Shipment already scanned for this pickup","data":{},"error_code":422}</pre>
+      </div>
+    </section>
+
+    <section class="api" id="assignlinehaul">
+      <header>
+        <h2>Related: assignlinehaul (success but blocks #10–11)</h2>
+        <p class="sub">POST · Returns linehaul_id 0</p>
+      </header>
+      <div class="block"><h3>cURL</h3>
+        <pre>curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/assignlinehaul?platform=android' \
+  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
+  -H 'X-App-Version: 99.99.99' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data 'manifest_ids=MUM075&amp;vehicle_no=UP78AB1234&amp;driver_name=API+Capture+Script&amp;user_id=143&amp;platform=android'</pre>
+      </div>
+      <div class="block"><h3>Response</h3>
+        <pre>{"status":"success","message":"Linehaul assigned","data":{"linehaul_id":0,"trip_no":"LH1778841961"}}</pre>
+      </div>
+    </section>
+
+    <footer>
+      Generated from AXLPL Messenger outbound capture · Repo: axlpl_delivery/docs/
+    </footer>
+  </div>
+</body>
+</html>

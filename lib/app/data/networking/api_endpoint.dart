@@ -49,7 +49,15 @@ const String deleteProfilePoint = 'deleteProfile';
 const String getNegativeStatusListPoint = 'negative_status_list';
 const String updateShipmentStatusNewPoint = 'update_shipment_status_new';
 
-// --- Outbound (Services V8) ---
+// --- Outbound (Services V8) — Postman gateway: api.php?request=<action> ---
+const String outboundApiPhpPoint = 'api.php';
+
+/// Reference data — branch/hub dropdown (Utility Dropdowns in Postman).
+/// Override: `--dart-define=OUTBOUND_BRANCH_LIST_PATH=your_path`
+const String getBranchesPoint = String.fromEnvironment(
+  'OUTBOUND_BRANCH_LIST_PATH',
+  defaultValue: 'getbranches',
+);
 const String hubScanPoint = 'hubscan';
 const String getHubScanLogsPoint = 'gethubscanlogs';
 const String getShipmentScanHistoryPoint = 'getshipmentscanhistory';

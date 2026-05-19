@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
 import 'package:get/get.dart';
 
 /// Shared snackbar + pretty JSON for outbound submodule screens.
@@ -26,7 +27,7 @@ class OutboundUiFeedback {
       error: (e) {
         target.value = e.message;
         final msg = e.message;
-        if (msg.toLowerCase().contains('already scanned')) {
+        if (outboundIsBenignDuplicate(msg)) {
           Get.snackbar(feature, 'Already recorded — $msg');
         } else {
           Get.snackbar(feature, msg);

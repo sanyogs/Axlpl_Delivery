@@ -1,4 +1,12 @@
 {
   "dart.flutterSdkPath": ".fvm/versions/3.27.2",
-  "java.compile.nullAnalysis.mode": "disabled"
+  "java.compile.nullAnalysis.mode": "disabled",
+
+  "dart.openDevTools": "flutter",
+  "dart.devToolsReuseWindows": true,
+  "dart.devToolsBrowser": "chrome",
+  "dart.shareDevToolsWithFlutter": true,
+
+  "debug.internalConsoleOptions": "openOnSessionStart",
+  "debug.console.focusOnDebugSessionStart": true
 }

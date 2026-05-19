@@ -16,6 +16,7 @@ class OutboundAuthContext {
         String? token,
         String? userId,
         String? branchId,
+        String? branchName,
         String hubBranchId,
       })> load() async {
     final user = await LocalStorage().getUserLocalData();
@@ -26,6 +27,7 @@ class OutboundAuthContext {
       token: token,
       userId: m?.id,
       branchId: messengerBranch,
+      branchName: m?.branchName?.trim(),
       hubBranchId: hubDataBranchId,
     );
   }

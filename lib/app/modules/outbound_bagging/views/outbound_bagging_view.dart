@@ -1,6 +1,17 @@
+import 'package:axlpl_delivery/app/data/models/outbound/bagging_report_item_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/controllers/outbound_bagging_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_dynamic_map_table.dart';
-import 'package:axlpl_delivery/utils/utils.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
+import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,151 +20,191 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: themes.lightWhite,
-      appBar: AppBar(
-        title: const Text('Bagging'),
-        backgroundColor: themes.whiteColor,
-      ),
-      body: Obx(() {
-        final busy = controller.isBusy.value;
-        final _ = controller.lastResponseText.value;
-        final __ = controller.bagRows.length;
-        return AbsorbPointer(
-          absorbing: busy,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+    final branchList = Get.find<OutboundBranchListController>();
+    return Obx(() {
+      final busy = controller.isBusy.value;
+      final _ = controller.lastResponseText.value;
+      final __ = controller.bagRows.length;
+      final ___ = branchList.branches.length;
+      final ____ = controller.selectedOriginDepotId.value;
+      final _____ = controller.selectedDestDepotId.value;
+      final ______ = controller.bagDetail.value;
+      final _______ = controller.baggingReportData.value;
+      return OutboundScreen(
+        title: 'Bagging',
+        busy: busy,
+        children: [
+          OutboundSection(
+            title: 'Create bag',
+            subtitle:
+                'Metal seal → bag_code + metal_seal_no. At least one shipment id (docket) required as shipment_ids.',
             children: [
-              const Text('Create bag',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              TextField(
-                controller: controller.originBranchController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Origin branch id',
-                  border: OutlineInputBorder(),
+              Obx(
+                () => OutboundBranchSelect(
+                  label: OutboundLabels.originDepot,
+                  items: branchList.branches,
+                  selectedId: controller.selectedOriginDepotId.value,
+                  isLoading: branchList.isLoadingBranches.value,
+                  onChanged: (id) => controller.selectedOriginDepotId.value = id,
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller.destBranchController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Destination branch id',
-                  border: OutlineInputBorder(),
+              Obx(
+                () => OutboundBranchSelect(
+                  label: OutboundLabels.destinationDepot,
+                  items: branchList.branches,
+                  selectedId: controller.selectedDestDepotId.value,
+                  isLoading: branchList.isLoadingBranches.value,
+                  onChanged: (id) => controller.selectedDestDepotId.value = id,
                 ),
               ),
-              const SizedBox(height: 8),
-              TextField(
+              OutboundScanField(
                 controller: controller.bagCodeController,
-                decoration: const InputDecoration(
-                  labelText: 'Bag code',
-                  border: OutlineInputBorder(),
-                ),
+                hintText: OutboundLabels.metalSeal,
               ),
-              ElevatedButton(
+              OutboundScanField(
+                controller: controller.createBagShipmentsController,
+                hintText: OutboundLabels.shipmentIdsForCreateBag,
+              ),
+              OutlinedButton(
+                onPressed: busy ? null : controller.useDocketForCreateBag,
+                child: const Text('Use shipment from “Scan shipments” below'),
+              ),
+              CommonButton(
+                title: 'Create bag',
                 onPressed: busy ? null : controller.createBag,
-                child: const Text('Create bag'),
               ),
-              const Divider(height: 24),
-              const Text('Working bag + docket',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              TextField(
-                controller: controller.bagIdController,
-                decoration: const InputDecoration(
-                  labelText: 'Bag id / bag code (from list)',
-                  border: OutlineInputBorder(),
-                ),
+            ],
+          ),
+          OutboundSection(
+            title: 'Scan shipments into bag',
+            children: [
+              OutboundScanField(
+                controller: controller.bagCodeWorkingController,
+                hintText: OutboundLabels.workingBagCode,
               ),
-              const SizedBox(height: 8),
-              TextField(
+              OutboundScanField(
                 controller: controller.docketController,
-                decoration: const InputDecoration(
-                  labelText: 'Shipment no (docket)',
-                  border: OutlineInputBorder(),
-                ),
+                hintText: OutboundLabels.shipmentNo,
               ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              OutboundScanField(
+                controller: controller.removeDocketController,
+                hintText: 'Remove / rebag docket no',
+              ),
+              CommonButton(
+                title: 'Add to bag',
+                onPressed: busy ? null : controller.addShipment,
+              ),
+              Row(
                 children: [
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.addShipment,
-                    child: const Text('Add to bag'),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: busy ? null : controller.removeShipment,
+                      child: const Text('Remove shipment'),
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.removeShipment,
-                    child: const Text('Remove'),
-                  ),
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.getBagDetails,
-                    child: const Text('Bag details'),
-                  ),
-                  OutlinedButton(
-                    onPressed: busy ? null : controller.openBagDetailPage,
-                    child: const Text('Full-screen detail'),
-                  ),
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.lockBag,
-                    child: const Text('Lock bag'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: busy ? null : controller.getBagDetails,
+                      child: const Text('Bag details'),
+                    ),
                   ),
                 ],
               ),
-              TextField(
-                controller: controller.newBagIdController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'New bag id (rebag)',
-                  border: OutlineInputBorder(),
-                ),
+              OutlinedButton(
+                onPressed: busy ? null : controller.openBagDetailPage,
+                child: const Text('Full-screen bag detail'),
               ),
-              ElevatedButton(
+              if (controller.bagDetail.value != null)
+                OutboundBagDetailBody(detail: controller.bagDetail.value!),
+              CommonButton(
+                title: 'Lock bag',
+                onPressed: busy ? null : controller.lockBag,
+              ),
+              OutboundScanField(
+                controller: controller.newBagCodeController,
+                hintText: OutboundLabels.newBagCode,
+              ),
+              OutlinedButton(
                 onPressed: busy ? null : controller.rebag,
                 child: const Text('Rebag shipment'),
               ),
-              const Divider(height: 24),
-              ElevatedButton(
+            ],
+          ),
+          OutboundSection(
+            title: 'Bag list',
+            children: [
+              CommonButton(
+                title: 'List bags (origin depot)',
                 onPressed: busy ? null : controller.listBags,
-                child: const Text('List bags (uses origin branch id)'),
               ),
-              const SizedBox(height: 8),
               OutboundDynamicMapTable(
-                title: 'Bags (tap row to fill bag id)',
+                title: 'Bags — tap row to fill bag code',
                 rows: controller.listRows,
                 onRowTap: busy ? null : controller.applyBagIdFromListRow,
               ),
-              const Divider(height: 24),
-              const Text('Bagging report',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              TextField(
-                controller: controller.reportStartController,
-                decoration: const InputDecoration(
-                  labelText: 'Start YYYY-MM-DD',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller.reportEndController,
-                decoration: const InputDecoration(
-                  labelText: 'End YYYY-MM-DD',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: busy ? null : controller.baggingReport,
-                child: const Text('Bagging report'),
-              ),
-              const SizedBox(height: 16),
-              if (busy) const LinearProgressIndicator(),
-              const SizedBox(height: 8),
-              Text('Last response',
-                  style: Theme.of(context).textTheme.titleSmall),
-              SelectableText(controller.lastResponseText.value),
             ],
           ),
-        );
-      }),
+          OutboundSection(
+            title: 'Bagging report',
+            children: [
+              OutboundDateField(
+                controller: controller.reportStartController,
+                hintText: OutboundLabels.reportStart,
+              ),
+              OutboundDateField(
+                controller: controller.reportEndController,
+                hintText: OutboundLabels.reportEnd,
+              ),
+              CommonButton(
+                title: 'Generate bagging report',
+                onPressed: busy ? null : controller.baggingReport,
+              ),
+              _BaggingReportItemsTable(
+                items: controller.baggingReportData.value?.items ?? [],
+              ),
+            ],
+          ),
+          OutboundResponsePanel(text: controller.lastResponseText.value),
+        ],
+      );
+    });
+  }
+}
+
+class _BaggingReportItemsTable extends StatelessWidget {
+  const _BaggingReportItemsTable({required this.items});
+  final List<BaggingReportItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const OutboundDynamicMapTablePlaceholder();
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Shipment')),
+          DataColumn(label: Text('Receiver')),
+          DataColumn(label: Text('City')),
+          DataColumn(label: Text('Weight')),
+          DataColumn(label: Text('Pkgs')),
+        ],
+        rows: items
+            .map(
+              (e) => DataRow(
+                cells: [
+                  DataCell(Text(e.shipmentId ?? '—')),
+                  DataCell(Text(e.receiverName ?? e.senderName ?? '—')),
+                  DataCell(Text(e.destinationCity ?? '—')),
+                  DataCell(Text(e.totalWeight ?? '—')),
+                  DataCell(Text(e.noOfPackage ?? '—')),
+                ],
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }

@@ -1,18 +1,22 @@
+import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_response_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_test_ids.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class OutboundHubScanController extends GetxController {
-  OutboundHubScanController({OutboundRepository? repo})
-      : _repo = repo ?? Get.find<OutboundRepository>();
+  OutboundHubScanController({
+    OutboundRepository? repo,
+    OutboundBranchListController? branchList,
+  })  : _repo = repo ?? Get.find<OutboundRepository>(),
+        _branchList = branchList ?? Get.find<OutboundBranchListController>();
 
   final OutboundRepository _repo;
+  final OutboundBranchListController _branchList;
 
   final isBusy = false.obs;
   final lastResponseText = ''.obs;
@@ -21,9 +25,8 @@ class OutboundHubScanController extends GetxController {
   final shipmentHistory = <ShipmentScanEvent>[].obs;
 
   final docketController = TextEditingController();
-  final branchController = TextEditingController();
   final scanHistoryDocketController = TextEditingController();
-  final hubScanLimit = TextEditingController(text: '50');
+  final hubScanLimit = TextEditingController();
 
   final status = 'Hub In'.obs;
   final statuses = const ['Hub In', 'Hub Out'];
@@ -31,22 +34,36 @@ class OutboundHubScanController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _prefillBranch();
+    ever(_branchList.isLoadingBranches, (loading) {
+      if (loading == false && _branchList.selectedBranchIdOrNull != null) {
+        loadHubScanLogs();
+      }
+    });
   }
 
-  Future<void> _prefillBranch() async {
-    final ctx = await OutboundAuthContext.load();
-    branchController.text = OutboundAuthContext.branchIdForScan(ctx.branchId);
-    if (OutboundTestIds.docket.isNotEmpty) {
-      docketController.text = OutboundTestIds.docket;
-      scanHistoryDocketController.text = OutboundTestIds.docket;
+  /// History field first, else main scan docket (copied into history field).
+  String? _resolveHistoryDocket() {
+    final fromHistory = scanHistoryDocketController.text.trim();
+    if (fromHistory.isNotEmpty) return fromHistory;
+    final fromScan = docketController.text.trim();
+    if (fromScan.isEmpty) return null;
+    scanHistoryDocketController.text = fromScan;
+    return fromScan;
+  }
+
+  void useScanDocketForHistory() {
+    final docket = docketController.text.trim();
+    if (docket.isEmpty) {
+      Get.snackbar('Hub scan', 'Enter docket on scan field first');
+      return;
     }
+    scanHistoryDocketController.text = docket;
+    loadShipmentScanHistory();
   }
 
   @override
   void onClose() {
     docketController.dispose();
-    branchController.dispose();
     scanHistoryDocketController.dispose();
     hubScanLimit.dispose();
     super.onClose();
@@ -54,9 +71,9 @@ class OutboundHubScanController extends GetxController {
 
   Future<void> submitHubScan() async {
     final docket = docketController.text.trim();
-    final branchId = branchController.text.trim();
-    if (docket.isEmpty || branchId.isEmpty) {
-      Get.snackbar('Outbound', 'Docket no and branch id are required');
+    final branchId = _branchList.selectedBranchIdOrNull;
+    if (docket.isEmpty || branchId == null) {
+      Get.snackbar('Hub scan', 'Docket no and branch / hub are required');
       return;
     }
     isBusy.value = true;
@@ -70,6 +87,18 @@ class OutboundHubScanController extends GetxController {
         target: lastResponseText,
         response: r,
         feature: 'Hub scan',
+      );
+      r.when(
+        success: (data) {
+          final scan = HubScanResponse.fromDynamic(data);
+          lastResponseText.value = scan.isOk
+              ? '${scan.successMessage ?? 'OK'} — ${scan.docketNo ?? scan.shipmentId ?? ''}'
+              : OutboundDataParse.pretty(data);
+          scanHistoryDocketController.text = docket;
+          loadHubScanLogs();
+          loadShipmentScanHistory();
+        },
+        error: (_) {},
       );
     } finally {
       isBusy.value = false;
@@ -102,9 +131,9 @@ class OutboundHubScanController extends GetxController {
   }
 
   Future<void> loadHubScanLogs() async {
-    final branchId = branchController.text.trim();
-    if (branchId.isEmpty) {
-      Get.snackbar('Outbound', 'Branch id required');
+    final branchId = _branchList.selectedBranchIdOrNull;
+    if (branchId == null) {
+      Get.snackbar('Hub scan', 'Select branch / hub first');
       return;
     }
     final limit = int.tryParse(hubScanLimit.text.trim()) ?? 50;
@@ -116,9 +145,13 @@ class OutboundHubScanController extends GetxController {
         Get.snackbar('Outbound', _repo.lastMessage);
         lastResponseText.value = _repo.lastMessage;
       } else {
-        lastResponseText.value =
-            rows.isEmpty ? 'No hub scan rows returned.' : '${rows.length} row(s).';
-        Get.snackbar('Outbound', 'Loaded ${rows.length} log(s)');
+        lastResponseText.value = rows.isEmpty
+            ? 'No hub scan rows for branch $branchId.'
+            : '${rows.length} row(s) for branch $branchId.';
+        Get.snackbar(
+          'Outbound',
+          rows.isEmpty ? 'No logs for branch $branchId' : 'Loaded ${rows.length} log(s)',
+        );
       }
     } finally {
       isBusy.value = false;
@@ -126,8 +159,8 @@ class OutboundHubScanController extends GetxController {
   }
 
   Future<void> loadShipmentScanHistory() async {
-    final docket = scanHistoryDocketController.text.trim();
-    if (docket.isEmpty) {
+    final docket = _resolveHistoryDocket();
+    if (docket == null) {
       Get.snackbar('Outbound', 'Docket no required for scan history');
       return;
     }
@@ -139,9 +172,13 @@ class OutboundHubScanController extends GetxController {
         Get.snackbar('Outbound', _repo.lastMessage);
         lastResponseText.value = _repo.lastMessage;
       } else {
-        lastResponseText.value =
-            rows.isEmpty ? 'No scan history.' : '${rows.length} event(s).';
-        Get.snackbar('Outbound', 'Loaded ${rows.length} event(s)');
+        lastResponseText.value = rows.isEmpty
+            ? 'No scan history for $docket.'
+            : '${rows.length} event(s) for $docket.';
+        Get.snackbar(
+          'Outbound',
+          rows.isEmpty ? 'No history for $docket' : 'Loaded ${rows.length} event(s)',
+        );
       }
     } finally {
       isBusy.value = false;

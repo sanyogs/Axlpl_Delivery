@@ -1,7 +1,18 @@
+import 'package:axlpl_delivery/app/data/models/outbound/pickup_report_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
+import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
@@ -9,120 +20,97 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: themes.lightWhite,
-      appBar: AppBar(
-        title: const Text('Sector pickup'),
-        backgroundColor: themes.whiteColor,
-      ),
-      body: Obx(() {
-        final busy = controller.isBusy.value;
-        final _ = controller.lastResponseText.value;
-        final __ = controller.pickupRows.length;
-        return AbsorbPointer(
-          absorbing: busy,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+    return Obx(() {
+      final busy = controller.isBusy.value;
+      final _ = controller.lastResponseText.value;
+      final __ = controller.pickupRows.length;
+      final ___ = controller.pickupReportRows.length;
+      return OutboundScreen(
+        title: 'Sector pickup',
+        busy: busy,
+        children: [
+          OutboundSection(
+            title: 'Pickup list (MAWB)',
+            subtitle: 'Tap a row to set pickup id — scan docket below',
             children: [
-              ElevatedButton(
+              CommonButton(
+                title: 'Load pickup list',
                 onPressed: busy ? null : controller.loadPickupList,
-                child: const Text('Get pickup list'),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Pickup list (${controller.pickupRows.length})',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
               _SectorPickupTable(
                 rows: controller.pickupRows,
                 busy: busy,
                 onRowTap: controller.applyPickupIdFromRow,
               ),
-              const Divider(height: 24),
-              TextField(
+            ],
+          ),
+          OutboundSection(
+            title: 'Sector pickup scan',
+            children: [
+              OutboundField(
                 controller: controller.pickupIdController,
+                hintText: OutboundLabels.pickupId,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Pickup id',
-                  border: OutlineInputBorder(),
-                ),
               ),
-              const SizedBox(height: 8),
-              TextField(
+              OutboundScanField(
                 controller: controller.docketController,
-                decoration: const InputDecoration(
-                  labelText: 'Shipment no (docket)',
-                  border: OutlineInputBorder(),
-                ),
+                hintText: OutboundLabels.shipmentNo,
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller.scanStatusController,
-                decoration: const InputDecoration(
-                  labelText: 'Scan status',
-                  border: OutlineInputBorder(),
-                ),
+              OutboundSelectField(
+                label: OutboundLabels.scanStatus,
+                value: controller.scanStatus.value,
+                options: OutboundSectorPickupController.scanStatusOptions,
+                onChanged: (v) => controller.scanStatus.value = v,
               ),
-              const SizedBox(height: 8),
-              TextField(
+              OutboundField(
                 controller: controller.remarksController,
-                decoration: const InputDecoration(
-                  labelText: 'Remarks',
-                  border: OutlineInputBorder(),
-                ),
+                hintText: OutboundLabels.remarks,
               ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              CommonButton(
+                title: 'Submit pickup scan',
+                onPressed: busy ? null : controller.sectorPickupScan,
+              ),
+              Row(
                 children: [
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.sectorPickupScan,
-                    child: const Text('Pickup scan'),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: busy ? null : controller.markNotPicked,
+                      child: const Text('Mark not picked'),
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.markNotPicked,
-                    child: const Text('Mark not picked'),
-                  ),
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.addMissedShipment,
-                    child: const Text('Add missed shipment'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: busy ? null : controller.addMissedShipment,
+                      child: const Text('Add missed'),
+                    ),
                   ),
                 ],
               ),
-              const Divider(height: 24),
-              TextField(
-                controller: controller.reportStartController,
-                decoration: const InputDecoration(
-                  labelText: 'Report start YYYY-MM-DD',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: controller.reportEndController,
-                decoration: const InputDecoration(
-                  labelText: 'Report end YYYY-MM-DD',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: busy ? null : controller.pickupReport,
-                child: const Text('Pickup report'),
-              ),
-              const SizedBox(height: 16),
-              if (busy) const LinearProgressIndicator(),
-              const SizedBox(height: 8),
-              Text(
-                'Last response',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              SelectableText(controller.lastResponseText.value),
             ],
           ),
-        );
-      }),
-    );
+          OutboundSection(
+            title: 'Pickup report',
+            children: [
+              OutboundDateField(
+                controller: controller.reportStartController,
+                hintText: OutboundLabels.reportStart,
+              ),
+              OutboundDateField(
+                controller: controller.reportEndController,
+                hintText: OutboundLabels.reportEnd,
+              ),
+              CommonButton(
+                title: 'Generate pickup report',
+                onPressed: busy ? null : controller.pickupReport,
+              ),
+              _PickupReportTable(rows: controller.pickupReportRows),
+            ],
+          ),
+          OutboundResponsePanel(text: controller.lastResponseText.value),
+        ],
+      );
+    });
   }
 }
 
@@ -140,41 +128,79 @@ class _SectorPickupTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Text('No rows yet — tap “Get pickup list”.');
+      return Text(
+        'No pickups — tap “Load pickup list”.',
+        style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+      );
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Card(
+      elevation: 0,
+      color: themes.whiteColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: 40,
+          columns: const [
+            DataColumn(label: Text('Pickup id')),
+            DataColumn(label: Text('MAWB')),
+            DataColumn(label: Text('Hub')),
+            DataColumn(label: Text('Date')),
+          ],
+          rows: rows
+              .map(
+                (e) => DataRow(
+                  onSelectChanged: busy
+                      ? null
+                      : (_) {
+                          onRowTap(e);
+                          Get.snackbar(
+                            'Sector pickup',
+                            'Pickup ${e.id ?? ''} · MAWB ${e.mawbNo ?? ''}',
+                          );
+                        },
+                  cells: [
+                    DataCell(Text(e.id ?? '—')),
+                    DataCell(Text(e.mawbNo ?? '—')),
+                    DataCell(Text(e.hubId ?? '—')),
+                    DataCell(Text(e.pickupDate ?? '—')),
+                  ],
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _PickupReportTable extends StatelessWidget {
+  const _PickupReportTable({required this.rows});
+  final List<PickupReportRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) {
+      return Text(
+        'No report rows — generate report above.',
+        style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+      );
+    }
+    return Card(
+      elevation: 0,
+      color: themes.whiteColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
       child: DataTable(
-        headingRowHeight: 40,
-        dataRowMinHeight: 36,
-        dataRowMaxHeight: 64,
         columns: const [
-          DataColumn(label: Text('Pickup id')),
-          DataColumn(label: Text('MAWB')),
-          DataColumn(label: Text('Hub')),
-          DataColumn(label: Text('Picked by')),
-          DataColumn(label: Text('Date')),
-          DataColumn(label: Text('Time')),
+          DataColumn(label: Text('Status')),
+          DataColumn(label: Text('Count')),
         ],
         rows: rows
             .map(
               (e) => DataRow(
-                onSelectChanged: busy
-                    ? null
-                    : (_) {
-                        onRowTap(e);
-                        Get.snackbar(
-                          'Sector pickup',
-                          'Pickup id ${e.id ?? ''} copied to field',
-                        );
-                      },
                 cells: [
-                  DataCell(Text(e.id ?? '—')),
-                  DataCell(Text(e.mawbNo ?? '—')),
-                  DataCell(Text(e.hubId ?? '—')),
-                  DataCell(Text(e.pickedBy ?? '—')),
-                  DataCell(Text(e.pickupDate ?? '—')),
-                  DataCell(Text(e.pickupTime ?? '—')),
+                  DataCell(Text(e.status ?? '—')),
+                  DataCell(Text(e.count ?? '—')),
                 ],
               ),
             )

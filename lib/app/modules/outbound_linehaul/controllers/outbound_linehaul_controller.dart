@@ -1,9 +1,9 @@
+import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_test_ids.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
@@ -18,52 +18,64 @@ class OutboundLinehaulController extends GetxController {
   final isBusy = false.obs;
   final lastResponseText = ''.obs;
   final linehaulRows = <OutboundLinehaulRow>[].obs;
+  final linehaulDetail = Rxn<LinehaulDetail>();
+
+  final listFilterStatus = 'In Transit'.obs;
+  final updateStatus = 'ARRIVED'.obs;
+
+  static const listStatusOptions = [
+    'In Transit',
+    'Dispatched',
+    'ARRIVED',
+    'Completed',
+  ];
+
+  static const updateStatusOptions = [
+    'ARRIVED',
+    'In Transit',
+    'Dispatched',
+    'Completed',
+  ];
 
   List<Map<String, dynamic>> get listRows =>
       linehaulRows.map((r) => r.asMap).toList();
 
-  final manifestIdsController = TextEditingController();
+  final manifestCodesController = TextEditingController();
   final vehicleController = TextEditingController();
   final driverController = TextEditingController();
-  final listStatusController = TextEditingController(text: 'In Transit');
-  final linehaulIdController = TextEditingController();
-  final updateStatusController = TextEditingController(text: 'ARRIVED');
+  final tripNoController = TextEditingController();
   final reportStartController = TextEditingController();
   final reportEndController = TextEditingController();
 
   @override
-  void onInit() {
-    super.onInit();
-    final now = DateTime.now();
-    final d =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    reportStartController.text = d;
-    reportEndController.text = d;
-    if (OutboundTestIds.manifestId.isNotEmpty) {
-      manifestIdsController.text = OutboundTestIds.manifestId;
-    }
-  }
-
-  @override
   void onClose() {
-    manifestIdsController.dispose();
+    manifestCodesController.dispose();
     vehicleController.dispose();
     driverController.dispose();
-    listStatusController.dispose();
-    linehaulIdController.dispose();
-    updateStatusController.dispose();
+    tripNoController.dispose();
     reportStartController.dispose();
     reportEndController.dispose();
     super.onClose();
   }
 
   Future<void> assignLinehaul() async {
+    final manifests = manifestCodesController.text.trim();
+    final vehicle = vehicleController.text.trim();
+    final driver = driverController.text.trim();
+    if (manifests.isEmpty) {
+      Get.snackbar('Linehaul', 'Manifest code(s) required');
+      return;
+    }
+    if (vehicle.isEmpty || driver.isEmpty) {
+      Get.snackbar('Linehaul', 'Vehicle no and driver name are required');
+      return;
+    }
     isBusy.value = true;
     try {
       final r = await _repo.assignLinehaul(
-        manifestIdsCommaSeparated: manifestIdsController.text.trim(),
-        vehicleNo: vehicleController.text.trim(),
-        driverName: driverController.text.trim(),
+        manifestIdsCommaSeparated: manifests,
+        vehicleNo: vehicle,
+        driverName: driver,
       );
       OutboundUiFeedback.apply(
         target: lastResponseText,
@@ -75,7 +87,7 @@ class OutboundLinehaulController extends GetxController {
           final created = OutboundMutationResult.fromDynamic(data);
           final ref = created.effectiveLinehaulRef;
           if (ref != null && ref.isNotEmpty) {
-            linehaulIdController.text = ref;
+            tripNoController.text = ref;
           }
         },
         error: (_) {},
@@ -86,11 +98,7 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> listLinehauls() async {
-    final status = listStatusController.text.trim();
-    if (status.isEmpty) {
-      Get.snackbar('Linehaul', 'Status filter required');
-      return;
-    }
+    final status = listFilterStatus.value;
     isBusy.value = true;
     try {
       final rows = await _repo.listLinehauls(status: status);
@@ -113,20 +121,32 @@ class OutboundLinehaulController extends GetxController {
   }
 
   void applyLinehaulIdFromListRow(Map<String, dynamic> row) {
-    final id = OutboundLinehaulRow(row).linehaulId;
-    if (id != null) linehaulIdController.text = id;
+    applyLinehaulFromRow(OutboundLinehaulRow.fromJson(row));
+  }
+
+  void applyLinehaulFromRow(OutboundLinehaulRow row) {
+    final ref = row.effectiveRef;
+    if (ref != null) tripNoController.text = ref;
   }
 
   Future<void> getLinehaulDetails() async {
     isBusy.value = true;
     try {
-      final r = await _repo.fetchLinehaulDetails(
-        linehaulIdController.text.trim(),
-      );
-      OutboundUiFeedback.apply(
-        target: lastResponseText,
-        response: r,
-        feature: 'Linehaul',
+      final r = await _repo.fetchLinehaulDetails(tripNoController.text.trim());
+      r.when(
+        success: (data) {
+          final detail = LinehaulDetail.fromDynamic(data);
+          linehaulDetail.value = detail;
+          final summary = detail.summaryLines;
+          lastResponseText.value = summary.isNotEmpty
+              ? summary.join('\n')
+              : OutboundDataParse.pretty(data);
+          Get.snackbar('Linehaul', 'Linehaul details loaded');
+        },
+        error: (e) {
+          lastResponseText.value = e.message;
+          Get.snackbar('Linehaul', e.message);
+        },
       );
     } finally {
       isBusy.value = false;
@@ -134,17 +154,18 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> updateLinehaulStatus() async {
-    final ctx = await OutboundAuthContext.load();
-    final branchId = ctx.branchId;
-    if (branchId == null || branchId.isEmpty) {
-      Get.snackbar('Linehaul', 'Branch id missing');
+    final trip = tripNoController.text.trim();
+    if (trip.isEmpty) {
+      Get.snackbar('Linehaul', 'Trip no / linehaul ref is required');
       return;
     }
     isBusy.value = true;
     try {
+      final ctx = await OutboundAuthContext.load();
+      final branchId = OutboundAuthContext.branchIdForScan(ctx.branchId);
       final r = await _repo.updateLinehaulStatus(
-        linehaulId: linehaulIdController.text.trim(),
-        status: updateStatusController.text.trim(),
+        linehaulId: trip,
+        status: updateStatus.value,
         branchId: branchId,
       );
       OutboundUiFeedback.apply(
@@ -175,14 +196,14 @@ class OutboundLinehaulController extends GetxController {
   }
 
   void openLinehaulDetailPage() {
-    final id = linehaulIdController.text.trim();
-    if (id.isEmpty) {
-      Get.snackbar('Linehaul', 'Enter linehaul id');
+    final ref = tripNoController.text.trim();
+    if (ref.isEmpty) {
+      Get.snackbar('Linehaul', 'Enter trip no from assign or list');
       return;
     }
     Get.toNamed(
       Routes.OUTBOUND_REMOTE_DETAIL,
-      arguments: {'kind': 'linehaul', 'id': id},
+      arguments: {'kind': 'linehaul', 'id': ref},
     );
   }
 }

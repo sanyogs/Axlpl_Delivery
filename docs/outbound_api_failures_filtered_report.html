@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Outbound API Failures — curl report</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:960px;margin:0 auto;padding:20px;background:#f4f6f9}
+h1{color:#0d47a1}
+.sql{background:#e3f2fd;padding:14px;border-radius:8px;font-family:ui-monospace,monospace;font-size:13px;margin:16px 0}
+.card{background:#fff;border:1px solid #ddd;border-radius:8px;margin:18px 0;padding:18px}
+.reason{background:#ffebee;padding:12px;border-left:4px solid #c62828;margin:10px 0}
+.lbl{font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;margin-top:14px}
+pre.code{background:#1e293b;color:#eceff1;padding:14px;border-radius:6px;font-size:12px;white-space:pre-wrap;word-break:break-all}
+.tag{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:bold;color:#fff}
+.postman{background:#e65100}.pdf{background:#1565c0}
+h2{font-size:1rem;margin:0 0 10px}
+</style>
+</head>
+<body>
+<h1>Outbound API failures (curl only)</h1>
+<div class="sql">
+Filter: <code>status &lt;&gt; 200 OR response NOT LIKE '%success%'</code><br>
+Sources: <strong>postman</strong> (api.php?request=) + <strong>pdf</strong> (path URL)<br>
+Replace <code>$TOKEN</code> with messenger JWT.
+</div>
+<h2>Failed APIs</h2>
+<div class="card">
+  <h2>1. <span class="tag postman">postman</span> <code>hubscan</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: BAG20260515154014</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=hubscan&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'docket_no=BAG20260515154014&amp;branch_id=1&amp;user_id=1&amp;status=Hub+In&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: BAG20260515154014&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>2. <span class="tag postman">postman</span> <code>gethubscanlogs</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=gethubscanlogs&amp;branch_id=1&amp;limit=50&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;id&quot;:&quot;28&quot;,&quot;shipment_id&quot;:&quot;555801776337608&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:37:48&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:37:48&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:37:48&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;278&quot;},{&quot;id&quot;:&quot;26&quot;,&quot;shipment_id&quot;:&quot;837091776337485&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;46464&quot;},{&quot;id&quot;:&quot;27&quot;,&quot;shipment_id&quot;:&quot;837091776337485&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:37:42&quot;,&quot;box_no&quot;:&quot;2&quot;,&quot;shipment_invoice_no&quot;:&quot;46464&quot;},{&quot;id&quot;:&quot;25&quot;,&quot;shipment_id&quot;:&quot;703511776337367&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:37:38&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:37:38&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:37:38&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;1700000&quot;},{&quot;id&quot;:&quot;24&quot;,&quot;shipment_id&quot;:&quot;136851776336746&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:37:28&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:37:28&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:37:28&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;10000&quot;},{&quot;id&quot;:&quot;23&quot;,&quot;shipment_id&quot;:&quot;472591776333076&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 16:15:38&quot;,&quot;created_at&quot;:&quot;2026-04-16 16:15:38&quot;,&quot;updated_at&quot;:&quot;2026-04-16 16:15:38&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SG-11&quot;},{&quot;id&quot;:&quot;22&quot;,&quot;shipment_id&quot;:&quot;595611776251617&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 15:09:13&quot;,&quot;created_at&quot;:&quot;2026-04-16 15:09:13&quot;,&quot;updated_at&quot;:&quot;2026-04-16 15:09:13&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;485566&quot;},{&quot;id&quot;:&quot;20&quot;,&quot;shipment_id&quot;:&quot;271991769493933&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-16 14:43:46&quot;,&quot;created_at&quot;:&quot;2026-04-16 14:43:46&quot;,&quot;updated_at&quot;:&quot;2026-04-16 14:43:46&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;RAISONI\/BLR\/250101&quot;},{&quot;id&quot;:&quot;19&quot;,&quot;shipment_id&quot;:&quot;290951776244914&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-15 15:49:23&quot;,&quot;created_at&quot;:&quot;2026-04-15 15:49:23&quot;,&quot;updated_at&quot;:&quot;2026-04-15 15:49:23&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;MCA\/26-27\/32&quot;},{&quot;id&quot;:&quot;16&quot;,&quot;shipment_id&quot;:&quot;280481776243976&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-15 15:48:49&quot;,&quot;created_at&quot;:&quot;2026-04-15 15:48:49&quot;,&quot;updated_at&quot;:&quot;2026-04-15 15:48:49&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;S\/73-26\/27&quot;},{&quot;id&quot;:&quot;15&quot;,&quot;shipment_id&quot;:&quot;833611776248129&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-15 15:48:25&quot;,&quot;created_at&quot;:&quot;2026-04-15 15:48:25&quot;,&quot;updated_at&quot;:&quot;2026-04-15 15:48:25&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;GST\/008\/2026-27&quot;},{&quot;id&quot;:&quot;14&quot;,&quot;shipment_id&quot;:&quot;684861775817504&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-10 16:09:00&quot;,&quot;created_at&quot;:&quot;2026-04-10 16:09:00&quot;,&quot;updated_at&quot;:&quot;2026-04-10 16:09:00&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;112&quot;},{&quot;id&quot;:&quot;13&quot;,&quot;shipment_id&quot;:&quot;306011775471753&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-06 16:27:25&quot;,&quot;created_at&quot;:&quot;2026-04-06 16:27:25&quot;,&quot;updated_at&quot;:&quot;2026-04-06 16:27:25&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SSB\/009\/26-27&quot;},{&quot;id&quot;:&quot;11&quot;,&quot;shipment_id&quot;:&quot;740431775217091&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;created_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;updated_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;100&quot;},{&quot;id&quot;:&quot;12&quot;,&quot;shipment_id&quot;:&quot;740431775217091&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;created_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;updated_at&quot;:&quot;2026-04-03 17:57:54&quot;,&quot;box_no&quot;:&quot;2&quot;,&quot;shipment_invoice_no&quot;:&quot;100&quot;},{&quot;id&quot;:&quot;10&quot;,&quot;shipment_id&quot;:&quot;442571775121846&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-02 14:56:14&quot;,&quot;created_at&quot;:&quot;2026-04-02 14:56:14&quot;,&quot;updated_at&quot;:&quot;2026-04-02 14:56:14&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;100&quot;},{&quot;id&quot;:&quot;9&quot;,&quot;shipment_id&quot;:&quot;304211775121914&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;1&quot;,&quot;scanned_at&quot;:&quot;2026-04-02 14:55:53&quot;,&quot;created_at&quot;:&quot;2026-04-02 14:55:53&quot;,&quot;updated_at&quot;:&quot;2026-04-02 14:55:53&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;100&quot;}]</pre>
+</div>
+<div class="card">
+  <h2>3. <span class="tag postman">postman</span> <code>getshipmentscanhistory</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: BAG20260515154014</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getshipmentscanhistory&amp;docket_no=BAG20260515154014&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: BAG20260515154014&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>4. <span class="tag postman">postman</span> <code>createbag</code> — HTTP 400</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 400, not 200 — Metal seal number is required</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=createbag&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'origin_branch_id=1&amp;destination_branch_id=2&amp;bag_code=BAG20260518132700&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metal seal number is required&quot;,&quot;data&quot;:{},&quot;error_code&quot;:400}</pre>
+</div>
+<div class="card">
+  <h2>5. <span class="tag postman">postman</span> <code>addshipmenttobag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: BAG20260518132700</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_code=BAG20260518132700&amp;docket_no=AWB1234567&amp;branch_id=1&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: BAG20260518132700&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>6. <span class="tag postman">postman</span> <code>getbagdetails</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: BAG20260518132700</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getbagdetails&amp;bag_code=BAG20260518132700&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: BAG20260518132700&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>7. <span class="tag postman">postman</span> <code>listbags</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listbags&amp;branch_id=1&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>8. <span class="tag postman">postman</span> <code>removeshipmentfrombag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: BAG20260518132700</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=removeshipmentfrombag&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_code=BAG20260518132700&amp;docket_no=AWB1234567&amp;branch_id=1&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: BAG20260518132700&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>9. <span class="tag postman">postman</span> <code>lockbag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: BAG20260518132700</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=lockbag&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_code=BAG20260518132700&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: BAG20260518132700&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>10. <span class="tag postman">postman</span> <code>rebagshipment</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AWB1234567</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=rebagshipment&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'new_bag_code=BAG20260518999999&amp;docket_no=AWB1234567&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AWB1234567&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>11. <span class="tag postman">postman</span> <code>baggingreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=baggingreport&amp;start_date=2026-05-01&amp;end_date=2026-05-18&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>12. <span class="tag postman">postman</span> <code>createmanifest</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: BAG20260518132700</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_codes=BAG20260518132700,BAG20260518999999&amp;origin_branch_id=1&amp;destination_branch_id=2&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: BAG20260518132700&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>13. <span class="tag postman">postman</span> <code>getmanifestdetails</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&amp;manifest_code=MUM075&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;id&quot;:&quot;171&quot;,&quot;manifest_no&quot;:&quot;MUM075&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;75&quot;,&quot;created_by&quot;:&quot;81&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:47:10&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:47:10&quot;,&quot;origin_branch_name&quot;:&quot;Mumbai&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;bags&quot;:[],&quot;shipments&quot;:[]}</pre>
+</div>
+<div class="card">
+  <h2>14. <span class="tag postman">postman</span> <code>listmanifests</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listmanifests&amp;branch_id=1&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>15. <span class="tag postman">postman</span> <code>manifestreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=manifestreport&amp;start_date=2026-05-01&amp;end_date=2026-05-18&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>16. <span class="tag postman">postman</span> <code>printmanifestdata</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=printmanifestdata&amp;manifest_code=MUM075&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;id&quot;:&quot;171&quot;,&quot;manifest_no&quot;:&quot;MUM075&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;75&quot;,&quot;created_by&quot;:&quot;81&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:47:10&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:47:10&quot;,&quot;origin_branch_name&quot;:&quot;Mumbai&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;shipments&quot;:[]}</pre>
+</div>
+<div class="card">
+  <h2>17. <span class="tag postman">postman</span> <code>assignlinehaul</code> — HTTP 422</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 422, not 200 — Shipment already processed in Delivered</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=assignlinehaul&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'manifest_codes=MUM075,MUM076&amp;vehicle_no=MH-02-AB-1234&amp;driver_name=John+Doe&amp;user_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment already processed in Delivered&quot;,&quot;data&quot;:{},&quot;error_code&quot;:422}</pre>
+</div>
+<div class="card">
+  <h2>18. <span class="tag postman">postman</span> <code>listlinehauls</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listlinehauls&amp;status=In+Transit&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>19. <span class="tag postman">postman</span> <code>getlinehauldetails</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Linehaul not found: LH1778841961</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&amp;trip_no=LH1778841961&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Linehaul not found: LH1778841961&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>20. <span class="tag postman">postman</span> <code>updatelinehaulstatus</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Linehaul not found: LH1778841961</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=updatelinehaulstatus&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'trip_no=LH1778841961&amp;status=Arrived&amp;user_id=1&amp;branch_id=2&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Linehaul not found: LH1778841961&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>21. <span class="tag postman">postman</span> <code>linehaulreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=linehaulreport&amp;start_date=2026-05-01&amp;end_date=2026-05-18&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>22. <span class="tag postman">postman</span> <code>sectorpickupscan</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AWB1234567</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=sectorpickupscan&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=123&amp;docket_no=AWB1234567&amp;status=Picked&amp;remarks=Scanned&amp;user_id=1&amp;branch_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AWB1234567&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>23. <span class="tag postman">postman</span> <code>getpickuplist</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getpickuplist&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;id&quot;:&quot;153&quot;,&quot;mawb_no&quot;:&quot;312279959840&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;13:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 13:01:33&quot;,&quot;updated_at&quot;:&quot;2026-05-18 13:02:11&quot;},{&quot;id&quot;:&quot;152&quot;,&quot;mawb_no&quot;:&quot;31228057256&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:33:57&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:33:57&quot;},{&quot;id&quot;:&quot;151&quot;,&quot;mawb_no&quot;:&quot;BY BUS1778946328&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:33:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:33:52&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:33:52&quot;},{&quot;id&quot;:&quot;150&quot;,&quot;mawb_no&quot;:&quot;31227756271&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:23:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:25:20&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:25:20&quot;},{&quot;id&quot;:&quot;149&quot;,&quot;mawb_no&quot;:&quot;312-28058564&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:29:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:24:38&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:30:01&quot;},{&quot;id&quot;:&quot;148&quot;,&quot;mawb_no&quot;:&quot;31228050665&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:29:43&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:20:48&quot;},{&quot;id&quot;:&quot;147&quot;,&quot;mawb_no&quot;:&quot;312-28058354&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:29:25&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:59&quot;},{&quot;id&quot;:&quot;146&quot;,&quot;mawb_no&quot;:&quot;280541110&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:17:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:28:40&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:30&quot;},{&quot;id&quot;:&quot;145&quot;,&quot;mawb_no&quot;:&quot;31228059533&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:17:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:27:40&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:08&quot;},{&quot;id&quot;:&quot;144&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778945614&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 10:47:52&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:20:22&quot;},{&quot;id&quot;:&quot;143&quot;,&quot;mawb_no&quot;:&quot;312280554563&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-17&quot;,&quot;pickup_time&quot;:&quot;11:54:00&quot;,&quot;created_at&quot;:&quot;2026-05-17 11:54:22&quot;,&quot;updated_at&quot;:&quot;2026-05-17 11:54:22&quot;},{&quot;id&quot;:&quot;142&quot;,&quot;mawb_no&quot;:&quot;31227948104&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:&quot;ravi kumar&quot;,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;13:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 13:04:45&quot;,&quot;updated_at&quot;:&quot;2026-05-16 13:20:22&quot;},{&quot;id&quot;:&quot;141&quot;,&quot;mawb_no&quot;:&quot;31227948325&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:49&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:31:59&quot;},{&quot;id&quot;:&quot;140&quot;,&quot;mawb_no&quot;:&quot;31227955314&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:29&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:21:22&quot;},{&quot;id&quot;:&quot;139&quot;,&quot;mawb_no&quot;:&quot;31227995984&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:54:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:23&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:54:42&quot;},{&quot;id&quot;:&quot;138&quot;,&quot;mawb_no&quot;:&quot;31227995811&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:00:59&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:33:35&quot;},{&quot;id&quot;:&quot;137&quot;,&quot;mawb_no&quot;:&quot;312-27666435&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;11:58:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:54:15&quot;,&quot;updated_at&quot;:&quot;2026-05-16 11:58:58&quot;},{&quot;id&quot;:&quot;136&quot;,&quot;mawb_no&quot;:&quot;312-28002214&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:38:18&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:04:27&quot;},{&quot;id&quot;:&quot;135&quot;,&quot;mawb_no&quot;:&quot;09805721376&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;11:26:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:28:41&quot;,&quot;updated_at&quot;:&quot;2026-05-18 11:26:41&quot;},{&quot;id&quot;:&quot;134&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778858923&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:00:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:01:24&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:00:37&quot;},{&quot;id&quot;:&quot;133&quot;,&quot;mawb_no&quot;:&quot;9805743953&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 09:03:15&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:04:06&quot;},{&quot;id&quot;:&quot;132&quot;,&quot;mawb_no&quot;:&quot;BY ROAD&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:47:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:47:49&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:47:49&quot;},{&quot;id&quot;:&quot;131&quot;,&quot;mawb_no&quot;:&quot;TN04BC2219&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:51:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:45:08&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:51:56&quot;},{&quot;id&quot;:&quot;130&quot;,&quot;mawb_no&quot;:&quot;312-27816180&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:49:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:43:18&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:49:58&quot;},{&quot;id&quot;:&quot;129&quot;,&quot;mawb_no&quot;:&quot;31227759675&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:52:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:40:11&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:52:58&quot;},{&quot;id&quot;:&quot;128&quot;,&quot;mawb_no&quot;:&quot;00001778853893&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:35:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:35:16&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:35:16&quot;},{&quot;id&quot;:&quot;127&quot;,&quot;mawb_no&quot;:&quot;TN 04 BC 22191778344478&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:13:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:18:21&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:18:21&quot;},{&quot;id&quot;:&quot;126&quot;,&quot;mawb_no&quot;:&quot;312-27672352&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:13:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:13:43&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:13:43&quot;},{&quot;id&quot;:&quot;125&quot;,&quot;mawb_no&quot;:&quot;BY ROAD1778852378&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:10:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:10:41&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:10:41&quot;},{&quot;id&quot;:&quot;124&quot;,&quot;mawb_no&quot;:&quot;312-27556911&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;18:36:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:05:11&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:05:11&quot;},{&quot;id&quot;:&quot;123&quot;,&quot;mawb_no&quot;:&quot;312-27610785&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;18:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:04:49&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:04:49&quot;},{&quot;id&quot;:&quot;122&quot;,&quot;mawb_no&quot;:&quot;mum4321&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:49:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:50:04&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:50:04&quot;},{&quot;id&quot;:&quot;121&quot;,&quot;mawb_no&quot;:&quot;awb1234&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:20:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:20:32&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:20:34&quot;},{&quot;id&quot;:&quot;120&quot;,&quot;mawb_no&quot;:&quot;0001&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;14:41:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 14:43:04&quot;,&quot;updated_at&quot;:&quot;2026-05-15 14:43:04&quot;},{&quot;id&quot;:&quot;119&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778772483&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:34:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:42:22&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:34:05&quot;},{&quot;id&quot;:&quot;118&quot;,&quot;mawb_no&quot;:&quot;31227879541&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;14:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:39:51&quot;,&quot;updated_at&quot;:&quot;2026-05-15 14:45:12&quot;},{&quot;id&quot;:&quot;117&quot;,&quot;mawb_no&quot;:&quot;09805370654&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;13:53:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:37:53&quot;,&quot;updated_at&quot;:&quot;2026-05-15 13:56:23&quot;},{&quot;id&quot;:&quot;116&quot;,&quot;mawb_no&quot;:&quot;31227937291&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:47:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:10:29&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:48:07&quot;},{&quot;id&quot;:&quot;115&quot;,&quot;mawb_no&quot;:&quot;31227935456&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:55:56&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:41:33&quot;},{&quot;id&quot;:&quot;114&quot;,&quot;mawb_no&quot;:&quot;312-27932376&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;11:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:54:26&quot;,&quot;updated_at&quot;:&quot;2026-05-16 11:37:22&quot;},{&quot;id&quot;:&quot;113&quot;,&quot;mawb_no&quot;:&quot;27935504&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:53:52&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:45:45&quot;},{&quot;id&quot;:&quot;112&quot;,&quot;mawb_no&quot;:&quot;31227881921&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;13:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:50:24&quot;,&quot;updated_at&quot;:&quot;2026-05-15 13:32:15&quot;},{&quot;id&quot;:&quot;111&quot;,&quot;mawb_no&quot;:&quot;09803808420&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:44:45&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:40:55&quot;},{&quot;id&quot;:&quot;110&quot;,&quot;mawb_no&quot;:&quot;:312-27943285&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:43:43&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:40:15&quot;},{&quot;id&quot;:&quot;109&quot;,&quot;mawb_no&quot;:&quot;09805749321&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;10:10:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 10:10:48&quot;,&quot;updated_at&quot;:&quot;2026-05-15 10:10:48&quot;},{&quot;id&quot;:&quot;108&quot;,&quot;mawb_no&quot;:&quot;up0461111778757102&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;16:41:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 16:42:02&quot;,&quot;updated_at&quot;:&quot;2026-05-14 16:42:02&quot;},{&quot;id&quot;:&quot;107&quot;,&quot;mawb_no&quot;:&quot;09804579886&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;16:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 16:01:23&quot;,&quot;updated_at&quot;:&quot;2026-05-14 16:01:23&quot;},{&quot;id&quot;:&quot;106&quot;,&quot;mawb_no&quot;:&quot;098-05173324&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;12:25:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:25:18&quot;,&quot;updated_at&quot;:&quot;2026-05-14 12:25:18&quot;},{&quot;id&quot;:&quot;105&quot;,&quot;mawb_no&quot;:&quot;312-27875621&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;12:15:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:15:13&quot;,&quot;updated_at&quot;:&quot;2026-05-14 12:15:13&quot;},{&quot;id&quot;:&quot;104&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778686644&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;13:38:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:08:47&quot;,&quot;updated_at&quot;:&quot;2026-05-14 13:38:55&quot;}]</pre>
+</div>
+<div class="card">
+  <h2>24. <span class="tag postman">postman</span> <code>marknotpicked</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AWB1234567</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=marknotpicked&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=123&amp;docket_no=AWB1234567&amp;remarks=Customer+not+available&amp;user_id=1&amp;branch_id=1&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AWB1234567&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>25. <span class="tag postman">postman</span> <code>addmissedshipment</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AWB1234567</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=addmissedshipment&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=123&amp;docket_no=AWB1234567&amp;remarks=Damaged&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AWB1234567&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>26. <span class="tag postman">postman</span> <code>pickupreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=pickupreport&amp;start_date=2026-05-01&amp;end_date=2026-05-18&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;status&quot;:&quot;Picked&quot;,&quot;count&quot;:&quot;756&quot;},{&quot;status&quot;:&quot;Missed&quot;,&quot;count&quot;:&quot;0&quot;}]</pre>
+</div>
+<div class="card">
+  <h2>27. <span class="tag postman">postman</span> <code>getbranches</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getbranches&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;id&quot;:71,&quot;branch_name&quot;:&quot;Agra&quot;},{&quot;id&quot;:72,&quot;branch_name&quot;:&quot;Agra crossing&quot;},{&quot;id&quot;:61,&quot;branch_name&quot;:&quot;Ahmedabad&quot;},{&quot;id&quot;:62,&quot;branch_name&quot;:&quot;Ahmedabad crossing&quot;},{&quot;id&quot;:39,&quot;branch_name&quot;:&quot;Amritsar&quot;},{&quot;id&quot;:40,&quot;branch_name&quot;:&quot;Amritsar crossing&quot;},{&quot;id&quot;:31,&quot;branch_name&quot;:&quot;Bangalore&quot;},{&quot;id&quot;:32,&quot;branch_name&quot;:&quot;Bangalore crossing&quot;},{&quot;id&quot;:43,&quot;branch_name&quot;:&quot;Bhubaneshwar&quot;},{&quot;id&quot;:44,&quot;branch_name&quot;:&quot;Bhubaneshwar crossing&quot;},{&quot;id&quot;:65,&quot;branch_name&quot;:&quot;Bikaner&quot;},{&quot;id&quot;:66,&quot;branch_name&quot;:&quot;Bikaner crossing&quot;},{&quot;id&quot;:35,&quot;branch_name&quot;:&quot;Chandigadh&quot;},{&quot;id&quot;:36,&quot;branch_name&quot;:&quot;Chandigadh crossing&quot;},{&quot;id&quot;:29,&quot;branch_name&quot;:&quot;Chennai&quot;},{&quot;id&quot;:30,&quot;branch_name&quot;:&quot;Chennai Crossing&quot;},{&quot;id&quot;:51,&quot;branch_name&quot;:&quot;Coimbatore&quot;},{&quot;id&quot;:52,&quot;branch_name&quot;:&quot;Coimbatore crossing&quot;},{&quot;id&quot;:27,&quot;branch_name&quot;:&quot;Delhi&quot;},{&quot;id&quot;:28,&quot;branch_name&quot;:&quot;Delhi crossing&quot;},{&quot;id&quot;:49,&quot;branch_name&quot;:&quot;Hyderabad&quot;},{&quot;id&quot;:50,&quot;branch_name&quot;:&quot;Hyderabad crossing&quot;},{&quot;id&quot;:79,&quot;branch_name&quot;:&quot;Indore&quot;},{&quot;id&quot;:80,&quot;branch_name&quot;:&quot;Indore crossing&quot;},{&quot;id&quot;:41,&quot;branch_name&quot;:&quot;Jaipur&quot;},{&quot;id&quot;:42,&quot;branch_name&quot;:&quot;Jaipur crossing&quot;},{&quot;id&quot;:63,&quot;branch_name&quot;:&quot;Jodhpur&quot;},{&quot;id&quot;:64,&quot;branch_name&quot;:&quot;Jodhpur crossing&quot;},{&quot;id&quot;:33,&quot;branch_name&quot;:&quot;Kochin&quot;},{&quot;id&quot;:34,&quot;branch_name&quot;:&quot;Kochin crossing&quot;},{&quot;id&quot;:37,&quot;branch_name&quot;:&quot;Kolkatta&quot;},{&quot;id&quot;:38,&quot;branch_name&quot;:&quot;Kolkatta crossing&quot;},{&quot;id&quot;:57,&quot;branch_name&quot;:&quot;Lucknow&quot;},{&quot;id&quot;:58,&quot;branch_name&quot;:&quot;Lucknow crossing&quot;},{&quot;id&quot;:73,&quot;branch_name&quot;:&quot;Madurai&quot;},{&quot;id&quot;:74,&quot;branch_name&quot;:&quot;Madurai crossing&quot;},{&quot;id&quot;:75,&quot;branch_name&quot;:&quot;Mumbai&quot;},{&quot;id&quot;:76,&quot;branch_name&quot;:&quot;Mumbai crossing&quot;},{&quot;id&quot;:81,&quot;branch_name&quot;:&quot;Nagpur&quot;},{&quot;id&quot;:82,&quot;branch_name&quot;:&quot;Nagpur crossing&quot;},{&quot;id&quot;:55,&quot;branch_name&quot;:&quot;Patna&quot;},{&quot;id&quot;:56,&quot;branch_name&quot;:&quot;Patna crossing&quot;},{&quot;id&quot;:77,&quot;branch_name&quot;:&quot;Pune&quot;},{&quot;id&quot;:78,&quot;branch_name&quot;:&quot;Pune crossing&quot;},{&quot;id&quot;:53,&quot;branch_name&quot;:&quot;Raipur&quot;},{&quot;id&quot;:54,&quot;branch_name&quot;:&quot;Raipur crossing&quot;},{&quot;id&quot;:69,&quot;branch_name&quot;:&quot;Rajkot&quot;},{&quot;id&quot;:70,&quot;branch_name&quot;:&quot;Rajkot crossing&quot;},{&quot;id&quot;:59,&quot;branch_name&quot;:&quot;Surat&quot;},{&quot;id&quot;:60,&quot;branch_name&quot;:&quot;Surat crossing&quot;},{&quot;id&quot;:67,&quot;branch_name&quot;:&quot;Udaipur&quot;},{&quot;id&quot;:68,&quot;branch_name&quot;:&quot;Udaipur crossing&quot;},{&quot;id&quot;:83,&quot;branch_name&quot;:&quot;Varanasi&quot;},{&quot;id&quot;:84,&quot;branch_name&quot;:&quot;Varanasi crossing&quot;},{&quot;id&quot;:47,&quot;branch_name&quot;:&quot;Vijaywada&quot;},{&quot;id&quot;:48,&quot;branch_name&quot;:&quot;Vijaywada crossing&quot;},{&quot;id&quot;:45,&quot;branch_name&quot;:&quot;Vishakapatnam&quot;},{&quot;id&quot;:46,&quot;branch_name&quot;:&quot;Vishakapatnam crossing&quot;}]</pre>
+</div>
+<div class="card">
+  <h2>28. <span class="tag pdf">pdf</span> <code>hubscan</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/hubscan?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'docket_no=AXL123456&amp;branch_id=2&amp;user_id=148&amp;status=Hub+In&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>29. <span class="tag pdf">pdf</span> <code>gethubscanlogs</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/gethubscanlogs?branch_id=2&amp;limit=50&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>30. <span class="tag pdf">pdf</span> <code>getshipmentscanhistory</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/getshipmentscanhistory?docket_no=AXL123456&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>31. <span class="tag pdf">pdf</span> <code>createbag</code> — HTTP 400</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 400, not 200 — Metal seal number is required</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/createbag?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'origin_branch_id=2&amp;destination_branch_id=5&amp;bag_code=BAG1746700000&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Metal seal number is required&quot;,&quot;data&quot;:{},&quot;error_code&quot;:400}</pre>
+</div>
+<div class="card">
+  <h2>32. <span class="tag pdf">pdf</span> <code>addshipmenttobag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: 10</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_id=10&amp;docket_no=AXL123456&amp;branch_id=2&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: 10&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>33. <span class="tag pdf">pdf</span> <code>getbagdetails</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: 10</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/getbagdetails?bag_id=10&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: 10&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>34. <span class="tag pdf">pdf</span> <code>listbags</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/listbags?branch_id=2&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>35. <span class="tag pdf">pdf</span> <code>removeshipmentfrombag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: 10</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_id=10&amp;docket_no=AXL123456&amp;branch_id=2&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: 10&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>36. <span class="tag pdf">pdf</span> <code>lockbag</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: 10</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/lockbag?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_id=10&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: 10&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>37. <span class="tag pdf">pdf</span> <code>rebagshipment</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/rebagshipment?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'new_bag_id=12&amp;docket_no=AXL123456&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>38. <span class="tag pdf">pdf</span> <code>baggingreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/baggingreport?start_date=2026-04-01&amp;end_date=2026-05-08&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>39. <span class="tag pdf">pdf</span> <code>createmanifest</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Bag not found: 10</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/createmanifest?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'bag_ids=10,11,12&amp;origin_branch_id=2&amp;destination_branch_id=5&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag not found: 10&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>40. <span class="tag pdf">pdf</span> <code>getmanifestdetails</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Manifest not found: 5</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/getmanifestdetails?manifest_id=5&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Manifest not found: 5&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>41. <span class="tag pdf">pdf</span> <code>listmanifests</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/listmanifests?branch_id=2&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>42. <span class="tag pdf">pdf</span> <code>manifestreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/manifestreport?start_date=2026-04-01&amp;end_date=2026-05-08&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>43. <span class="tag pdf">pdf</span> <code>printmanifestdata</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Manifest not found: 5</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/printmanifestdata?manifest_id=5&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Manifest not found: 5&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>44. <span class="tag pdf">pdf</span> <code>assignlinehaul</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Manifest not found: 5</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/assignlinehaul?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'manifest_ids=5,6&amp;vehicle_no=UP78AB1234&amp;driver_name=Ramesh+Kumar&amp;user_id=148&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Manifest not found: 5&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>45. <span class="tag pdf">pdf</span> <code>listlinehauls</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/listlinehauls?status=In+Transit&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>46. <span class="tag pdf">pdf</span> <code>getlinehauldetails</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Linehaul not found: 3</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/getlinehauldetails?linehaul_id=3&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Linehaul not found: 3&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>47. <span class="tag pdf">pdf</span> <code>updatelinehaulstatus</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Linehaul not found: 3</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/updatelinehaulstatus?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'linehaul_id=3&amp;status=ARRIVED&amp;user_id=148&amp;branch_id=2&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Linehaul not found: 3&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>48. <span class="tag pdf">pdf</span> <code>linehaulreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/linehaulreport?start_date=2026-04-01&amp;end_date=2026-05-08&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[]</pre>
+</div>
+<div class="card">
+  <h2>49. <span class="tag pdf">pdf</span> <code>sectorpickupscan</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/sectorpickupscan?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=15&amp;docket_no=AXL123456&amp;status=Picked&amp;remarks=&amp;user_id=148&amp;branch_id=2&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>50. <span class="tag pdf">pdf</span> <code>getpickuplist</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/getpickuplist?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;id&quot;:&quot;153&quot;,&quot;mawb_no&quot;:&quot;312279959840&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;13:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 13:01:33&quot;,&quot;updated_at&quot;:&quot;2026-05-18 13:02:11&quot;},{&quot;id&quot;:&quot;152&quot;,&quot;mawb_no&quot;:&quot;31228057256&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:33:57&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:33:57&quot;},{&quot;id&quot;:&quot;151&quot;,&quot;mawb_no&quot;:&quot;BY BUS1778946328&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:33:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:33:52&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:33:52&quot;},{&quot;id&quot;:&quot;150&quot;,&quot;mawb_no&quot;:&quot;31227756271&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:23:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:25:20&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:25:20&quot;},{&quot;id&quot;:&quot;149&quot;,&quot;mawb_no&quot;:&quot;312-28058564&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:29:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 12:24:38&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:30:01&quot;},{&quot;id&quot;:&quot;148&quot;,&quot;mawb_no&quot;:&quot;31228050665&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:29:43&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:20:48&quot;},{&quot;id&quot;:&quot;147&quot;,&quot;mawb_no&quot;:&quot;312-28058354&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:29:25&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:59&quot;},{&quot;id&quot;:&quot;146&quot;,&quot;mawb_no&quot;:&quot;280541110&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:17:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:28:40&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:30&quot;},{&quot;id&quot;:&quot;145&quot;,&quot;mawb_no&quot;:&quot;31228059533&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:17:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 11:27:40&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:19:08&quot;},{&quot;id&quot;:&quot;144&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778945614&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-18 10:47:52&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:20:22&quot;},{&quot;id&quot;:&quot;143&quot;,&quot;mawb_no&quot;:&quot;312280554563&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-17&quot;,&quot;pickup_time&quot;:&quot;11:54:00&quot;,&quot;created_at&quot;:&quot;2026-05-17 11:54:22&quot;,&quot;updated_at&quot;:&quot;2026-05-17 11:54:22&quot;},{&quot;id&quot;:&quot;142&quot;,&quot;mawb_no&quot;:&quot;31227948104&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:&quot;ravi kumar&quot;,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;13:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 13:04:45&quot;,&quot;updated_at&quot;:&quot;2026-05-16 13:20:22&quot;},{&quot;id&quot;:&quot;141&quot;,&quot;mawb_no&quot;:&quot;31227948325&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:49&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:31:59&quot;},{&quot;id&quot;:&quot;140&quot;,&quot;mawb_no&quot;:&quot;31227955314&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:19:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:29&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:21:22&quot;},{&quot;id&quot;:&quot;139&quot;,&quot;mawb_no&quot;:&quot;31227995984&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;12:54:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:03:23&quot;,&quot;updated_at&quot;:&quot;2026-05-18 12:54:42&quot;},{&quot;id&quot;:&quot;138&quot;,&quot;mawb_no&quot;:&quot;31227995811&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 12:00:59&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:33:35&quot;},{&quot;id&quot;:&quot;137&quot;,&quot;mawb_no&quot;:&quot;312-27666435&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;11:58:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:54:15&quot;,&quot;updated_at&quot;:&quot;2026-05-16 11:58:58&quot;},{&quot;id&quot;:&quot;136&quot;,&quot;mawb_no&quot;:&quot;312-28002214&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:38:18&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:04:27&quot;},{&quot;id&quot;:&quot;135&quot;,&quot;mawb_no&quot;:&quot;09805721376&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-18&quot;,&quot;pickup_time&quot;:&quot;11:26:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:28:41&quot;,&quot;updated_at&quot;:&quot;2026-05-18 11:26:41&quot;},{&quot;id&quot;:&quot;134&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778858923&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:00:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 11:01:24&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:00:37&quot;},{&quot;id&quot;:&quot;133&quot;,&quot;mawb_no&quot;:&quot;9805743953&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;12:03:00&quot;,&quot;created_at&quot;:&quot;2026-05-16 09:03:15&quot;,&quot;updated_at&quot;:&quot;2026-05-16 12:04:06&quot;},{&quot;id&quot;:&quot;132&quot;,&quot;mawb_no&quot;:&quot;BY ROAD&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:47:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:47:49&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:47:49&quot;},{&quot;id&quot;:&quot;131&quot;,&quot;mawb_no&quot;:&quot;TN04BC2219&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:51:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:45:08&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:51:56&quot;},{&quot;id&quot;:&quot;130&quot;,&quot;mawb_no&quot;:&quot;312-27816180&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:49:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:43:18&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:49:58&quot;},{&quot;id&quot;:&quot;129&quot;,&quot;mawb_no&quot;:&quot;31227759675&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:52:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:40:11&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:52:58&quot;},{&quot;id&quot;:&quot;128&quot;,&quot;mawb_no&quot;:&quot;00001778853893&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:35:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:35:16&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:35:16&quot;},{&quot;id&quot;:&quot;127&quot;,&quot;mawb_no&quot;:&quot;TN 04 BC 22191778344478&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:13:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:18:21&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:18:21&quot;},{&quot;id&quot;:&quot;126&quot;,&quot;mawb_no&quot;:&quot;312-27672352&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:13:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:13:43&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:13:43&quot;},{&quot;id&quot;:&quot;125&quot;,&quot;mawb_no&quot;:&quot;BY ROAD1778852378&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;19:10:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:10:41&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:10:41&quot;},{&quot;id&quot;:&quot;124&quot;,&quot;mawb_no&quot;:&quot;312-27556911&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;18:36:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:05:11&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:05:11&quot;},{&quot;id&quot;:&quot;123&quot;,&quot;mawb_no&quot;:&quot;312-27610785&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;18:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 19:04:49&quot;,&quot;updated_at&quot;:&quot;2026-05-15 19:04:49&quot;},{&quot;id&quot;:&quot;122&quot;,&quot;mawb_no&quot;:&quot;mum4321&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:49:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:50:04&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:50:04&quot;},{&quot;id&quot;:&quot;121&quot;,&quot;mawb_no&quot;:&quot;awb1234&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:20:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:20:32&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:20:34&quot;},{&quot;id&quot;:&quot;120&quot;,&quot;mawb_no&quot;:&quot;0001&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;14:41:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 14:43:04&quot;,&quot;updated_at&quot;:&quot;2026-05-15 14:43:04&quot;},{&quot;id&quot;:&quot;119&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778772483&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:34:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:42:22&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:34:05&quot;},{&quot;id&quot;:&quot;118&quot;,&quot;mawb_no&quot;:&quot;31227879541&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;14:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:39:51&quot;,&quot;updated_at&quot;:&quot;2026-05-15 14:45:12&quot;},{&quot;id&quot;:&quot;117&quot;,&quot;mawb_no&quot;:&quot;09805370654&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;13:53:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:37:53&quot;,&quot;updated_at&quot;:&quot;2026-05-15 13:56:23&quot;},{&quot;id&quot;:&quot;116&quot;,&quot;mawb_no&quot;:&quot;31227937291&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;15:47:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 12:10:29&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:48:07&quot;},{&quot;id&quot;:&quot;115&quot;,&quot;mawb_no&quot;:&quot;31227935456&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:55:56&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:41:33&quot;},{&quot;id&quot;:&quot;114&quot;,&quot;mawb_no&quot;:&quot;312-27932376&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-16&quot;,&quot;pickup_time&quot;:&quot;11:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:54:26&quot;,&quot;updated_at&quot;:&quot;2026-05-16 11:37:22&quot;},{&quot;id&quot;:&quot;113&quot;,&quot;mawb_no&quot;:&quot;27935504&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:45:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:53:52&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:45:45&quot;},{&quot;id&quot;:&quot;112&quot;,&quot;mawb_no&quot;:&quot;31227881921&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;13:31:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:50:24&quot;,&quot;updated_at&quot;:&quot;2026-05-15 13:32:15&quot;},{&quot;id&quot;:&quot;111&quot;,&quot;mawb_no&quot;:&quot;09803808420&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:44:45&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:40:55&quot;},{&quot;id&quot;:&quot;110&quot;,&quot;mawb_no&quot;:&quot;:312-27943285&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;12:37:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 11:43:43&quot;,&quot;updated_at&quot;:&quot;2026-05-15 12:40:15&quot;},{&quot;id&quot;:&quot;109&quot;,&quot;mawb_no&quot;:&quot;09805749321&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-15&quot;,&quot;pickup_time&quot;:&quot;10:10:00&quot;,&quot;created_at&quot;:&quot;2026-05-15 10:10:48&quot;,&quot;updated_at&quot;:&quot;2026-05-15 10:10:48&quot;},{&quot;id&quot;:&quot;108&quot;,&quot;mawb_no&quot;:&quot;up0461111778757102&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;16:41:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 16:42:02&quot;,&quot;updated_at&quot;:&quot;2026-05-14 16:42:02&quot;},{&quot;id&quot;:&quot;107&quot;,&quot;mawb_no&quot;:&quot;09804579886&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;16:01:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 16:01:23&quot;,&quot;updated_at&quot;:&quot;2026-05-14 16:01:23&quot;},{&quot;id&quot;:&quot;106&quot;,&quot;mawb_no&quot;:&quot;098-05173324&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;12:25:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:25:18&quot;,&quot;updated_at&quot;:&quot;2026-05-14 12:25:18&quot;},{&quot;id&quot;:&quot;105&quot;,&quot;mawb_no&quot;:&quot;312-27875621&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;12:15:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:15:13&quot;,&quot;updated_at&quot;:&quot;2026-05-14 12:15:13&quot;},{&quot;id&quot;:&quot;104&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141778686644&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-05-14&quot;,&quot;pickup_time&quot;:&quot;13:38:00&quot;,&quot;created_at&quot;:&quot;2026-05-14 12:08:47&quot;,&quot;updated_at&quot;:&quot;2026-05-14 13:38:55&quot;}]</pre>
+</div>
+<div class="card">
+  <h2>51. <span class="tag pdf">pdf</span> <code>marknotpicked</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/marknotpicked?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=15&amp;docket_no=AXL123456&amp;remarks=Customer+unavailable&amp;user_id=148&amp;branch_id=2&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>52. <span class="tag pdf">pdf</span> <code>addmissedshipment</code> — HTTP 404</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP status is 404, not 200 — Shipment not found: AXL123456</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X POST 'https://my.axlpl.com/messenger/services_v8/addmissedshipment?platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  --data 'pickup_id=15&amp;docket_no=AXL123456&amp;remarks=Shipment+not+scanned&amp;platform=android'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Shipment not found: AXL123456&quot;,&quot;data&quot;:{},&quot;error_code&quot;:404}</pre>
+</div>
+<div class="card">
+  <h2>53. <span class="tag pdf">pdf</span> <code>pickupreport</code> — HTTP 200</h2>
+  <div class="reason"><strong>Reason:</strong> HTTP 200 but response does not contain success</div>
+  <p class="lbl">Request curl</p>
+  <pre class="code">curl -sS -w '\n__HTTP_CODE__:%{http_code}' -X GET 'https://my.axlpl.com/messenger/services_v8/pickupreport?start_date=2026-04-01&amp;end_date=2026-05-08&amp;platform=android' \
+  -H 'Authorization: Bearer $TOKEN' \
+  -H 'X-App-Version: 22.3.0' \
+  -H 'X-App-Platform: android' \
+  -H 'accept: */*'</pre>
+  <p class="lbl">Response</p>
+  <pre class="code">[{&quot;status&quot;:&quot;Picked&quot;,&quot;count&quot;:&quot;544&quot;},{&quot;status&quot;:&quot;Missed&quot;,&quot;count&quot;:&quot;2&quot;}]</pre>
+</div>
+<p><strong>Total failures:</strong> 53 (tested with curl only)</p>
+</body></html>

@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:axlpl_delivery/app/data/models/shipment_req_static_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_client.dart';
 import 'package:axlpl_delivery/app/data/networking/api_endpoint.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:dio/dio.dart';
 
 import "dart:async";
@@ -1046,6 +1047,20 @@ class ApiServices {
   }
 
   // =========================
+  // Outbound — Reference data
+  // =========================
+
+  Future<APIResponse> getBranches({
+    required String token,
+  }) async {
+    return _api.getOutbound(
+      getBranchesPoint,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  // =========================
   // Outbound — Hub scan
   // =========================
 
@@ -1056,17 +1071,19 @@ class ApiServices {
     required String userId,
     required String status,
   }) async {
-    final body = {
+    // Production iOS: multipart POST api.php?request=hubscan (no platform param).
+    final body = FormData.fromMap({
       'docket_no': docketNo,
       'branch_id': branchId,
       'user_id': userId,
       'status': status,
-    };
-    return _api.post(
+    });
+    return _api.postOutbound(
       hubScanPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1075,14 +1092,15 @@ class ApiServices {
     required String branchId,
     required int limit,
   }) async {
-    return _api.get(
+    // GET api.php?request=gethubscanlogs&branch_id=&limit=
+    return _api.getOutbound(
       getHubScanLogsPoint,
       token: token,
       query: {
         'branch_id': branchId,
-        'limit': limit,
+        'limit': limit.toString(),
       },
-      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
     );
   }
 
@@ -1090,9 +1108,10 @@ class ApiServices {
     required String token,
     required String docketNo,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       getShipmentScanHistoryPoint,
       token: token,
+      appendPlatform: false,
       query: {'docket_no': docketNo},
       contentType: ContentType.urlEncoded,
     );
@@ -1107,61 +1126,69 @@ class ApiServices {
     required String originBranchId,
     required String destinationBranchId,
     required String bagCode,
+    required String metalSealNo,
     required String userId,
+    required String shipmentIds,
   }) async {
-    final body = {
+    final body = FormData.fromMap({
       'origin_branch_id': originBranchId,
       'destination_branch_id': destinationBranchId,
-      'bag_code': bagCode,
       'user_id': userId,
-    };
-    return _api.post(
+      ...OutboundApiParams.createBagBody(
+        bagCode: bagCode,
+        metalSealNo: metalSealNo,
+        shipmentIdsCsv: shipmentIds,
+      ),
+    });
+    return _api.postOutbound(
       createBagPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> addShipmentToBag({
     required String token,
-    required String bagId,
+    required String bagCode,
     required String docketNo,
     required String branchId,
     required String userId,
-    Map<String, String>? extraFields,
   }) async {
-    final body = <String, String>{
-      'bag_id': bagId,
-      'docket_no': docketNo,
-      'branch_id': branchId,
-      'user_id': userId,
-      if (extraFields != null) ...extraFields,
-    };
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.bagDocketMutationBody(
+        bagRef: bagCode,
+        docketNo: docketNo,
+        branchId: branchId,
+        userId: userId,
+      ),
+    );
+    return _api.postOutbound(
       addShipmentToBagPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> getBagDetails({
     required String token,
-    required String bagId,
+    required String bagCode,
   }) async {
-    return getBagDetailsQuery(token: token, query: {'bag_id': bagId});
+    return getBagDetailsQuery(token: token, query: {'bag_code': bagCode});
   }
 
   Future<APIResponse> getBagDetailsQuery({
     required String token,
     required Map<String, String> query,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       getBagDetailsPoint,
       token: token,
       query: query,
-      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
     );
   }
 
@@ -1169,47 +1196,69 @@ class ApiServices {
     required String token,
     required String branchId,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       listBagsPoint,
       token: token,
       query: {'branch_id': branchId},
-      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> removeShipmentFromBag({
     required String token,
-    required Map<String, String> body,
+    required String bagCode,
+    required String docketNo,
+    required String branchId,
+    required String userId,
   }) async {
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.bagDocketMutationBody(
+        bagRef: bagCode,
+        docketNo: docketNo,
+        branchId: branchId,
+        userId: userId,
+      ),
+    );
+    return _api.postOutbound(
       removeShipmentFromBagPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> lockBag({
     required String token,
-    required Map<String, String> body,
+    required String bagCode,
   }) async {
-    return _api.post(
+    final body = FormData.fromMap(OutboundApiParams.bagMutationBody(bagCode));
+    return _api.postOutbound(
       lockBagPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> rebagShipment({
     required String token,
-    required Map<String, String> body,
+    required String newBagCode,
+    required String docketNo,
+    required String userId,
   }) async {
-    return _api.post(
+    final body = FormData.fromMap({
+      ...OutboundApiParams.bagMutationBody(newBagCode, idKey: 'new_bag_code'),
+      'docket_no': docketNo,
+      'user_id': userId,
+    });
+    return _api.postOutbound(
       rebagShipmentPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1217,15 +1266,18 @@ class ApiServices {
     required String token,
     required String startDate,
     required String endDate,
+    String? bagCode,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       baggingReportPoint,
       token: token,
       query: {
         'start_date': startDate,
         'end_date': endDate,
+        if (bagCode != null && bagCode.trim().isNotEmpty)
+          'bag_code': bagCode.trim(),
       },
-      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
     );
   }
 
@@ -1235,13 +1287,25 @@ class ApiServices {
 
   Future<APIResponse> createManifest({
     required String token,
-    required Map<String, String> body,
+    required String bagCodesCsv,
+    required String originBranchId,
+    required String destinationBranchId,
+    required String userId,
   }) async {
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.createManifestBody(
+        bagCodesCsv: bagCodesCsv,
+        originBranchId: originBranchId,
+        destinationBranchId: destinationBranchId,
+        userId: userId,
+      ),
+    );
+    return _api.postOutbound(
       createManifestPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1251,7 +1315,7 @@ class ApiServices {
   }) async {
     return getManifestDetailsQuery(
       token: token,
-      query: {'manifest_id': manifestId},
+      query: {'manifest_code': manifestId},
     );
   }
 
@@ -1259,7 +1323,7 @@ class ApiServices {
     required String token,
     required Map<String, String> query,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       getManifestDetailsPoint,
       token: token,
       query: query,
@@ -1271,7 +1335,7 @@ class ApiServices {
     required String token,
     required String branchId,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       listManifestsPoint,
       token: token,
       query: {'branch_id': branchId},
@@ -1283,14 +1347,19 @@ class ApiServices {
     required String token,
     required String startDate,
     required String endDate,
+    String? manifestNo,
   }) async {
-    return _api.get(
+    final query = <String, dynamic>{
+      'start_date': startDate,
+      'end_date': endDate,
+    };
+    if (manifestNo != null && manifestNo.trim().isNotEmpty) {
+      query['manifest_no'] = manifestNo.trim();
+    }
+    return _api.getOutbound(
       manifestReportPoint,
       token: token,
-      query: {
-        'start_date': startDate,
-        'end_date': endDate,
-      },
+      query: query,
       contentType: ContentType.urlEncoded,
     );
   }
@@ -1301,7 +1370,7 @@ class ApiServices {
   }) async {
     return printManifestDataQuery(
       token: token,
-      query: {'manifest_id': manifestId},
+      query: {'manifest_code': manifestId},
     );
   }
 
@@ -1309,7 +1378,7 @@ class ApiServices {
     required String token,
     required Map<String, String> query,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       printManifestDataPoint,
       token: token,
       query: query,
@@ -1328,17 +1397,20 @@ class ApiServices {
     required String driverName,
     required String userId,
   }) async {
-    final body = {
-      'manifest_ids': manifestIdsCommaSeparated,
-      'vehicle_no': vehicleNo,
-      'driver_name': driverName,
-      'user_id': userId,
-    };
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.assignLinehaulBody(
+        manifestCodesCsv: manifestIdsCommaSeparated,
+        vehicleNo: vehicleNo,
+        driverName: driverName,
+        userId: userId,
+      ),
+    );
+    return _api.postOutbound(
       assignLinehaulPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1346,7 +1418,7 @@ class ApiServices {
     required String token,
     required String status,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       listLinehaulsPoint,
       token: token,
       query: {'status': status},
@@ -1360,7 +1432,7 @@ class ApiServices {
   }) async {
     return getLinehaulDetailsQuery(
       token: token,
-      query: {'linehaul_id': linehaulId},
+      query: {'trip_no': linehaulId},
     );
   }
 
@@ -1368,7 +1440,7 @@ class ApiServices {
     required String token,
     required Map<String, String> query,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       getLinehaulDetailsPoint,
       token: token,
       query: query,
@@ -1378,13 +1450,25 @@ class ApiServices {
 
   Future<APIResponse> updateLinehaulStatus({
     required String token,
-    required Map<String, String> body,
+    required String linehaulRef,
+    required String status,
+    required String userId,
+    required String branchId,
   }) async {
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.updateLinehaulStatusBody(
+        linehaulRef: linehaulRef,
+        status: status,
+        userId: userId,
+        branchId: branchId,
+      ),
+    );
+    return _api.postOutbound(
       updateLinehaulStatusPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1393,7 +1477,7 @@ class ApiServices {
     required String startDate,
     required String endDate,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       linehaulReportPoint,
       token: token,
       query: {
@@ -1417,26 +1501,29 @@ class ApiServices {
     required String userId,
     required String branchId,
   }) async {
-    final body = {
-      'pickup_id': pickupId,
-      'docket_no': docketNo,
-      'status': status,
-      'remarks': remarks,
-      'user_id': userId,
-      'branch_id': branchId,
-    };
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.sectorPickupScanBody(
+        pickupId: pickupId,
+        docketNo: docketNo,
+        status: status,
+        remarks: remarks,
+        userId: userId,
+        branchId: branchId,
+      ),
+    );
+    return _api.postOutbound(
       sectorPickupScanPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
   Future<APIResponse> getPickupListOutbound({
     required String token,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       getPickupListPoint,
       token: token,
       query: null,
@@ -1452,18 +1539,21 @@ class ApiServices {
     required String userId,
     required String branchId,
   }) async {
-    final body = {
-      'pickup_id': pickupId,
-      'docket_no': docketNo,
-      'remarks': remarks,
-      'user_id': userId,
-      'branch_id': branchId,
-    };
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.markNotPickedBody(
+        pickupId: pickupId,
+        docketNo: docketNo,
+        remarks: remarks,
+        userId: userId,
+        branchId: branchId,
+      ),
+    );
+    return _api.postOutbound(
       markNotPickedPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1472,17 +1562,24 @@ class ApiServices {
     required String pickupId,
     required String docketNo,
     required String remarks,
+    required String userId,
+    required String branchId,
   }) async {
-    final body = {
-      'pickup_id': pickupId,
-      'docket_no': docketNo,
-      'remarks': remarks,
-    };
-    return _api.post(
+    final body = FormData.fromMap(
+      OutboundApiParams.addMissedShipmentBody(
+        pickupId: pickupId,
+        docketNo: docketNo,
+        remarks: remarks,
+        userId: userId,
+        branchId: branchId,
+      ),
+    );
+    return _api.postOutbound(
       addMissedShipmentPoint,
       body,
       token: token,
-      contentType: ContentType.urlEncoded,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
     );
   }
 
@@ -1491,7 +1588,7 @@ class ApiServices {
     required String startDate,
     required String endDate,
   }) async {
-    return _api.get(
+    return _api.getOutbound(
       pickupReportPoint,
       token: token,
       query: {

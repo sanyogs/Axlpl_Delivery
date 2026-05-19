@@ -1,7 +1,17 @@
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/controllers/outbound_hub_scan_controller.dart';
-import 'package:axlpl_delivery/utils/utils.dart';
+import 'package:axlpl_delivery/common_widget/common_button.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,153 +20,123 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: themes.lightWhite,
-      appBar: AppBar(
-        title: const Text('Hub scan'),
-        backgroundColor: themes.whiteColor,
-      ),
-      body: Obx(() {
-        final busy = controller.isBusy.value;
-        final _ = controller.lastResponseText.value;
-        final __ = controller.status.value;
-        final ___ = controller.hubScanLogs.length;
-        final ____ = controller.shipmentHistory.length;
-        final _____ = controller.shipmentHintText.value;
-        return AbsorbPointer(
-          absorbing: busy,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+    final branchList = Get.find<OutboundBranchListController>();
+    return Obx(() {
+      final busy = controller.isBusy.value;
+      final _ = controller.lastResponseText.value;
+      final __ = controller.shipmentHintText.value;
+      final ___ = branchList.branches.length;
+      final ____ = branchList.selectedBranchId.value;
+      return OutboundScreen(
+        title: 'Hub scan',
+        busy: busy,
+        children: [
+          OutboundSection(
+            title: 'Scan shipment',
+            subtitle: 'Scan docket at hub (Save on admin)',
             children: [
-              TextField(
+              OutboundScanField(
                 controller: controller.docketController,
-                decoration: const InputDecoration(
-                  labelText: 'Docket no',
-                  border: OutlineInputBorder(),
+                hintText: OutboundLabels.docketNo,
+                prefixIcon: const Icon(CupertinoIcons.doc_text_search),
+              ),
+              Obx(
+                () => OutboundBranchSelect(
+                  label: OutboundLabels.branchHub,
+                  items: branchList.branches,
+                  selectedId: branchList.selectedBranchId.value,
+                  isLoading: branchList.isLoadingBranches.value,
+                  onChanged: (id) {
+                    branchList.onBranchSelected(id);
+                    branchList.showLoadIssueIfNeeded();
+                  },
                 ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller.branchController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Branch id',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              OutboundSelectField(
+                label: OutboundLabels.hubScanStatus,
                 value: controller.status.value,
-                decoration: const InputDecoration(
-                  labelText: 'Scan status',
-                  border: OutlineInputBorder(),
-                ),
-                items: controller.statuses
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) controller.status.value = v;
-                },
+                options: controller.statuses,
+                onChanged: (v) => controller.status.value = v,
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              CommonButton(
+                title: 'Submit hub scan',
+                onPressed: busy ? null : controller.submitHubScan,
+              ),
+              OutlinedButton(
+                onPressed: busy ? null : controller.loadShipmentHint,
+                child: const Text('Load shipment details'),
+              ),
+              if (controller.shipmentHintText.value.isNotEmpty)
+                OutboundResponsePanel(
+                  title: 'Shipment details',
+                  text: controller.shipmentHintText.value,
+                ),
+            ],
+          ),
+          OutboundSection(
+            title: 'Hub scan logs',
+            children: [
+              OutboundField(
+                controller: controller.hubScanLimit,
+                hintText: OutboundLabels.logLimit,
+                keyboardType: TextInputType.number,
+              ),
+              CommonButton(
+                title: 'Refresh hub scan logs',
+                onPressed: busy ? null : controller.loadHubScanLogs,
+              ),
+              _HubScanLogsTable(rows: controller.hubScanLogs),
+            ],
+          ),
+          OutboundSection(
+            title: 'Shipment scan history',
+            subtitle: 'GET getshipmentscanhistory — same docket as hub scan',
+            children: [
+              OutboundScanField(
+                controller: controller.scanHistoryDocketController,
+                hintText: OutboundLabels.docketNo,
+              ),
+              Row(
                 children: [
-                  ElevatedButton(
-                    onPressed: busy ? null : controller.submitHubScan,
-                    child: const Text('Hub scan (POST)'),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: busy ? null : controller.useScanDocketForHistory,
+                      child: const Text('Use scan docket'),
+                    ),
                   ),
-                  OutlinedButton(
-                    onPressed: busy ? null : controller.loadShipmentHint,
-                    child: const Text('Shipment hint (consignment)'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: CommonButton(
+                      title: 'Get scan history',
+                      onPressed: busy ? null : controller.loadShipmentScanHistory,
+                    ),
                   ),
                 ],
               ),
-              if (controller.shipmentHintText.value.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  'Shipment hint',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                SelectableText(controller.shipmentHintText.value),
-              ],
-              const Divider(height: 32),
-              TextField(
-                controller: controller.hubScanLimit,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Log limit',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: busy ? null : controller.loadHubScanLogs,
-                child: const Text('Get hub scan logs'),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Hub scan logs',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              _HubScanLogsTable(rows: controller.hubScanLogs),
-              const Divider(height: 32),
-              TextField(
-                controller: controller.scanHistoryDocketController,
-                decoration: const InputDecoration(
-                  labelText: 'Docket for scan history',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: busy ? null : controller.loadShipmentScanHistory,
-                child: const Text('Get shipment scan history'),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Shipment scan history',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
               _ShipmentHistoryTable(rows: controller.shipmentHistory),
-              const SizedBox(height: 24),
-              if (busy) const LinearProgressIndicator(),
-              const SizedBox(height: 8),
-              Text(
-                'Last submit / summary',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              SelectableText(controller.lastResponseText.value),
             ],
           ),
-        );
-      }),
-    );
+          OutboundResponsePanel(text: controller.lastResponseText.value),
+        ],
+      );
+    });
   }
 }
 
 class _HubScanLogsTable extends StatelessWidget {
   const _HubScanLogsTable({required this.rows});
-
   final List<HubScanLog> rows;
 
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Text('No rows loaded.');
+      return const OutboundDynamicMapTablePlaceholder();
     }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
-        headingRowHeight: 40,
-        dataRowMinHeight: 36,
-        dataRowMaxHeight: 64,
         columns: const [
+          DataColumn(label: Text('Docket / shipment')),
           DataColumn(label: Text('Invoice / box')),
           DataColumn(label: Text('Scan')),
           DataColumn(label: Text('Branch')),
@@ -166,6 +146,7 @@ class _HubScanLogsTable extends StatelessWidget {
             .map(
               (e) => DataRow(
                 cells: [
+                  DataCell(Text(e.shipmentId ?? '—')),
                   DataCell(Text(e.shipmentInvoiceNo ?? e.boxNo ?? '—')),
                   DataCell(Text(e.scanType ?? '—')),
                   DataCell(Text(e.branchId ?? '—')),
@@ -181,21 +162,18 @@ class _HubScanLogsTable extends StatelessWidget {
 
 class _ShipmentHistoryTable extends StatelessWidget {
   const _ShipmentHistoryTable({required this.rows});
-
   final List<ShipmentScanEvent> rows;
 
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) {
-      return const Text('No rows loaded.');
+      return const OutboundDynamicMapTablePlaceholder();
     }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
-        headingRowHeight: 40,
-        dataRowMinHeight: 36,
-        dataRowMaxHeight: 72,
         columns: const [
+          DataColumn(label: Text('Docket')),
           DataColumn(label: Text('Status')),
           DataColumn(label: Text('Branch')),
           DataColumn(label: Text('When')),
@@ -205,6 +183,7 @@ class _ShipmentHistoryTable extends StatelessWidget {
             .map(
               (e) => DataRow(
                 cells: [
+                  DataCell(Text(e.shipmentId ?? '—')),
                   DataCell(Text(e.status ?? '—')),
                   DataCell(Text(e.branchId ?? '—')),
                   DataCell(Text(e.createdDate ?? '—')),
@@ -214,6 +193,21 @@ class _ShipmentHistoryTable extends StatelessWidget {
             )
             .toList(),
       ),
+    );
+  }
+}
+
+/// Avoid importing map table for empty state in nested tables.
+class OutboundDynamicMapTablePlaceholder extends StatelessWidget {
+  const OutboundDynamicMapTablePlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'No rows loaded yet.',
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.grey,
+          ),
     );
   }
 }

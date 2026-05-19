@@ -79,7 +79,7 @@ class ApiClient {
   }
 
   Future<Map<String, String>> _buildHeaders({
-    required String content,
+    String? content,
     String? token,
   }) async {
     final appVersion = await _appVersionFuture;
@@ -87,7 +87,7 @@ class ApiClient {
 
     return {
       'accept': '*/*',
-      'Content-Type': content,
+      if (content != null && content.isNotEmpty) 'Content-Type': content,
       'X-App-Version': appVersion,
       'X-App-Platform': appPlatform,
       'X-Platform': appPlatform,
@@ -95,7 +95,11 @@ class ApiClient {
     };
   }
 
-  Map<String, dynamic>? _appendPlatformToQuery(Map<String, dynamic>? query) {
+  Map<String, dynamic>? _appendPlatformToQuery(
+    Map<String, dynamic>? query, {
+    bool appendPlatform = true,
+  }) {
+    if (!appendPlatform) return query;
     if (query == null) {
       return {'platform': _appPlatform};
     }
@@ -104,7 +108,11 @@ class ApiClient {
     return updated;
   }
 
-  dynamic _appendPlatformToBody(dynamic body) {
+  dynamic _appendPlatformToBody(
+    dynamic body, {
+    bool appendPlatform = true,
+  }) {
+    if (!appendPlatform) return body;
     if (body is Map) {
       final updated = <String, dynamic>{};
       body.forEach((key, value) {
@@ -251,6 +259,7 @@ class ApiClient {
     String? token,
     Map<String, String?>? query,
     ContentType contentType = ContentType.urlEncoded,
+    bool appendPlatform = true,
   }) async {
     // ✅ Step 1: Check Internet Connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -260,19 +269,20 @@ class ApiClient {
 
     // ✅ Step 2: ruct URL
     String url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
-    final requestBody = _appendPlatformToBody(body);
+    final requestBody = _appendPlatformToBody(body, appendPlatform: appendPlatform);
     final queryParameters = _appendPlatformToQuery(
       query == null ? null : Map<String, dynamic>.from(query),
+      appendPlatform: appendPlatform,
     );
 
-    // ✅ Step 3: Define Content Type
-    String content;
+    // ✅ Step 3: Define Content Type (multipart boundary is set by Dio)
+    final String? content;
     switch (contentType) {
       case ContentType.json:
         content = 'application/json';
         break;
       case ContentType.multipart:
-        content = 'multipart/form-data';
+        content = null;
         break;
       default:
         content = 'application/x-www-form-urlencoded';
@@ -379,6 +389,7 @@ class ApiClient {
     String? token,
     Map<String, dynamic>? query,
     ContentType contentType = ContentType.urlEncoded,
+    bool appendPlatform = true,
   }) async {
     // Check for network connectivity with potential error handling
     try {
@@ -394,12 +405,15 @@ class ApiClient {
 
     // Determine the URL to use
     String url = newBaseUrl != null ? newBaseUrl + path : baseUrl + path;
-    final queryParameters = _appendPlatformToQuery(query);
+    final queryParameters = _appendPlatformToQuery(
+      query,
+      appendPlatform: appendPlatform,
+    );
 
-    // Simplify content-type assignment
-    final content = contentType == ContentType.json
+    // GET has no body — omit Content-Type (matches production iOS curls).
+    final String? content = contentType == ContentType.json
         ? 'application/json; charset=utf-8'
-        : 'application/x-www-form-urlencoded';
+        : null;
 
     try {
       // Setup headers with an optional authorization token
@@ -483,6 +497,44 @@ class ApiClient {
       return APIResponse.error(
           AppException.errorWithMessage("Unexpected error occurred"));
     }
+  }
+
+  /// Outbound V8 (Postman): `GET …/api.php?request=<action>&…`
+  Future<APIResponse> getOutbound(
+    String request, {
+    String? token,
+    Map<String, dynamic>? query,
+    ContentType contentType = ContentType.urlEncoded,
+    bool appendPlatform = true,
+  }) {
+    final q = <String, dynamic>{'request': request, ...?query};
+    return get(
+      outboundApiPhpPoint,
+      token: token,
+      query: q,
+      contentType: contentType,
+      appendPlatform: appendPlatform,
+    );
+  }
+
+  /// Outbound V8 (Postman): `POST …/api.php?request=<action>` + form body.
+  Future<APIResponse> postOutbound(
+    String request,
+    dynamic body, {
+    String? token,
+    Map<String, String?>? query,
+    ContentType contentType = ContentType.urlEncoded,
+    bool appendPlatform = true,
+  }) {
+    final q = <String, String?>{'request': request, ...?query};
+    return post(
+      outboundApiPhpPoint,
+      body,
+      token: token,
+      query: q,
+      contentType: contentType,
+      appendPlatform: appendPlatform,
+    );
   }
 
   Future<Response<dynamic>?> getRaw(

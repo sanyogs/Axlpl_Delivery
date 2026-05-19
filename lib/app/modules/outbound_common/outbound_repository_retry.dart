@@ -18,5 +18,7 @@ Future<APIResponse<dynamic>> outboundFirstSuccess(
 
 bool outboundIsBenignDuplicate(String? message) {
   final m = (message ?? '').toLowerCase();
-  return m.contains('already scanned') || m.contains('already picked');
+  return m.contains('already scanned') ||
+      m.contains('already picked') ||
+      m.contains('already bagged');
 }

@@ -543,28 +543,33 @@ class HomeView extends GetView<HomeController> {
                             )),
                           ],
                         ),
-                        SizedBox(height: 12.h),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: HomeIconContainer(
-                                title: 'Outbound',
-                                Img: barcodeIcon,
-                                OnTap: () =>
-                                    Get.toNamed(Routes.OUTBOUND_MENU),
-                              ),
-                            ),
-                            SizedBox(width: 10.w),
-                            const Expanded(child: SizedBox()),
-                            SizedBox(width: 10.w),
-                            const Expanded(child: SizedBox()),
-                          ],
-                        ),
                       ],
                     );
                   } else {
-                    return Container();
+                    return const SizedBox.shrink();
                   }
+                }),
+                SizedBox(
+                  height: 15.h,
+                ),
+                Obx(() {
+                  if (bottomController.isLoading.value) {
+                    return const SizedBox.shrink();
+                  }
+                  if (bottomController.userData.value == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: HomeIconContainer(
+                          title: 'Outbound',
+                          Img: barcodeIcon,
+                          OnTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
+                        ),
+                      ),
+                    ],
+                  );
                 }),
                 SizedBox(
                   height: 15.h,

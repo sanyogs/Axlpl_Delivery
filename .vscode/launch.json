@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (debug)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Flutter (Pixel 7)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "33091FDH2006CG",
+      "flutterMode": "debug",
+      "toolArgs": ["--dart-define=API_HTTP_LOG=true"]
+    },
+    {
+      "name": "Flutter (attach)",
+      "request": "attach",
+      "type": "dart"
+    }
+  ]
+}

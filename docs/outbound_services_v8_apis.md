@@ -9,9 +9,12 @@ Single reference for **Services V8 outbound** endpoints: categorization, full re
 | Item | Value |
 |------|--------|
 | Base URL | `https://my.axlpl.com/messenger/services_v8/` |
-| Flutter client | [`lib/app/data/networking/api_client.dart`](../lib/app/data/networking/api_client.dart) — same base path |
-| Auth | `Authorization: Bearer <token>` on requests (see `ApiClient._buildHeaders`) |
-| Platform | `platform` query/body field appended automatically (`ios` / `android`) |
+| **Production gateway** | `https://my.axlpl.com/messenger/services_v8/api.php?request=<action>` (Postman / iOS app) |
+| Flutter client | [`lib/app/data/networking/api_client.dart`](../lib/app/data/networking/api_client.dart) — `getOutbound` / `postOutbound` |
+| Auth | `Authorization: Bearer <token>` + `X-App-Version` + `X-App-Platform` |
+| Platform param | **Not sent** on verified outbound calls (`appendPlatform: false`). Old path URLs used `?platform=android`. |
+
+**Verified batch 1 (live curls + responses):** [`outbound_batch1_verified.md`](outbound_batch1_verified.md) — regenerate: `./docs/run_batch1_curls.sh`
 
 **Token and user context in the app**
 
@@ -30,7 +33,7 @@ Single reference for **Services V8 outbound** endpoints: categorization, full re
 | Column | Meaning |
 |--------|---------|
 | **Implemented** | **Yes** = Flutter path constant, `ApiServices` method, `OutboundRepository`, and outbound UI screen action exist. |
-| **Working fine** | **Yes** = HTTP 200, valid JSON envelope, and contract verified (success with data, or success with empty list/report). **Partial** = Reachable but happy path blocked (e.g. `createbag` → `bag_id: 0`, bag/manifest/linehaul 404 without real ids). Flutter treats these as errors where appropriate. **No** = Not called or not verified. |
+| **Working fine** | **Yes** = HTTP 200 with expected body (raw JSON array/object **or** `{success:…}` / `{status:success}`). **Partial** = API reachable; happy path blocked by state (422 already bagged) or missing optional field (`createbag` needs `shipment_ids`). **No** = not verified. |
 | **Request cURL** | Example `curl` matching capture URL/body (replace `$OUTBOUND_BEARER_TOKEN`). See master table for full command per API. |
 | **Raw JSON response** | Exact `raw_body` from capture as one line (no indentation). See master table. |
 
@@ -41,9 +44,9 @@ Source: [`outbound_v8_api_capture.summary.json`](outbound_v8_api_capture.summary
 | 1 | `hubscan` | Yes | **Yes** |
 | 2 | `gethubscanlogs` | Yes | **Yes** |
 | 3 | `getshipmentscanhistory` | Yes | **Yes** |
-| 4 | `createbag` | Yes | No |
-| 5 | `addshipmenttobag` | Yes | Partial |
-| 6 | `getbagdetails` | Yes | Partial |
+| 4 | `createbag` | Yes | **Partial** |
+| 5 | `addshipmenttobag` | Yes | **Yes** |
+| 6 | `getbagdetails` | Yes | **Yes** |
 | 7 | `listbags` | Yes | **Yes** |
 | 8 | `removeshipmentfrombag` | Yes | Partial |
 | 9 | `lockbag` | Yes | Partial |
@@ -69,67 +72,116 @@ Source: [`outbound_v8_api_capture.summary.json`](outbound_v8_api_capture.summary
 
 ## Module A — Hub scan (3 APIs)
 
-<table>
-<thead><tr><th>#</th><th>Name</th><th>Method</th><th>Path</th><th>Request</th><th>Implemented</th><th>Working fine</th><th>Request cURL</th><th>Raw JSON response</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>Hub Scan</td><td>POST</td><td><code>hubscan</code></td><td>`docket_no`, `branch_id`, `user_id`, `status`</td><td>Yes</td><td>Yes</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/hubscan?platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data 'docket_no=990831778839479&amp;branch_id=27&amp;user_id=143&amp;status=Hub+In&amp;platform=android'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Shipment scanned successfully as Hub In&quot;,&quot;data&quot;:{&quot;shipment_id&quot;:&quot;990831778839479&quot;,&quot;docket_no&quot;:&quot;3213213&quot;}}</pre></td></tr>
-<tr><td>2</td><td>Get Hub Scan Logs</td><td>GET</td><td><code>gethubscanlogs</code></td><td>Query: `branch_id`, `limit`</td><td>Yes</td><td>Yes</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/gethubscanlogs?branch_id=27&amp;limit=50&amp;platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Hub scan logs retrieved&quot;,&quot;data&quot;:[{&quot;id&quot;:&quot;220&quot;,&quot;shipment_id&quot;:&quot;149311778836750&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-15 15:12:11&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:12:11&quot;,&quot;updated_at&quot;:&quot;2026-05-15 15:12:11&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;123654987&quot;},{&quot;id&quot;:&quot;217&quot;,&quot;shipment_id&quot;:&quot;445681778769763&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SGL033&quot;},{&quot;id&quot;:&quot;211&quot;,&quot;shipment_id&quot;:&quot;872991778765685&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;RDLD\/009\/26-27&quot;},{&quot;id&quot;:&quot;216&quot;,&quot;shipment_id&quot;:&quot;338481778769798&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;AG\/26-27\/035&quot;},{&quot;id&quot;:&quot;218&quot;,&quot;shipment_id&quot;:&quot;236861778770022&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;BSH92\/2627\/52&quot;},{&quot;id&quot;:&quot;212&quot;,&quot;shipment_id&quot;:&quot;547181778759592&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;DCS\/26-27\/002&quot;},{&quot;id&quot;:&quot;215&quot;,&quot;shipment_id&quot;:&quot;700971778766947&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;MOPL\/15\/26-27&quot;},{&quot;id&quot;:&quot;213&quot;,&quot;shipment_id&quot;:&quot;670281778764166&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;5&quot;},{&quot;id&quot;:&quot;219&quot;,&quot;shipment_id&quot;:&quot;435171778773315&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/87&quot;},{&quot;id&quot;:&quot;214&quot;,&quot;shipment_id&quot;:&quot;381661778765466&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:43:44&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IV\/2026-27\/027&quot;},{&quot;id&quot;:&quot;208&quot;,&quot;shipment_id&quot;:&quot;638031778765858&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;PR\/003\/26-27&quot;},{&quot;id&quot;:&quot;207&quot;,&quot;shipment_id&quot;:&quot;666751778759202&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IRD\/37&quot;},{&quot;id&quot;:&quot;206&quot;,&quot;shipment_id&quot;:&quot;215781778766478&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;26-27\/SV\/87&quot;},{&quot;id&quot;:&quot;209&quot;,&quot;shipment_id&quot;:&quot;340191778773190&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/88&quot;},{&quot;id&quot;:&quot;210&quot;,&quot;shipment_id&quot;:&quot;800191778769475&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;created_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;updated_at&quot;:&quot;2026-05-14 21:40:05&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SGL035&quot;},{&quot;id&quot;:&quot;192&quot;,&quot;shipment_id&quot;:&quot;258181778677083&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 22:03:14&quot;,&quot;created_at&quot;:&quot;2026-05-13 22:03:14&quot;,&quot;updated_at&quot;:&quot;2026-05-13 22:03:14&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;CC\/JW\/26-27\/4&quot;},{&quot;id&quot;:&quot;186&quot;,&quot;shipment_id&quot;:&quot;767841778675611&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;2025-26\/03&quot;},{&quot;id&quot;:&quot;191&quot;,&quot;shipment_id&quot;:&quot;416131778687588&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SG-245&quot;},{&quot;id&quot;:&quot;187&quot;,&quot;shipment_id&quot;:&quot;386291778681343&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;GST\/2026-27\/024&quot;},{&quot;id&quot;:&quot;183&quot;,&quot;shipment_id&quot;:&quot;721271778674007&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;HGJ-012\/26-27&quot;},{&quot;id&quot;:&quot;188&quot;,&quot;shipment_id&quot;:&quot;225011778682993&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;BSH92\/26-27\/49&quot;},{&quot;id&quot;:&quot;184&quot;,&quot;shipment_id&quot;:&quot;721271778674007&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;2&quot;,&quot;shipment_invoice_no&quot;:&quot;HGJ-012\/26-27&quot;},{&quot;id&quot;:&quot;189&quot;,&quot;shipment_id&quot;:&quot;933581778683486&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SRKJB\/26-27\/126&quot;},{&quot;id&quot;:&quot;185&quot;,&quot;shipment_id&quot;:&quot;450841778674298&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;VSRJY\/013\/26-27\/&quot;},{&quot;id&quot;:&quot;190&quot;,&quot;shipment_id&quot;:&quot;135801778685021&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;created_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;updated_at&quot;:&quot;2026-05-13 21:59:45&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/85&quot;},{&quot;id&quot;:&quot;170&quot;,&quot;shipment_id&quot;:&quot;523141778588996&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;4&quot;,&quot;shipment_invoice_no&quot;:&quot;DC -56&quot;},{&quot;id&quot;:&quot;165&quot;,&quot;shipment_id&quot;:&quot;417651778581554&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;PR\/26-27\/5&quot;},{&quot;id&quot;:&quot;174&quot;,&quot;shipment_id&quot;:&quot;723111778593508&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;GC\/2026-27\/023&quot;},{&quot;id&quot;:&quot;172&quot;,&quot;shipment_id&quot;:&quot;982311778589762&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;6&quot;},{&quot;id&quot;:&quot;163&quot;,&quot;shipment_id&quot;:&quot;299701778583072&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;VSR\/005\/26-27&quot;},{&quot;id&quot;:&quot;175&quot;,&quot;shipment_id&quot;:&quot;985051778593737&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;SRKJ\/26-27\/130&quot;},{&quot;id&quot;:&quot;171&quot;,&quot;shipment_id&quot;:&quot;742361778590521&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;2&quot;},{&quot;id&quot;:&quot;167&quot;,&quot;shipment_id&quot;:&quot;523141778588996&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;DC -56&quot;},{&quot;id&quot;:&quot;164&quot;,&quot;shipment_id&quot;:&quot;130811778583251&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;VSRJY\/012\/26-27&quot;},{&quot;id&quot;:&quot;173&quot;,&quot;shipment_id&quot;:&quot;783091778594794&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;MOPL\/14\/26-27&quot;},{&quot;id&quot;:&quot;166&quot;,&quot;shipment_id&quot;:&quot;662101778591725&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IV\/2026-27\/024&quot;},{&quot;id&quot;:&quot;168&quot;,&quot;shipment_id&quot;:&quot;523141778588996&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;2&quot;,&quot;shipment_invoice_no&quot;:&quot;DC -56&quot;},{&quot;id&quot;:&quot;161&quot;,&quot;shipment_id&quot;:&quot;720931778586497&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IV\/2026-27\/022&quot;},{&quot;id&quot;:&quot;176&quot;,&quot;shipment_id&quot;:&quot;384581778598608&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;26-27\/22&quot;},{&quot;id&quot;:&quot;177&quot;,&quot;shipment_id&quot;:&quot;555131778592266&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;REF-13-12\/P3&quot;},{&quot;id&quot;:&quot;169&quot;,&quot;shipment_id&quot;:&quot;523141778588996&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;3&quot;,&quot;shipment_invoice_no&quot;:&quot;DC -56&quot;},{&quot;id&quot;:&quot;179&quot;,&quot;shipment_id&quot;:&quot;372801778598930&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/84&quot;},{&quot;id&quot;:&quot;162&quot;,&quot;shipment_id&quot;:&quot;846541778586732&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IV\/2026-27\/023&quot;},{&quot;id&quot;:&quot;178&quot;,&quot;shipment_id&quot;:&quot;744211778592890&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:06:55&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;21,20&quot;},{&quot;id&quot;:&quot;159&quot;,&quot;shipment_id&quot;:&quot;488261778599075&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/82&quot;},{&quot;id&quot;:&quot;157&quot;,&quot;shipment_id&quot;:&quot;864131778587269&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IRD\/35&quot;},{&quot;id&quot;:&quot;160&quot;,&quot;shipment_id&quot;:&quot;231571778599224&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;D NOTE\/2026-27\/83&quot;},{&quot;id&quot;:&quot;156&quot;,&quot;shipment_id&quot;:&quot;922661778587457&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;IRD\/34&quot;},{&quot;id&quot;:&quot;158&quot;,&quot;shipment_id&quot;:&quot;770001778579162&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;created_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;updated_at&quot;:&quot;2026-05-12 22:02:02&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;MBTIDL\/000126-27&quot;},{&quot;id&quot;:&quot;137&quot;,&quot;shipment_id&quot;:&quot;126441778333753&quot;,&quot;scan_type&quot;:&quot;IN&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;scanned_at&quot;:&quot;2026-05-10 21:43:11&quot;,&quot;created_at&quot;:&quot;2026-05-10 21:43:11&quot;,&quot;updated_at&quot;:&quot;2026-05-10 21:43:11&quot;,&quot;box_no&quot;:&quot;1&quot;,&quot;shipment_invoice_no&quot;:&quot;425&quot;}]}</pre></td></tr>
-<tr><td>3</td><td>Get Shipment Scan History</td><td>GET</td><td><code>getshipmentscanhistory</code></td><td>Query: `docket_no`</td><td>Yes</td><td>Yes</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/getshipmentscanhistory?docket_no=990831778839479&amp;platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Shipment scan history retrieved&quot;,&quot;data&quot;:[{&quot;id&quot;:&quot;1946273&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Hub In&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;27&quot;,&quot;created_by&quot;:&quot;143&quot;,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 16:15:57&quot;,&quot;modified_date&quot;:&quot;2026-05-15 16:15:57&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946197&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Pending&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:null,&quot;created_by&quot;:&quot;81&quot;,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 15:34:39&quot;,&quot;modified_date&quot;:&quot;2026-05-15 15:34:39&quot;,&quot;sequence_no&quot;:&quot;1&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946212&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Hub In&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;75&quot;,&quot;created_by&quot;:null,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;modified_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946218&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Bagged&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;75&quot;,&quot;created_by&quot;:null,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;modified_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946231&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Manifest Created&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;75&quot;,&quot;created_by&quot;:null,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;modified_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946235&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Linehaul Dispatched&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;75&quot;,&quot;created_by&quot;:null,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;modified_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null},{&quot;id&quot;:&quot;1946237&quot;,&quot;s_id&quot;:&quot;990831778839479&quot;,&quot;status&quot;:&quot;Hub in&quot;,&quot;is_exception&quot;:&quot;0&quot;,&quot;branch_id&quot;:&quot;2&quot;,&quot;created_by&quot;:null,&quot;u_type&quot;:null,&quot;remark&quot;:&quot;&quot;,&quot;created_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;modified_date&quot;:&quot;2026-05-15 00:00:00&quot;,&quot;sequence_no&quot;:&quot;0&quot;,&quot;is_negative&quot;:&quot;0&quot;,&quot;negative_remark&quot;:null,&quot;receiver_name&quot;:null}]}</pre></td></tr>
-</tbody></table>
+Verified 2026-05-19 — full curls/responses in [`outbound_batch1_verified.md`](outbound_batch1_verified.md).
 
+| # | Path | Method | Params | Flutter |
+|---|------|--------|--------|---------|
+| 1 | `hubscan` | POST multipart | `docket_no`, `branch_id`, `user_id`, `status` | `ApiServices.hubScan` → FormData, no platform |
+| 2 | `gethubscanlogs` | GET | `branch_id`, `limit` | `ApiServices.getHubScanLogs` |
+| 3 | `getshipmentscanhistory` | GET | `docket_no` | `ApiServices.getShipmentScanHistory` |
 
+**QA IDs:** docket `558751776258671`, branch `73`.
 
-**Full URLs (append to base)**
+**Response shapes (no envelope):**
+- `hubscan` → `{"success":"Shipment scanned successfully","shipment_id":"…","docket_no":"…"}`
+- `gethubscanlogs` → JSON **array** of `{id, shipment_id, scan_type, branch_id, scanned_at, box_no, shipment_invoice_no, …}`
+- `getshipmentscanhistory` → JSON **array** of `{id, s_id, status, branch_id, created_date, remark, …}`
 
-- `POST hubscan`
-- `GET gethubscanlogs?branch_id=&limit=`
-- `GET getshipmentscanhistory?docket_no=`
+**Example — hubscan**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=hubscan' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'docket_no=558751776258671' \
+  --form 'branch_id=73' \
+  --form 'user_id=1' \
+  --form 'status=Hub In'
+```
+
+**Example — gethubscanlogs**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=gethubscanlogs&branch_id=73&limit=50' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Example — getshipmentscanhistory**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getshipmentscanhistory&docket_no=558751776258671' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
 
 ---
 
-## Module B — Bagging (8 APIs)
+## Module B — Bagging (batch 1: APIs 4–7 verified)
+
+Verified 2026-05-19 — [`outbound_batch1_verified.md`](outbound_batch1_verified.md).
+
+| # | Path | Method | Params | Notes |
+|---|------|--------|--------|-------|
+| 4 | `createbag` | POST multipart | `origin_branch_id`, `destination_branch_id`, `bag_code`, **`metal_seal_no`**, `user_id`, optional `shipment_ids` | Without `metal_seal_no` → 400. Without shipments → 400. |
+| 5 | `addshipmenttobag` | POST multipart | **`bag_code`**, `docket_no`, `branch_id`, `user_id` | Use `bag_code` not `bag_id`. 422 if already bagged. |
+| 6 | `getbagdetails` | GET | **`bag_code`** query | Returns bag + `items[]` shipments. |
+| 7 | `listbags` | GET | `branch_id` | JSON **array** of bags at origin depot. |
+
+**QA IDs:** bag `BAG20260518152744831`, bagging docket `825411779084407`, list branch `75`.
+
+**Example — addshipmenttobag**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'bag_code=BAG20260518152744831' \
+  --form 'docket_no=825411779084407' \
+  --form 'branch_id=1' \
+  --form 'user_id=1'
+```
+
+**Example — getbagdetails** (response includes `items`, `metal_seal_no`, `manifest_status`)
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getbagdetails&bag_code=BAG20260518152744831' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Example — listbags**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listbags&branch_id=75' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Example — createbag**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=createbag' \
+  --header 'Authorization: Bearer $TOKEN' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios' \
+  --form 'origin_branch_id=37' \
+  --form 'destination_branch_id=75' \
+  --form 'bag_code=BAG_NEW_CODE' \
+  --form 'metal_seal_no=MSeal825411779084407' \
+  --form 'user_id=1'
+```
+
+### Bagging APIs 8–11 (batch 2 — pending verify in doc)
+
+Legacy table below; update when batch 2 curls are run.
 
 <table>
 <thead><tr><th>#</th><th>Name</th><th>Method</th><th>Path</th><th>Request</th><th>Implemented</th><th>Working fine</th><th>Request cURL</th><th>Raw JSON response</th></tr></thead>
 <tbody>
-<tr><td>4</td><td>Create Bag</td><td>POST</td><td><code>createbag</code></td><td>`origin_branch_id`, `destination_branch_id`, `bag_code`, `user_id`</td><td>Yes</td><td>No</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/createbag?platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data 'origin_branch_id=27&amp;destination_branch_id=5&amp;bag_code=BAG_CODE_EXAMPLE&amp;user_id=143&amp;platform=android'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">(skipped) Skipped by default (OUTBOUND_SKIP_CREATEBAG=1). The live createbag endpoint often returns status success with bag_id 0 even for invalid or incomplete payloads, so HTTP capture is misleading. Set OUTBOUND_SKIP_CREATEBAG=0 to record the real response body.</pre></td></tr>
-<tr><td>5</td><td>Add Shipment To Bag</td><td>POST</td><td><code>addshipmenttobag</code></td><td>`bag_id`, `docket_no`, `branch_id`, `user_id`</td><td>Yes</td><td>Partial</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data 'bag_id=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=143&amp;platform=android'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag ID and Docket Number required&quot;,&quot;data&quot;:{},&quot;error_code&quot;:400}</pre></td></tr>
-<tr><td>6</td><td>Get Bag Details</td><td>GET</td><td><code>getbagdetails</code></td><td>Query: `bag_id`</td><td>Yes</td><td>Partial</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/getbagdetails?bag_id=BAG20260515154014&amp;platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;fail&quot;,&quot;message&quot;:&quot;Bag ID required&quot;,&quot;data&quot;:{},&quot;error_code&quot;:400}</pre></td></tr>
-<tr><td>7</td><td>List Bags</td><td>GET</td><td><code>listbags</code></td><td>Query: `branch_id`</td><td>Yes</td><td>Yes</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X GET 'https://my.axlpl.com/messenger/services_v8/listbags?branch_id=27&amp;platform=android' \
-  -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
-  -H 'X-App-Version: 99.99.99' \
-  -H 'X-App-Platform: android' \
-  -H 'accept: */*'</pre></td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Bags retrieved&quot;,&quot;data&quot;:{}}</pre></td></tr>
+<tr><td>4</td><td>Create Bag</td><td>POST</td><td><code>createbag</code></td><td>`origin_branch_id`, `destination_branch_id`, `bag_code`, **`metal_seal_no`**, `user_id`</td><td>Yes</td><td>Partial</td><td>See batch 1 doc</td><td>`metal_seal_no` required; may need `shipment_ids`</td></tr>
+<tr><td>5</td><td>Add Shipment To Bag</td><td>POST</td><td><code>addshipmenttobag</code></td><td>**`bag_code`**, `docket_no`, `branch_id`, `user_id`</td><td>Yes</td><td>Yes</td><td>See batch 1 doc</td><td>422 if already bagged (API OK)</td></tr>
+<tr><td>6</td><td>Get Bag Details</td><td>GET</td><td><code>getbagdetails</code></td><td>Query: **`bag_code`**</td><td>Yes</td><td>Yes</td><td>See batch 1 doc</td><td>Raw object + `items[]`</td></tr>
+<tr><td>7</td><td>List Bags</td><td>GET</td><td><code>listbags</code></td><td>Query: `branch_id`</td><td>Yes</td><td>Yes</td><td>See batch 1 doc</td><td>Raw JSON array</td></tr>
 <tr><td>8</td><td>Remove Shipment From Bag</td><td>POST</td><td><code>removeshipmentfrombag</code></td><td>`bag_id`, `docket_no`, `branch_id`, `user_id`</td><td>Yes</td><td>Partial</td><td><pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin:0">curl -sS -X POST 'https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android' \
   -H 'Authorization: Bearer $OUTBOUND_BEARER_TOKEN' \
   -H 'X-App-Version: 99.99.99' \
@@ -607,6 +659,7 @@ Two artifacts are generated by [`scripts/capture_outbound_v8_responses.py`](../s
 | File | Purpose |
 |------|---------|
 | [`docs/outbound_services_v8_api_responses_reference.md`](outbound_services_v8_api_responses_reference.md) | **Human-readable:** every outbound API with request field table + full observed `raw_body` JSON (from capture; re-run script to refresh). |
+| [`docs/outbound_batch1_verified.md`](outbound_batch1_verified.md) | **Sarvesh QA batch 1:** live curls + responses for hub scan + bagging APIs 4–7. Regenerate: `./docs/run_batch1_curls.sh` |
 | [`docs/outbound_v8_api_capture.json`](outbound_v8_api_capture.json) | Full dump per call: `method`, `url`, `query`/`form`, `http_status`, `parsed_body`, `raw_body`, plus `skipped` + `note` when an HTTP call was not made. |
 | [`docs/outbound_v8_api_capture.summary.json`](outbound_v8_api_capture.summary.json) | One row per call: `api_status`, `message`, `error_code`, `data_kind`, list length or map keys — quick QA / diffing. |
 | [`docs/outbound_v8_api_all_requests_responses.json`](outbound_v8_api_all_requests_responses.json) | **All 26** calls: request `query`/`form` + parsed `response_json` (regenerate: `python3 scripts/export_outbound_requests_responses.py`). |
@@ -660,6 +713,7 @@ python3 scripts/generate_outbound_api_responses_reference.py
 
 | Date | Change |
 |------|--------|
+| 2026-05-19 | **Batch 1 verified** (Sarvesh QA): `api.php?request=` gateway, multipart POST, no `platform`. Hub scan + bagging 4–7 live curls in [`outbound_batch1_verified.md`](outbound_batch1_verified.md). Flutter: `hubScan`, `addShipmentToBag`, `createBag` → FormData; GET bagging/hub → `appendPlatform: false`; `bag_code` + `metal_seal_no`; `BagDetail.items[]` parsing. |
 | 2026-05-15 | `outbound_backend_gap_ticket.md`, `outbound_mutation_result_test.dart`, stricter `validate_outbound_capture.py`. |
 | 2026-05-15 | Added `refresh_outbound_docs.sh`, `validate_outbound_capture.py`; capture uses multi-branch discovery, `createbag` `bag_id:0` → Partial, completion checklist. |
 | 2026-05-15 | Authenticated capture (`OUTBOUND_BRANCH_ID=27`); module tables embed full **Request cURL** + **Raw JSON** (single-line); master table + `generate_outbound_api_table_with_curl.py`. |

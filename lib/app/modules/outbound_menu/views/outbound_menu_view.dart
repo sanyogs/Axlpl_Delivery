@@ -1,6 +1,11 @@
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
+import 'package:axlpl_delivery/common_widget/common_appbar.dart';
+import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
+import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
+import 'package:axlpl_delivery/utils/assets.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 class OutboundMenuView extends StatelessWidget {
@@ -8,56 +13,60 @@ class OutboundMenuView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: themes.lightWhite,
-      appBar: AppBar(
-        title: const Text('Outbound'),
-        backgroundColor: themes.whiteColor,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _tile(
-            title: 'Hub scan',
-            subtitle: 'Docket scan, logs, shipment scan history',
-            route: Routes.OUTBOUND_HUB_SCAN,
-          ),
-          _tile(
-            title: 'Bagging',
-            subtitle: 'Create bag, add shipments, lock',
-            route: Routes.OUTBOUND_BAGGING,
-          ),
-          _tile(
-            title: 'Manifest',
-            subtitle: 'Create, list, reports',
-            route: Routes.OUTBOUND_MANIFEST,
-          ),
-          _tile(
-            title: 'Linehaul',
-            subtitle: 'Assign, list, status, reports',
-            route: Routes.OUTBOUND_LINEHAUL,
-          ),
-          _tile(
-            title: 'Sector pickup',
-            subtitle: 'Pickup list, scan, missed / not picked',
-            route: Routes.OUTBOUND_SECTOR_PICKUP,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tile({
-    required String title,
-    required String subtitle,
-    required String route,
-  }) {
-    return Card(
-      child: ListTile(
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Get.toNamed(route),
+    return CommonScaffold(
+      appBar: commonAppbar('Outbound'),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Outbound process',
+              style: themes.fontSize18_600,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'Hub scan → Bagging → Manifest → Linehaul → Sector pickup',
+              style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+            ),
+            SizedBox(height: 16.h),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.35,
+                children: [
+                  HomeIconContainer(
+                    title: 'Hub scan',
+                    Img: barcodeIcon,
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
+                  ),
+                  HomeIconContainer(
+                    title: 'Bagging',
+                    Img: barcodeIcon,
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
+                  ),
+                  HomeIconContainer(
+                    title: 'Manifest',
+                    Img: barcodeIcon,
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
+                  ),
+                  HomeIconContainer(
+                    title: 'Linehaul',
+                    Img: barcodeIcon,
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
+                  ),
+                  HomeIconContainer(
+                    title: 'Sector pickup',
+                    Img: barcodeIcon,
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

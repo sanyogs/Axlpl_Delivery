@@ -1,0 +1,642 @@
+<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'/><title>AXLPL Outbound — PDF vs Postman Full Report</title><style>
+:root{--bg:#f0f4f8;--card:#fff;--text:#1a2332;--muted:#5c6b7a;--border:#d0d7de;--accent:#0d47a1;--crit:#b71c1c;--ok:#2e7d32}
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;margin:0;padding:24px 16px 48px;background:var(--bg);color:var(--text);line-height:1.55}
+.wrap{max-width:1100px;margin:0 auto}
+header{background:linear-gradient(135deg,#0d47a1,#1565c0);color:#fff;padding:28px 32px;border-radius:12px;margin-bottom:24px}
+header h1{margin:0 0 8px;font-size:1.45rem}header p{margin:0;opacity:.95}
+h2{font-size:1.12rem;border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 14px}
+h3{font-size:.95rem;margin:16px 0 8px;color:var(--accent)}
+h4{font-size:.88rem;margin:14px 0 6px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:20px}
+.card-hdr{padding:12px 16px;background:#eef2f7;border-bottom:1px solid var(--border);font-weight:600}
+.card-body{padding:16px 18px}
+pre.code{background:#1e293b;color:#e2e8f0;padding:12px;border-radius:6px;font-size:.72rem;white-space:pre-wrap;word-break:break-all}
+.issue{background:#ffebee;border-left:4px solid var(--crit);padding:12px 14px;margin:12px 0;font-size:.9rem}
+.fix{background:#fff8e1;border-left:4px solid #f9a825;padding:10px 12px;margin-top:12px;font-size:.88rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700;color:#fff;margin-right:6px}
+.b-crit{background:#b71c1c}.b-warn{background:#e65100}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:.82rem;margin-bottom:16px}
+th,td{padding:8px 10px;border:1px solid var(--border);text-align:left;vertical-align:top}
+th{background:#eef2f7}
+.ok{color:var(--ok);font-weight:600}.no{color:var(--crit);font-weight:600}
+.note{font-size:.85rem;color:var(--muted)}
+</style></head><body><div class='wrap'><header><h1>AXLPL Outbound API — PDF vs Postman (Complete Report)</h1><p>Generated 2026-05-18 11:31 UTC. Tests: (A) official PDF/Postman sample data, (B) real QA IDs. Section 5 lists APIs that still fail on Postman with QA data (backend must fix).</p></header><section><h2>1. Coverage</h2><table><tr><th>Source</th><th>Count</th><th>Detail</th></tr><tr><td>PDF list</td><td>26</td><td>Path URLs <code>…/services_v8/&lt;action&gt;</code></td></tr><tr><td>Postman</td><td>27</td><td><code>api.php?request=&lt;action&gt;</code></td></tr><tr><td>In both</td><td>26</td><td>Same action names</td></tr><tr><td><strong>Postman only</strong></td><td>1</td><td><code>getbranches</code> — not in PDF</td></tr><tr><td><strong>PDF only</strong></td><td>0</td><td>—</td></tr></table><p class='note'><strong>Param mismatch:</strong> PDF uses <code>bag_id</code>, <code>manifest_id</code>, <code>linehaul_id</code>. Postman uses <code>bag_code</code>, <code>manifest_code</code>, <code>trip_no</code>. QA IDs: docket 990831778839479, bag BAG20260515154014, manifest MUM075, trip LH1778842087.</p></section><section><h2>2. Full matrix (4 tests per API)</h2><table><tr><th>#</th><th>API</th><th>PDF official</th><th>PDF+QA</th><th>PM official</th><th>PM+QA</th></tr><tr><td>1</td><td><code>hubscan</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>2</td><td><code>gethubscanlogs</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>3</td><td><code>getshipmentscanhistory</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>4</td><td><code>createbag</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>5</td><td><code>addshipmenttobag</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>6</td><td><code>getbagdetails</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>7</td><td><code>listbags</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>8</td><td><code>removeshipmentfrombag</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>9</td><td><code>lockbag</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>10</td><td><code>rebagshipment</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>11</td><td><code>baggingreport</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>12</td><td><code>createmanifest</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>13</td><td><code>getmanifestdetails</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>14</td><td><code>listmanifests</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>15</td><td><code>manifestreport</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>16</td><td><code>printmanifestdata</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>17</td><td><code>assignlinehaul</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>18</td><td><code>listlinehauls</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>19</td><td><code>getlinehauldetails</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>20</td><td><code>updatelinehaulstatus</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>21</td><td><code>linehaulreport</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>22</td><td><code>sectorpickupscan</code></td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td><td class='no'>FAIL</td></tr><tr><td>23</td><td><code>getpickuplist</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>24</td><td><code>marknotpicked</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>25</td><td><code>addmissedshipment</code></td><td class='no'>FAIL</td><td class='ok'>PASS</td><td class='no'>FAIL</td><td class='ok'>PASS</td></tr><tr><td>26</td><td><code>pickupreport</code></td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr><tr><td>—</td><td><code>getbranches</code></td><td>—</td><td>—</td><td class='ok'>PASS</td><td class='ok'>PASS</td></tr></table></section><section><h2>3. Official sample data failures (PDF + Postman docs)</h2><p>Both documents use placeholder IDs (AXL123456, bag_id 10, etc.) — expected to fail.</p><table><tr><th>API</th><th>PDF official</th><th>Postman official</th></tr><tr><td><code>hubscan</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: BAG20260515154014</td></tr><tr><td><code>getshipmentscanhistory</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: BAG20260515154014</td></tr><tr><td><code>createbag</code></td><td>Metal seal number is required</td><td>Metal seal number is required</td></tr><tr><td><code>addshipmenttobag</code></td><td>Bag not found: 10</td><td>Bag not found: BAG20260518132700</td></tr><tr><td><code>getbagdetails</code></td><td>Bag not found: 10</td><td>Bag not found: BAG20260518132700</td></tr><tr><td><code>removeshipmentfrombag</code></td><td>Bag not found: 10</td><td>Bag not found: BAG20260518132700</td></tr><tr><td><code>lockbag</code></td><td>Bag not found: 10</td><td>Bag not found: BAG20260518132700</td></tr><tr><td><code>rebagshipment</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: AWB1234567</td></tr><tr><td><code>createmanifest</code></td><td>Bag not found: 10</td><td>Bag not found: BAG20260518132700</td></tr><tr><td><code>getmanifestdetails</code></td><td>Manifest not found: 5</td><td>HTTP 500 server error</td></tr><tr><td><code>printmanifestdata</code></td><td>Manifest not found: 5</td><td>HTTP 500 server error</td></tr><tr><td><code>assignlinehaul</code></td><td>Manifest not found: 5</td><td>Shipment already processed in Delivered</td></tr><tr><td><code>getlinehauldetails</code></td><td>Linehaul not found: 3</td><td>Linehaul not found: LH1778841961</td></tr><tr><td><code>updatelinehaulstatus</code></td><td>Linehaul not found: 3</td><td>Linehaul not found: LH1778841961</td></tr><tr><td><code>sectorpickupscan</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: AWB1234567</td></tr><tr><td><code>marknotpicked</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: AWB1234567</td></tr><tr><td><code>addmissedshipment</code></td><td>Shipment not found: AXL123456</td><td>Shipment not found: AWB1234567</td></tr></table></section><section><h2>4. QA data failures (real test IDs)</h2><table><tr><th>API</th><th>PDF path+QA</th><th>Postman+QA</th></tr><tr><td><code>createbag</code></td><td>Shipment(s) 990831778839479 are already assigned to another bag</td><td>Shipment(s) 990831778839479 are already assigned to another bag</td></tr><tr><td><code>addshipmenttobag</code></td><td>Shipment already bagged in Bag: BAG20260518162818301</td><td>Shipment already bagged in Bag: BAG20260518162818301</td></tr><tr><td><code>removeshipmentfrombag</code></td><td>Shipment is not in this bag</td><td>Shipment is not in this bag</td></tr><tr><td><code>rebagshipment</code></td><td>bare object OK</td><td>Shipment is not currently in any bag</td></tr><tr><td><code>createmanifest</code></td><td>Bag BAG20260515154014 is already manifested</td><td>Bag BAG20260515154014 is already manifested</td></tr><tr><td><code>getmanifestdetails</code></td><td>HTTP 500 server error</td><td>HTTP 500 server error</td></tr><tr><td><code>printmanifestdata</code></td><td>HTTP 500 server error</td><td>HTTP 500 server error</td></tr><tr><td><code>getlinehauldetails</code></td><td>Linehaul not found: LH1778842087</td><td>Linehaul not found: LH1778842087</td></tr><tr><td><code>updatelinehaulstatus</code></td><td>Linehaul not found: LH1778842087</td><td>Linehaul not found: LH1778842087</td></tr><tr><td><code>sectorpickupscan</code></td><td>Shipment already scanned for this pickup</td><td>Shipment already scanned for this pickup</td></tr></table></section><section><h2>5. Backend action required — Postman fails with QA data (10 APIs)</h2><p>Excluded: APIs that <strong>pass Postman with QA IDs</strong>. Each card includes all curls and responses.</p><article class='card' id='createbag'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #4 <code>createbag</code> — Create Bag</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Shipment(s) 990831778839479 are already assigned to another bag<br/><strong>PDF path+QA:</strong> Shipment(s) 990831778839479 are already assigned to another bag</div><h4>A) PDF official (from PDF doc) — FAIL: Metal seal number is required</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;origin_branch_id&quot;: &quot;2&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;bag_code&quot;: &quot;BAG1746700000&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/createbag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;origin_branch_id=2&amp;destination_branch_id=5&amp;bag_code=BAG1746700000&amp;user_id=148&#x27;</pre><p>Response HTTP 400:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Metal seal number is required&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 400
+}</pre><h4>B) PDF path + QA IDs — FAIL: Shipment(s) 990831778839479 are already assigned to another bag</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;origin_branch_id&quot;: &quot;27&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;bag_code&quot;: &quot;BAG_QA_1779103874&quot;,
+    &quot;metal_seal_no&quot;: &quot;SEAL21665&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;shipment_ids&quot;: &quot;990831778839479&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/createbag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;origin_branch_id=27&amp;destination_branch_id=5&amp;bag_code=BAG_QA_1779103874&amp;metal_seal_no=SEAL21665&amp;user_id=148&amp;shipment_ids=990831778839479&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment(s) 990831778839479 are already assigned to another bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><h4>C) Postman official (from collection) — FAIL: Metal seal number is required</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;origin_branch_id&quot;: &quot;1&quot;,
+    &quot;destination_branch_id&quot;: &quot;2&quot;,
+    &quot;bag_code&quot;: &quot;BAG20260518132700&quot;,
+    &quot;user_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createbag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;origin_branch_id=1&amp;destination_branch_id=2&amp;bag_code=BAG20260518132700&amp;user_id=1&#x27;</pre><p>Response HTTP 400:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Metal seal number is required&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 400
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Shipment(s) 990831778839479 are already assigned to another bag</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;origin_branch_id&quot;: &quot;27&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;bag_code&quot;: &quot;BAG_QA_1779103874&quot;,
+    &quot;metal_seal_no&quot;: &quot;SEAL21665&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;shipment_ids&quot;: &quot;990831778839479&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createbag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;origin_branch_id=27&amp;destination_branch_id=5&amp;bag_code=BAG_QA_1779103874&amp;metal_seal_no=SEAL21665&amp;user_id=148&amp;shipment_ids=990831778839479&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment(s) 990831778839479 are already assigned to another bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><div class='fix'><strong>Backend fix:</strong> Document metal_seal_no + shipment_ids in PDF and Postman; return valid bag on success.</div></div></article><article class='card' id='addshipmenttobag'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #5 <code>addshipmenttobag</code> — Add Shipment to Bag</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Shipment already bagged in Bag: BAG20260518162818301<br/><strong>PDF path+QA:</strong> Shipment already bagged in Bag: BAG20260518162818301</div><h4>A) PDF official (from PDF doc) — FAIL: Bag not found: 10</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_id&quot;: &quot;10&quot;,
+    &quot;docket_no&quot;: &quot;AXL123456&quot;,
+    &quot;branch_id&quot;: &quot;2&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_id=10&amp;docket_no=AXL123456&amp;branch_id=2&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: 10&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Shipment already bagged in Bag: BAG20260518162818301</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_id&quot;: &quot;BAG20260515154014&quot;,
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/addshipmenttobag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_id=BAG20260515154014&amp;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already bagged in Bag: BAG20260518162818301&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><h4>C) Postman official (from collection) — FAIL: Bag not found: BAG20260518132700</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260518132700&quot;,
+    &quot;docket_no&quot;: &quot;AWB1234567&quot;,
+    &quot;branch_id&quot;: &quot;1&quot;,
+    &quot;user_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_code=BAG20260518132700&amp;docket_no=AWB1234567&amp;branch_id=1&amp;user_id=1&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: BAG20260518132700&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Shipment already bagged in Bag: BAG20260518162818301</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=addshipmenttobag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already bagged in Bag: BAG20260518162818301&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><div class='fix'><strong>Backend fix:</strong> Accept bag_code on api.php; accept bag_id on path URL.</div></div></article><article class='card' id='removeshipmentfrombag'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #8 <code>removeshipmentfrombag</code> — Remove Shipment from Bag</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Shipment is not in this bag<br/><strong>PDF path+QA:</strong> Shipment is not in this bag</div><h4>A) PDF official (from PDF doc) — FAIL: Bag not found: 10</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_id&quot;: &quot;10&quot;,
+    &quot;docket_no&quot;: &quot;AXL123456&quot;,
+    &quot;branch_id&quot;: &quot;2&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_id=10&amp;docket_no=AXL123456&amp;branch_id=2&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: 10&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Shipment is not in this bag</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_id&quot;: &quot;BAG20260515154014&quot;,
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/removeshipmentfrombag?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_id=BAG20260515154014&amp;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment is not in this bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>C) Postman official (from collection) — FAIL: Bag not found: BAG20260518132700</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260518132700&quot;,
+    &quot;docket_no&quot;: &quot;AWB1234567&quot;,
+    &quot;branch_id&quot;: &quot;1&quot;,
+    &quot;user_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=removeshipmentfrombag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_code=BAG20260518132700&amp;docket_no=AWB1234567&amp;branch_id=1&amp;user_id=1&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: BAG20260518132700&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Shipment is not in this bag</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=removeshipmentfrombag&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;branch_id=27&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment is not in this bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><article class='card' id='rebagshipment'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #10 <code>rebagshipment</code> — Rebag Shipment</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Shipment is not currently in any bag<br/><strong>PDF path+QA:</strong> bare object OK</div><h4>A) PDF official (from PDF doc) — FAIL: Shipment not found: AXL123456</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;new_bag_id&quot;: &quot;12&quot;,
+    &quot;docket_no&quot;: &quot;AXL123456&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/rebagshipment?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;new_bag_id=12&amp;docket_no=AXL123456&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment not found: AXL123456&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — PASS: bare object OK</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;new_bag_id&quot;: &quot;BAG20260515154014&quot;,
+    &quot;new_bag_code&quot;: &quot;BAG20260515154014&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/rebagshipment?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;new_bag_id=BAG20260515154014&amp;new_bag_code=BAG20260515154014&amp;docket_no=990831778839479&amp;user_id=148&#x27;</pre><p>Response HTTP 200:</p><pre class="code">{
+  &quot;shipment_id&quot;: &quot;990831778839479&quot;,
+  &quot;old_bag_id&quot;: &quot;201&quot;,
+  &quot;old_bag_code&quot;: &quot;BAG20260518162818301&quot;,
+  &quot;new_bag_id&quot;: &quot;173&quot;,
+  &quot;new_bag_code&quot;: &quot;BAG20260515154014&quot;
+}</pre><h4>C) Postman official (from collection) — FAIL: Shipment not found: AWB1234567</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;new_bag_code&quot;: &quot;BAG20260518999999&quot;,
+    &quot;docket_no&quot;: &quot;AWB1234567&quot;,
+    &quot;user_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=rebagshipment&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;new_bag_code=BAG20260518999999&amp;docket_no=AWB1234567&amp;user_id=1&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment not found: AWB1234567&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Shipment is not currently in any bag</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;new_bag_code&quot;: &quot;BAG_QA_NEW_1779103881&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=rebagshipment&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;new_bag_code=BAG_QA_NEW_1779103881&amp;docket_no=990831778839479&amp;user_id=148&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment is not currently in any bag&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><article class='card' id='createmanifest'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #12 <code>createmanifest</code> — Create Manifest</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Bag BAG20260515154014 is already manifested<br/><strong>PDF path+QA:</strong> Bag BAG20260515154014 is already manifested</div><h4>A) PDF official (from PDF doc) — FAIL: Bag not found: 10</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_ids&quot;: &quot;10,11,12&quot;,
+    &quot;origin_branch_id&quot;: &quot;2&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/createmanifest?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_ids=10%2C11%2C12&amp;origin_branch_id=2&amp;destination_branch_id=5&amp;user_id=148&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: 10&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Bag BAG20260515154014 is already manifested</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_ids&quot;: &quot;BAG20260515154014&quot;,
+    &quot;bag_codes&quot;: &quot;BAG20260515154014&quot;,
+    &quot;origin_branch_id&quot;: &quot;27&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/createmanifest?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_ids=BAG20260515154014&amp;bag_codes=BAG20260515154014&amp;origin_branch_id=27&amp;destination_branch_id=5&amp;user_id=148&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag BAG20260515154014 is already manifested&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><h4>C) Postman official (from collection) — FAIL: Bag not found: BAG20260518132700</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;bag_codes&quot;: &quot;BAG20260518132700,BAG20260518999999&quot;,
+    &quot;origin_branch_id&quot;: &quot;1&quot;,
+    &quot;destination_branch_id&quot;: &quot;2&quot;,
+    &quot;user_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_codes=BAG20260518132700%2CBAG20260518999999&amp;origin_branch_id=1&amp;destination_branch_id=2&amp;user_id=1&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag not found: BAG20260518132700&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Bag BAG20260515154014 is already manifested</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;bag_codes&quot;: &quot;BAG20260515154014&quot;,
+    &quot;origin_branch_id&quot;: &quot;27&quot;,
+    &quot;destination_branch_id&quot;: &quot;5&quot;,
+    &quot;user_id&quot;: &quot;148&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;bag_codes=BAG20260515154014&amp;origin_branch_id=27&amp;destination_branch_id=5&amp;user_id=148&#x27;</pre><p>Response HTTP 422:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Bag BAG20260515154014 is already manifested&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 422
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><article class='card' id='getmanifestdetails'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #13 <code>getmanifestdetails</code> — Get Manifest Details</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> HTTP 500 server error<br/><strong>PDF path+QA:</strong> HTTP 500 server error</div><h4>A) PDF official (from PDF doc) — FAIL: Manifest not found: 5</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_id&quot;: &quot;5&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/getmanifestdetails?manifest_id=5&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Manifest not found: 5&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_id&quot;: &quot;MUM075&quot;,
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/getmanifestdetails?manifest_id=MUM075&amp;manifest_code=MUM075&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><h4>C) Postman official (from collection) — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: {}
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&amp;platform=android&amp;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><h4>D) Postman api.php + QA IDs — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&amp;platform=android&amp;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><div class='fix'><strong>Backend fix:</strong> Fix HTTP 500 on api.php for manifest_code=MUM075; support manifest_id on path URL.</div></div></article><article class='card' id='printmanifestdata'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #16 <code>printmanifestdata</code> — Print Manifest Data</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> HTTP 500 server error<br/><strong>PDF path+QA:</strong> HTTP 500 server error</div><h4>A) PDF official (from PDF doc) — FAIL: Manifest not found: 5</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_id&quot;: &quot;5&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/printmanifestdata?manifest_id=5&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Manifest not found: 5&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_id&quot;: &quot;MUM075&quot;,
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/printmanifestdata?manifest_id=MUM075&amp;manifest_code=MUM075&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><h4>C) Postman official (from collection) — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: {}
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=printmanifestdata&amp;platform=android&amp;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><h4>D) Postman api.php + QA IDs — FAIL: HTTP 500 server error</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;manifest_code&quot;: &quot;MUM075&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=printmanifestdata&amp;platform=android&amp;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 500:</p><pre class="code"></pre><div class='fix'><strong>Backend fix:</strong> Fix HTTP 500 on api.php for manifest_code=MUM075.</div></div></article><article class='card' id='getlinehauldetails'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #19 <code>getlinehauldetails</code> — Get Linehaul Details</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Linehaul not found: LH1778842087<br/><strong>PDF path+QA:</strong> Linehaul not found: LH1778842087</div><h4>A) PDF official (from PDF doc) — FAIL: Linehaul not found: 3</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;linehaul_id&quot;: &quot;3&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/getlinehauldetails?linehaul_id=3&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: 3&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Linehaul not found: LH1778842087</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;linehaul_id&quot;: &quot;LH1778842087&quot;,
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/getlinehauldetails?linehaul_id=LH1778842087&amp;trip_no=LH1778842087&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>C) Postman official (from collection) — FAIL: Linehaul not found: LH1778841961</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778841961&quot;
+  },
+  &quot;form&quot;: {}
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&amp;platform=android&amp;trip_no=LH1778841961&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778841961&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Linehaul not found: LH1778842087</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;
+  },
+  &quot;form&quot;: null
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&amp;platform=android&amp;trip_no=LH1778842087&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;X-App-Platform: android&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><article class='card' id='updatelinehaulstatus'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #20 <code>updatelinehaulstatus</code> — Update Linehaul Status</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Linehaul not found: LH1778842087<br/><strong>PDF path+QA:</strong> Linehaul not found: LH1778842087</div><h4>A) PDF official (from PDF doc) — FAIL: Linehaul not found: 3</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;linehaul_id&quot;: &quot;3&quot;,
+    &quot;status&quot;: &quot;ARRIVED&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;2&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/updatelinehaulstatus?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;linehaul_id=3&amp;status=ARRIVED&amp;user_id=148&amp;branch_id=2&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: 3&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Linehaul not found: LH1778842087</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;linehaul_id&quot;: &quot;LH1778842087&quot;,
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;,
+    &quot;status&quot;: &quot;ARRIVED&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/updatelinehaulstatus?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;linehaul_id=LH1778842087&amp;trip_no=LH1778842087&amp;status=ARRIVED&amp;user_id=148&amp;branch_id=27&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>C) Postman official (from collection) — FAIL: Linehaul not found: LH1778841961</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778841961&quot;,
+    &quot;status&quot;: &quot;Arrived&quot;,
+    &quot;user_id&quot;: &quot;1&quot;,
+    &quot;branch_id&quot;: &quot;2&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=updatelinehaulstatus&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;trip_no=LH1778841961&amp;status=Arrived&amp;user_id=1&amp;branch_id=2&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778841961&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Linehaul not found: LH1778842087</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;trip_no&quot;: &quot;LH1778842087&quot;,
+    &quot;status&quot;: &quot;Arrived&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=updatelinehaulstatus&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;trip_no=LH1778842087&amp;status=Arrived&amp;user_id=148&amp;branch_id=27&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found: LH1778842087&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><article class='card' id='sectorpickupscan'><div class='card-hdr'><span class='badge b-crit'>FIX</span> #22 <code>sectorpickupscan</code> — Sector Pickup Scan (Picked)</div><div class='card-body'><div class='issue'><strong>Issue (Postman+QA):</strong> Shipment already scanned for this pickup<br/><strong>PDF path+QA:</strong> Shipment already scanned for this pickup</div><h4>A) PDF official (from PDF doc) — FAIL: Shipment not found: AXL123456</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;pickup_id&quot;: &quot;15&quot;,
+    &quot;docket_no&quot;: &quot;AXL123456&quot;,
+    &quot;status&quot;: &quot;Picked&quot;,
+    &quot;remarks&quot;: &quot;&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;2&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/sectorpickupscan?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;pickup_id=15&amp;docket_no=AXL123456&amp;status=Picked&amp;remarks=&amp;user_id=148&amp;branch_id=2&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment not found: AXL123456&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>B) PDF path + QA IDs — FAIL: Shipment already scanned for this pickup</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;pickup_id&quot;: &quot;122&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;status&quot;: &quot;Picked&quot;,
+    &quot;remarks&quot;: &quot;qa&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/sectorpickupscan?platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;pickup_id=122&amp;docket_no=990831778839479&amp;status=Picked&amp;remarks=qa&amp;user_id=148&amp;branch_id=27&#x27;</pre><p>Response HTTP 400:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already scanned for this pickup&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 400
+}</pre><h4>C) Postman official (from collection) — FAIL: Shipment not found: AWB1234567</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: {},
+  &quot;form&quot;: {
+    &quot;pickup_id&quot;: &quot;123&quot;,
+    &quot;docket_no&quot;: &quot;AWB1234567&quot;,
+    &quot;status&quot;: &quot;Picked&quot;,
+    &quot;remarks&quot;: &quot;Scanned successfully&quot;,
+    &quot;user_id&quot;: &quot;1&quot;,
+    &quot;branch_id&quot;: &quot;1&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=sectorpickupscan&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;pickup_id=123&amp;docket_no=AWB1234567&amp;status=Picked&amp;remarks=Scanned+successfully&amp;user_id=1&amp;branch_id=1&#x27;</pre><p>Response HTTP 404:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment not found: AWB1234567&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 404
+}</pre><h4>D) Postman api.php + QA IDs — FAIL: Shipment already scanned for this pickup</h4><p>Params:</p><pre class='code'>{
+  &quot;query&quot;: null,
+  &quot;form&quot;: {
+    &quot;pickup_id&quot;: &quot;122&quot;,
+    &quot;docket_no&quot;: &quot;990831778839479&quot;,
+    &quot;status&quot;: &quot;Picked&quot;,
+    &quot;remarks&quot;: &quot;qa&quot;,
+    &quot;user_id&quot;: &quot;148&quot;,
+    &quot;branch_id&quot;: &quot;27&quot;
+  }
+}</pre><p>Request curl:</p><pre class='code'>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=sectorpickupscan&amp;platform=android&#x27; \
+  -H &#x27;Authorization: Bearer $TOKEN&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  --data &#x27;pickup_id=122&amp;docket_no=990831778839479&amp;status=Picked&amp;remarks=qa&amp;user_id=148&amp;branch_id=27&#x27;</pre><p>Response HTTP 400:</p><pre class="code">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Shipment already scanned for this pickup&quot;,
+  &quot;data&quot;: {},
+  &quot;error_code&quot;: 400
+}</pre><div class='fix'><strong>Backend fix:</strong> Fix on api.php gateway; align PDF path with Postman params; provide working test data in both documents.</div></div></article><footer class='note' style='margin-top:28px'><p>Re-run: <code>python3 docs/_gen_outbound_report.py</code></p></footer></div></body></html>

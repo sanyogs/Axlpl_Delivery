@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/models/outbound/bag_detail_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/outbound_branch_option.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
@@ -34,9 +35,29 @@ class OutboundRepository {
         String? token,
         String? userId,
         String? branchId,
+        String? branchName,
         String hubBranchId,
       })> _auth() async {
     return OutboundAuthContext.load();
+  }
+
+  /// Branch / hub dropdown (hub scan, bagging, manifest). Path overridable at build:
+  /// `--dart-define=OUTBOUND_BRANCH_LIST_PATH=getbranches`
+  Future<List<OutboundBranchOption>> branchHubList() async {
+    _clear();
+    final token = (await _auth()).token;
+    if (token == null || token.isEmpty) {
+      lastMessage = 'Not logged in';
+      return [];
+    }
+    final r = await _api.getBranches(token: token);
+    return r.when(
+      success: OutboundBranchOption.listFromDynamic,
+      error: (e) {
+        lastMessage = e.message;
+        return [];
+      },
+    );
   }
 
   Future<APIResponse<dynamic>> _requireToken(
@@ -134,14 +155,30 @@ class OutboundRepository {
 
   Future<List<ShipmentScanEvent>> shipmentScanHistory(String docketNo) async {
     _clear();
+    final docketErr = OutboundValidation.validateDocket(docketNo);
+    if (docketErr != null) {
+      lastMessage = docketErr;
+      return [];
+    }
     final token = (await _auth()).token;
     if (token == null || token.isEmpty) {
       lastMessage = 'Not logged in';
       return [];
     }
-    final r = await _api.getShipmentScanHistory(token: token, docketNo: docketNo);
+    final r = await _api.getShipmentScanHistory(
+      token: token,
+      docketNo: docketNo.trim(),
+    );
     return r.when(
-      success: ShipmentScanEvent.listFromDynamic,
+      success: (data) {
+        final rows = ShipmentScanEvent.listFromDynamic(data);
+        rows.sort((a, b) {
+          final ad = a.createdDate ?? '';
+          final bd = b.createdDate ?? '';
+          return bd.compareTo(ad);
+        });
+        return rows;
+      },
       error: (e) {
         lastMessage = e.message;
         return [];
@@ -176,22 +213,35 @@ class OutboundRepository {
     required String originBranchId,
     required String destinationBranchId,
     required String bagCode,
+    String? metalSealNo,
+    required String shipmentIdsCsv,
   }) async {
     if (originBranchId.trim().isEmpty || destinationBranchId.trim().isEmpty) {
       lastMessage = 'Origin and destination branch are required';
       return APIResponse.error(AppException.errorWithMessage(lastMessage));
     }
-    if (bagCode.trim().isEmpty) {
-      lastMessage = 'Bag code is required';
+    final code = bagCode.trim();
+    final seal = (metalSealNo ?? bagCode).trim();
+    if (code.isEmpty || seal.isEmpty) {
+      lastMessage = 'Metal seal / bag code is required';
       return APIResponse.error(AppException.errorWithMessage(lastMessage));
     }
+    final shipmentIds = OutboundApiParams.parseShipmentIdsCsv(shipmentIdsCsv);
+    if (shipmentIds.isEmpty) {
+      lastMessage =
+          'At least one shipment id is required for bagging (docket no)';
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
+    }
+    final shipmentIdsField = OutboundApiParams.shipmentIdsCsv(shipmentIds);
     final r = await _requireTokenUser(
       (token, userId) => _api.createBag(
         token: token,
         originBranchId: originBranchId.trim(),
         destinationBranchId: destinationBranchId.trim(),
-        bagCode: bagCode.trim(),
+        bagCode: code,
+        metalSealNo: seal,
         userId: userId,
+        shipmentIds: shipmentIdsField,
       ),
     );
     return r.when(
@@ -231,28 +281,19 @@ class OutboundRepository {
       lastMessage = docketErr;
       return APIResponse.error(AppException.errorWithMessage(docketErr));
     }
-    return _requireTokenUser((token, userId) async {
-      final ref = bagId.trim();
-      final extra = OutboundApiParams.bagReferenceBody(ref);
-      return outboundFirstSuccess([
-        () => _api.addShipmentToBag(
-          token: token,
-          bagId: ref,
-          docketNo: docketNo.trim(),
-          branchId: branchId.trim(),
-          userId: userId,
-          extraFields: extra,
-        ),
-        if (extra.containsKey('bag_code'))
-          () => _api.addShipmentToBag(
-            token: token,
-            bagId: extra['bag_code']!,
-            docketNo: docketNo.trim(),
-            branchId: branchId.trim(),
-            userId: userId,
-          ),
-      ]);
-    });
+    if (branchId.trim().isEmpty) {
+      lastMessage = 'Branch id is required';
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
+    }
+    return _requireTokenUser(
+      (token, userId) => _api.addShipmentToBag(
+        token: token,
+        bagCode: bagId.trim(),
+        docketNo: docketNo.trim(),
+        branchId: branchId.trim(),
+        userId: userId,
+      ),
+    );
   }
 
   Future<BagDetail?> bagDetails(String bagId) async {
@@ -284,16 +325,9 @@ class OutboundRepository {
       return APIResponse.error(AppException.errorWithMessage(bagErr));
     }
     final ref = bagRef.trim();
-    return _requireToken((token) {
-      final variants = OutboundApiParams.bagDetailQueries(ref);
-      return outboundFirstSuccess(
-        variants
-            .map(
-              (q) => () => _api.getBagDetailsQuery(token: token, query: q),
-            )
-            .toList(),
-      );
-    });
+    return _requireToken(
+      (token) => _api.getBagDetails(token: token, bagCode: ref),
+    );
   }
 
   Future<APIResponse<dynamic>> fetchBagDetails(String bagId) =>
@@ -331,15 +365,19 @@ class OutboundRepository {
       lastMessage = docketErr;
       return APIResponse.error(AppException.errorWithMessage(docketErr));
     }
-    return _requireTokenUser((token, userId) {
-      final ref = bagId.trim();
-      final body = _bagPostBody(ref, {
-        'docket_no': docketNo.trim(),
-        'branch_id': branchId.trim(),
-        'user_id': userId,
-      });
-      return _api.removeShipmentFromBag(token: token, body: body);
-    });
+    if (branchId.trim().isEmpty) {
+      lastMessage = 'Branch id is required';
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
+    }
+    return _requireTokenUser(
+      (token, userId) => _api.removeShipmentFromBag(
+        token: token,
+        bagCode: bagId.trim(),
+        docketNo: docketNo.trim(),
+        branchId: branchId.trim(),
+        userId: userId,
+      ),
+    );
   }
 
   Future<APIResponse<dynamic>> lockBag(String bagId) async {
@@ -348,15 +386,9 @@ class OutboundRepository {
       lastMessage = bagErr;
       return APIResponse.error(AppException.errorWithMessage(bagErr));
     }
-    return _requireToken((token) {
-      final ref = bagId.trim();
-      return outboundFirstSuccess([
-        () => _api.lockBag(
-          token: token,
-          body: OutboundApiParams.bagReferenceBody(ref),
-        ),
-      ]);
-    });
+    return _requireToken(
+      (token) => _api.lockBag(token: token, bagCode: bagId.trim()),
+    );
   }
 
   Future<APIResponse<dynamic>> rebagShipment({
@@ -373,26 +405,27 @@ class OutboundRepository {
       lastMessage = docketErr;
       return APIResponse.error(AppException.errorWithMessage(docketErr));
     }
-    return _requireTokenUser((token, userId) {
-      final ref = newBagId.trim();
-      final body = {
-        ...OutboundApiParams.bagReferenceBody(ref, idKey: 'new_bag_id'),
-        'docket_no': docketNo.trim(),
-        'user_id': userId,
-      };
-      return _api.rebagShipment(token: token, body: body);
-    });
+    return _requireTokenUser(
+      (token, userId) => _api.rebagShipment(
+        token: token,
+        newBagCode: newBagId.trim(),
+        docketNo: docketNo.trim(),
+        userId: userId,
+      ),
+    );
   }
 
   Future<APIResponse<dynamic>> baggingReport({
     required String startDate,
     required String endDate,
+    String? bagCode,
   }) =>
       _requireToken(
         (token) => _api.baggingReport(
           token: token,
           startDate: startDate,
           endDate: endDate,
+          bagCode: bagCode,
         ),
       );
 
@@ -414,24 +447,15 @@ class OutboundRepository {
         return APIResponse.error(AppException.errorWithMessage(bagErr));
       }
     }
-    return _requireTokenUser((token, userId) {
-      final bagFields =
-          OutboundApiParams.createManifestBagFields(bagIdsCommaSeparated);
-      final body = <String, String>{
-        ...bagFields,
-        'origin_branch_id': originBranchId.trim(),
-        'destination_branch_id': destinationBranchId.trim(),
-        'user_id': userId,
-      };
-      return outboundFirstSuccess([
-        () => _api.createManifest(token: token, body: body),
-        if (body.containsKey('bag_codes'))
-          () => _api.createManifest(
-            token: token,
-            body: Map<String, String>.from(body)..remove('bag_ids'),
-          ),
-      ]);
-    });
+    return _requireTokenUser(
+      (token, userId) => _api.createManifest(
+        token: token,
+        bagCodesCsv: bagIdsCommaSeparated.trim(),
+        originBranchId: originBranchId.trim(),
+        destinationBranchId: destinationBranchId.trim(),
+        userId: userId,
+      ),
+    );
   }
 
   Future<APIResponse<dynamic>> _fetchManifestDetailsRaw(String manifestRef) async {
@@ -489,12 +513,14 @@ class OutboundRepository {
   Future<APIResponse<dynamic>> manifestReport({
     required String startDate,
     required String endDate,
+    String? manifestNo,
   }) =>
       _requireToken(
         (token) => _api.manifestReport(
           token: token,
           startDate: startDate,
           endDate: endDate,
+          manifestNo: manifestNo,
         ),
       );
 
@@ -605,24 +631,19 @@ class OutboundRepository {
       lastMessage = lhErr;
       return APIResponse.error(AppException.errorWithMessage(lhErr));
     }
-    return _requireTokenUser((token, userId) {
-      final ref = linehaulId.trim();
-      return outboundFirstSuccess(
-        OutboundApiParams.linehaulDetailQueries(ref)
-            .map(
-              (q) => () => _api.updateLinehaulStatus(
-                token: token,
-                body: {
-                  ...q,
-                  'status': status.trim(),
-                  'user_id': userId,
-                  'branch_id': branchId.trim(),
-                },
-              ),
-            )
-            .toList(),
-      );
-    });
+    if (status.trim().isEmpty) {
+      lastMessage = 'Linehaul status is required';
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
+    }
+    return _requireTokenUser(
+      (token, userId) => _api.updateLinehaulStatus(
+        token: token,
+        linehaulRef: linehaulId.trim(),
+        status: status.trim(),
+        userId: userId,
+        branchId: branchId.trim(),
+      ),
+    );
   }
 
   Future<APIResponse<dynamic>> linehaulReport({
@@ -681,52 +702,101 @@ class OutboundRepository {
     required String status,
     required String remarks,
     required String branchId,
-  }) =>
-      _treatBenignPickupDuplicate(
-        () => _requireTokenUser(
-          (token, userId) => _api.sectorPickupScan(
-            token: token,
-            pickupId: pickupId,
-            docketNo: docketNo,
-            status: status,
-            remarks: remarks,
-            userId: userId,
-            branchId: branchId,
-          ),
-        ),
+  }) {
+    final pickupErr = _validatePickupId(pickupId);
+    if (pickupErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(pickupErr)),
       );
+    }
+    final docketErr = OutboundValidation.validateDocket(docketNo);
+    if (docketErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(docketErr)),
+      );
+    }
+    return _treatBenignPickupDuplicate(
+      () => _requireTokenUser(
+        (token, userId) => _api.sectorPickupScan(
+          token: token,
+          pickupId: pickupId.trim(),
+          docketNo: docketNo.trim(),
+          status: status.trim(),
+          remarks: remarks.trim(),
+          userId: userId,
+          branchId: branchId.trim(),
+        ),
+      ),
+    );
+  }
 
   Future<APIResponse<dynamic>> markNotPicked({
     required String pickupId,
     required String docketNo,
     required String remarks,
     required String branchId,
-  }) =>
-      _treatBenignPickupDuplicate(
-        () => _requireTokenUser(
-          (token, userId) => _api.markNotPicked(
-            token: token,
-            pickupId: pickupId,
-            docketNo: docketNo,
-            remarks: remarks,
-            userId: userId,
-            branchId: branchId,
-          ),
-        ),
+  }) {
+    final pickupErr = _validatePickupId(pickupId);
+    if (pickupErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(pickupErr)),
       );
+    }
+    final docketErr = OutboundValidation.validateDocket(docketNo);
+    if (docketErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(docketErr)),
+      );
+    }
+    return _treatBenignPickupDuplicate(
+      () => _requireTokenUser(
+        (token, userId) => _api.markNotPicked(
+          token: token,
+          pickupId: pickupId.trim(),
+          docketNo: docketNo.trim(),
+          remarks: remarks.trim(),
+          userId: userId,
+          branchId: branchId.trim(),
+        ),
+      ),
+    );
+  }
 
   Future<APIResponse<dynamic>> addMissedShipment({
     required String pickupId,
     required String docketNo,
     required String remarks,
-  }) => _requireToken(
-        (token) => _api.addMissedShipment(
-          token: token,
-          pickupId: pickupId,
-          docketNo: docketNo,
-          remarks: remarks,
-        ),
+    required String branchId,
+  }) {
+    final pickupErr = _validatePickupId(pickupId);
+    if (pickupErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(pickupErr)),
       );
+    }
+    final docketErr = OutboundValidation.validateDocket(docketNo);
+    if (docketErr != null) {
+      return Future.value(
+        APIResponse.error(AppException.errorWithMessage(docketErr)),
+      );
+    }
+    return _requireTokenUser(
+      (token, userId) => _api.addMissedShipment(
+        token: token,
+        pickupId: pickupId.trim(),
+        docketNo: docketNo.trim(),
+        remarks: remarks.trim(),
+        userId: userId,
+        branchId: branchId.trim(),
+      ),
+    );
+  }
+
+  String? _validatePickupId(String? pickupId) {
+    final s = pickupId?.trim() ?? '';
+    if (s.isEmpty) return 'Pickup id is required';
+    return null;
+  }
 
   Future<APIResponse<dynamic>> pickupReport({
     required String startDate,

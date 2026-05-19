@@ -1,7 +1,7 @@
+import 'package:axlpl_delivery/app/data/models/outbound/pickup_report_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_test_ids.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,35 +15,20 @@ class OutboundSectorPickupController extends GetxController {
   final isBusy = false.obs;
   final lastResponseText = ''.obs;
   final pickupRows = <SectorPickupRow>[].obs;
+  final pickupReportRows = <PickupReportRow>[].obs;
 
   final pickupIdController = TextEditingController();
   final docketController = TextEditingController();
-  final scanStatusController = TextEditingController(text: 'Picked');
+  final scanStatus = 'Picked'.obs;
+  static const scanStatusOptions = ['Picked', 'Missed'];
   final remarksController = TextEditingController();
   final reportStartController = TextEditingController();
   final reportEndController = TextEditingController();
 
   @override
-  void onInit() {
-    super.onInit();
-    final now = DateTime.now();
-    final d =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    reportStartController.text = d;
-    reportEndController.text = d;
-    if (OutboundTestIds.docket.isNotEmpty) {
-      docketController.text = OutboundTestIds.docket;
-    }
-    if (OutboundTestIds.pickupId.isNotEmpty) {
-      pickupIdController.text = OutboundTestIds.pickupId;
-    }
-  }
-
-  @override
   void onClose() {
     pickupIdController.dispose();
     docketController.dispose();
-    scanStatusController.dispose();
     remarksController.dispose();
     reportStartController.dispose();
     reportEndController.dispose();
@@ -69,6 +54,12 @@ class OutboundSectorPickupController extends GetxController {
   }
 
   Future<void> sectorPickupScan() async {
+    final pickupId = pickupIdController.text.trim();
+    final docket = docketController.text.trim();
+    if (pickupId.isEmpty || docket.isEmpty) {
+      Get.snackbar('Sector pickup', 'Pickup id and docket no are required');
+      return;
+    }
     final ctx = await OutboundAuthContext.load();
     final branchId = ctx.branchId;
     if (branchId == null || branchId.isEmpty) {
@@ -80,7 +71,7 @@ class OutboundSectorPickupController extends GetxController {
       final r = await _repo.sectorPickupScan(
         pickupId: pickupIdController.text.trim(),
         docketNo: docketController.text.trim(),
-        status: scanStatusController.text.trim(),
+        status: scanStatus.value,
         remarks: remarksController.text.trim(),
         branchId: branchId,
       );
@@ -120,12 +111,19 @@ class OutboundSectorPickupController extends GetxController {
   }
 
   Future<void> addMissedShipment() async {
+    final ctx = await OutboundAuthContext.load();
+    final branchId = ctx.branchId;
+    if (branchId == null || branchId.isEmpty) {
+      Get.snackbar('Sector pickup', 'Branch id missing');
+      return;
+    }
     isBusy.value = true;
     try {
       final r = await _repo.addMissedShipment(
         pickupId: pickupIdController.text.trim(),
         docketNo: docketController.text.trim(),
         remarks: remarksController.text.trim(),
+        branchId: branchId,
       );
       OutboundUiFeedback.apply(
         target: lastResponseText,
@@ -148,6 +146,17 @@ class OutboundSectorPickupController extends GetxController {
         target: lastResponseText,
         response: r,
         feature: 'Sector pickup',
+      );
+      r.when(
+        success: (data) {
+          pickupReportRows.assignAll(PickupReportRow.listFromDynamic(data));
+          if (pickupReportRows.isNotEmpty) {
+            lastResponseText.value = pickupReportRows
+                .map((e) => '${e.status ?? ''}: ${e.count ?? '0'}')
+                .join('\n');
+          }
+        },
+        error: (_) {},
       );
     } finally {
       isBusy.value = false;
