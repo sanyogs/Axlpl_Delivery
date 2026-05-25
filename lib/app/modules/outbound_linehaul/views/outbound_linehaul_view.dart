@@ -29,8 +29,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
         children: [
           OutboundSection(
             title: 'Assign linehaul',
-            subtitle:
-                'manifest_codes, vehicle_no, driver_name, user_id (multipart POST)',
+            subtitle: OutboundLabels.subtitleAssignLinehaul,
             children: [
               OutboundScanField(
                 controller: controller.manifestCodesController,
@@ -56,6 +55,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               OutboundSelectField(
                 label: OutboundLabels.linehaulFilterStatus,
                 value: controller.listFilterStatus.value,
+                hint: OutboundLabels.selectStatus,
                 options: OutboundLinehaulController.listStatusOptions,
                 onChanged: (v) => controller.listFilterStatus.value = v,
               ),
@@ -77,7 +77,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 hintText: OutboundLabels.tripNo,
               ),
               OutboundSecondaryButton(
-                label: 'Linehaul details',
+                label: OutboundLabels.btnLinehaulDetails,
                 onPressed: busy ? null : controller.getLinehaulDetails,
               ),
               if (controller.linehaulDetail.value != null)
@@ -90,12 +90,13 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                   ),
                 ),
               OutboundSecondaryButton(
-                label: 'Full-screen detail',
+                label: OutboundLabels.btnFullLinehaulDetail,
                 onPressed: busy ? null : controller.openLinehaulDetailPage,
               ),
               OutboundSelectField(
                 label: OutboundLabels.newLinehaulStatus,
                 value: controller.updateStatus.value,
+                hint: OutboundLabels.selectStatus,
                 options: OutboundLinehaulController.updateStatusOptions,
                 onChanged: (v) => controller.updateStatus.value = v,
               ),
@@ -117,7 +118,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 hintText: OutboundLabels.reportEnd,
               ),
               OutboundPrimaryButton(
-                title: 'Generate linehaul report',
+                title: OutboundLabels.btnLinehaulReport,
                 onPressed: busy ? null : controller.linehaulReport,
               ),
             ],

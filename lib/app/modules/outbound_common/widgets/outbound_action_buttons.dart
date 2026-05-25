@@ -27,11 +27,11 @@ abstract final class OutboundButtons {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20.r),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
       minimumSize: Size(double.infinity, height),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       textStyle: themes.fontReboto16_600.copyWith(
-        fontSize: 15.sp,
+        fontSize: 13.sp,
         color: enabled ? themes.darkCyanBlue : themes.grayColor,
       ),
       surfaceTintColor: Colors.transparent,
@@ -67,6 +67,66 @@ class OutboundPrimaryButton extends StatelessWidget {
   }
 }
 
+/// Primary action sized for half-width rows — scales long titles down.
+class OutboundPrimaryButtonCompact extends StatelessWidget {
+  const OutboundPrimaryButtonCompact({
+    super.key,
+    required this.title,
+    this.onPressed,
+    this.isLoading,
+  });
+
+  final String title;
+  final VoidCallback? onPressed;
+  final bool? isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    return SizedBox(
+      width: double.infinity,
+      height: OutboundButtons.height,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: ButtonStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            enabled ? themes.darkCyanBlue : themes.lightGrayColor,
+          ),
+          foregroundColor: WidgetStatePropertyAll(themes.whiteColor),
+          padding: WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+          ),
+          minimumSize: WidgetStatePropertyAll(Size(double.infinity, OutboundButtons.height)),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          ),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: isLoading == true
+            ? SizedBox(
+                height: 18.h,
+                width: 18.h,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: themes.whiteColor,
+                ),
+              )
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  style: themes.fontReboto16_600.copyWith(
+                    fontSize: 13.sp,
+                    color: themes.whiteColor,
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
 /// Full-width secondary action — cyan outline on white (not theme purple).
 class OutboundSecondaryButton extends StatelessWidget {
   const OutboundSecondaryButton({
@@ -87,11 +147,16 @@ class OutboundSecondaryButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutboundButtons.secondaryStyle(enabled: enabled),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
         ),
       ),
     );
@@ -146,7 +211,7 @@ class OutboundSecondaryPrimaryRow extends StatelessWidget {
         label: secondaryLabel,
         onPressed: onSecondary,
       ),
-      end: OutboundPrimaryButton(
+      end: OutboundPrimaryButtonCompact(
         title: primaryTitle,
         onPressed: onPrimary,
         isLoading: primaryLoading,

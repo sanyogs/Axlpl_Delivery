@@ -33,7 +33,7 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
         children: [
           OutboundSection(
             title: 'Scan shipment',
-            subtitle: 'Scan docket at hub (Save on admin)',
+            subtitle: OutboundLabels.subtitleHubScan,
             children: [
               OutboundScanField(
                 controller: controller.docketController,
@@ -55,6 +55,7 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
               OutboundSelectField(
                 label: OutboundLabels.hubScanStatus,
                 value: controller.status.value,
+                hint: OutboundLabels.selectStatus,
                 options: controller.statuses,
                 onChanged: (v) => controller.status.value = v,
               ),
@@ -63,7 +64,7 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
                 onPressed: busy ? null : controller.submitHubScan,
               ),
               OutboundSecondaryButton(
-                label: 'Load shipment details',
+                label: OutboundLabels.btnShipmentInfo,
                 onPressed: busy ? null : controller.loadShipmentHint,
               ),
               if (controller.shipmentHintText.value.isNotEmpty)
@@ -82,7 +83,7 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
                 keyboardType: TextInputType.number,
               ),
               OutboundPrimaryButton(
-                title: 'Refresh hub scan logs',
+                title: OutboundLabels.btnRefreshLogs,
                 onPressed: busy ? null : controller.loadHubScanLogs,
               ),
               _HubScanLogsTable(rows: controller.hubScanLogs),
@@ -90,15 +91,15 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
           ),
           OutboundSection(
             title: 'Shipment scan history',
-            subtitle: 'GET getshipmentscanhistory — same docket as hub scan',
+            subtitle: OutboundLabels.subtitleScanHistory,
             children: [
               OutboundScanField(
                 controller: controller.scanHistoryDocketController,
                 hintText: OutboundLabels.docketNo,
               ),
               OutboundSecondaryPrimaryRow(
-                secondaryLabel: 'Use scan docket',
-                primaryTitle: 'Get scan history',
+                secondaryLabel: OutboundLabels.useScanDocketForBag,
+                primaryTitle: OutboundLabels.btnScanHistory,
                 onSecondary: busy ? null : controller.useScanDocketForHistory,
                 onPrimary: busy ? null : controller.loadShipmentScanHistory,
               ),

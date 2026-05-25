@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_bag_ref_model.d
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -97,33 +98,36 @@ class OutboundBagDetailBody extends StatelessWidget {
           title: 'Bag summary',
           subtitle: detail.bagCode ?? '',
           children: [
-            OutboundDetailField(label: 'Bag code', value: detail.bagCode ?? '—'),
             OutboundDetailField(
-              label: 'Metal seal',
+              label: OutboundLabels.bagCode,
+              value: detail.bagCode ?? '—',
+            ),
+            OutboundDetailField(
+              label: OutboundLabels.metalSeal,
               value: detail.metalSealNo ?? '—',
             ),
             OutboundDetailField(
-              label: 'Manifest status',
+              label: OutboundLabels.manifestStatus,
               value: detail.manifestStatus ?? '—',
             ),
             OutboundDetailField(
-              label: 'Shipment count',
+              label: OutboundLabels.shipmentCount,
               value: count.toString(),
             ),
             OutboundDetailField(
-              label: 'Origin branch',
+              label: OutboundLabels.originDepot,
               value: originLabel,
             ),
             OutboundDetailField(
-              label: 'Destination sector',
+              label: OutboundLabels.destinationDepot,
               value: destinationLabel,
             ),
             OutboundDetailField(
-              label: 'Created at',
+              label: OutboundLabels.created,
               value: detail.createdAt ?? '—',
             ),
             OutboundDetailField(
-              label: 'Updated at',
+              label: OutboundLabels.updated,
               value: detail.updatedAt ?? '—',
             ),
           ],
@@ -166,18 +170,24 @@ class OutboundManifestDetailBody extends StatelessWidget {
     );
     final summaryFields = [
       OutboundDetailField(
-        label: 'Manifest number',
+        label: OutboundLabels.manifestCode,
         value: detail.manifestNo ?? '—',
       ),
-      OutboundDetailField(label: 'Origin', value: originLabel),
-      OutboundDetailField(label: 'Destination', value: destinationLabel),
       OutboundDetailField(
-        label: 'Created',
+        label: OutboundLabels.originDepot,
+        value: originLabel,
+      ),
+      OutboundDetailField(
+        label: OutboundLabels.destinationDepot,
+        value: destinationLabel,
+      ),
+      OutboundDetailField(
+        label: OutboundLabels.created,
         value: detail.createdAt ?? '—',
       ),
       if (!compact && (detail.updatedAt?.isNotEmpty ?? false))
         OutboundDetailField(
-          label: 'Updated',
+          label: OutboundLabels.updated,
           value: detail.updatedAt ?? '—',
         ),
     ];
@@ -272,16 +282,28 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
       title: 'Linehaul summary',
       subtitle: detail.tripNo ?? detail.linehaulId ?? '',
       children: [
-        OutboundDetailField(label: 'Trip no', value: detail.tripNo ?? '—'),
         OutboundDetailField(
-          label: 'Linehaul id',
+          label: OutboundLabels.tripNo,
+          value: detail.tripNo ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.linehaulId,
           value: detail.linehaulId ?? '—',
         ),
-        OutboundDetailField(label: 'Vehicle', value: detail.vehicleNo ?? '—'),
-        OutboundDetailField(label: 'Driver', value: detail.driverName ?? '—'),
-        OutboundDetailField(label: 'Status', value: detail.status ?? '—'),
         OutboundDetailField(
-          label: 'Manifest codes',
+          label: OutboundLabels.vehicleNo,
+          value: detail.vehicleNo ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.driverName,
+          value: detail.driverName ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.status,
+          value: detail.status ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.manifestNumbers,
           value: detail.manifestCodes ?? detail.manifestIds ?? '—',
         ),
       ],

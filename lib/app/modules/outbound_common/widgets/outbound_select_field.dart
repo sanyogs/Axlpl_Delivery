@@ -3,7 +3,7 @@ import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// String enum picker styled like the rest of the app.
+/// String enum picker — no default selection; user must choose an option.
 class OutboundSelectField extends StatelessWidget {
   const OutboundSelectField({
     super.key,
@@ -11,12 +11,20 @@ class OutboundSelectField extends StatelessWidget {
     required this.value,
     required this.options,
     required this.onChanged,
+    this.hint = 'Select',
   });
 
   final String label;
-  final String value;
+  final String? value;
   final List<String> options;
   final ValueChanged<String> onChanged;
+  final String hint;
+
+  String? get _effectiveValue {
+    final v = value?.trim();
+    if (v == null || v.isEmpty) return null;
+    return options.contains(v) ? v : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +41,11 @@ class OutboundSelectField extends StatelessWidget {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               isExpanded: true,
-              value: options.contains(value) ? value : options.first,
+              value: _effectiveValue,
+              hint: Text(
+                hint,
+                style: themes.fontSize16_400.copyWith(color: themes.grayColor),
+              ),
               items: options
                   .map(
                     (e) => DropdownMenuItem(
@@ -42,9 +54,11 @@ class OutboundSelectField extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              onChanged: (v) {
-                if (v != null) onChanged(v);
-              },
+              onChanged: options.isEmpty
+                  ? null
+                  : (v) {
+                      if (v != null) onChanged(v);
+                    },
             ),
           ),
         ),

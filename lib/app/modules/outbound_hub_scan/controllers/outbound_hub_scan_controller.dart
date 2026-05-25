@@ -28,7 +28,7 @@ class OutboundHubScanController extends GetxController {
   final scanHistoryDocketController = TextEditingController();
   final hubScanLimit = TextEditingController();
 
-  final status = 'Hub In'.obs;
+  final status = RxnString();
   final statuses = const ['Hub In', 'Hub Out'];
 
   @override
@@ -72,8 +72,13 @@ class OutboundHubScanController extends GetxController {
   Future<void> submitHubScan() async {
     final docket = docketController.text.trim();
     final branchId = _branchList.selectedBranchIdOrNull;
+    final scanStatus = status.value?.trim();
     if (docket.isEmpty || branchId == null) {
       Get.snackbar('Hub scan', 'Docket no and branch / hub are required');
+      return;
+    }
+    if (scanStatus == null || scanStatus.isEmpty) {
+      Get.snackbar('Hub scan', 'Select hub scan status');
       return;
     }
     isBusy.value = true;
@@ -81,7 +86,7 @@ class OutboundHubScanController extends GetxController {
       final r = await _repo.hubScanSubmit(
         docketNo: docket,
         branchId: branchId,
-        status: status.value,
+        status: scanStatus,
       );
       OutboundUiFeedback.apply(
         target: lastResponseText,

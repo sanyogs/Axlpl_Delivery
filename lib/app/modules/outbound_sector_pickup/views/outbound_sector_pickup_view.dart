@@ -3,7 +3,6 @@ import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
@@ -22,7 +21,6 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final busy = controller.isBusy.value;
-      final _ = controller.lastResponseText.value;
       final __ = controller.pickupRows.length;
       final ___ = controller.pickupReportRows.length;
       return OutboundScreen(
@@ -31,7 +29,7 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
         children: [
           OutboundSection(
             title: 'Pickup list (MAWB)',
-            subtitle: 'Tap a row to set pickup id — scan docket below',
+            subtitle: OutboundLabels.subtitlePickupList,
             children: [
               OutboundPrimaryButton(
                 title: 'Load pickup list',
@@ -59,6 +57,7 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
               OutboundSelectField(
                 label: OutboundLabels.scanStatus,
                 value: controller.scanStatus.value,
+                hint: OutboundLabels.selectStatus,
                 options: OutboundSectorPickupController.scanStatusOptions,
                 onChanged: (v) => controller.scanStatus.value = v,
               ),
@@ -72,11 +71,11 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
               ),
               OutboundButtonRow(
                 start: OutboundSecondaryButton(
-                  label: 'Mark not picked',
+                  label: OutboundLabels.btnMarkNotPicked,
                   onPressed: busy ? null : controller.markNotPicked,
                 ),
                 end: OutboundSecondaryButton(
-                  label: 'Add missed',
+                  label: OutboundLabels.btnAddMissed,
                   onPressed: busy ? null : controller.addMissedShipment,
                 ),
               ),
@@ -94,13 +93,12 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
                 hintText: OutboundLabels.reportEnd,
               ),
               OutboundPrimaryButton(
-                title: 'Generate pickup report',
+                title: OutboundLabels.btnPickupReport,
                 onPressed: busy ? null : controller.pickupReport,
               ),
               _PickupReportTable(rows: controller.pickupReportRows),
             ],
           ),
-          OutboundResponsePanel(text: controller.lastResponseText.value),
         ],
       );
     });
@@ -143,15 +141,7 @@ class _SectorPickupTable extends StatelessWidget {
           rows: rows
               .map(
                 (e) => DataRow(
-                  onSelectChanged: busy
-                      ? null
-                      : (_) {
-                          onRowTap(e);
-                          Get.snackbar(
-                            'Sector pickup',
-                            'Pickup ${e.id ?? ''} · MAWB ${e.mawbNo ?? ''}',
-                          );
-                        },
+                  onSelectChanged: busy ? null : (_) => onRowTap(e),
                   cells: [
                     DataCell(Text(e.id ?? '—')),
                     DataCell(Text(e.mawbNo ?? '—')),

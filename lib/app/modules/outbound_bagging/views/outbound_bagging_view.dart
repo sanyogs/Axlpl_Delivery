@@ -36,8 +36,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
         children: [
           OutboundSection(
             title: 'Create bag',
-            subtitle:
-                'Metal seal → bag_code + metal_seal_no. At least one shipment id (docket) required as shipment_ids.',
+            subtitle: OutboundLabels.subtitleCreateBag,
             children: [
               Obx(
                 () => OutboundBranchSelect(
@@ -66,7 +65,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 hintText: OutboundLabels.shipmentIdsForCreateBag,
               ),
               OutboundSecondaryButton(
-                label: 'Use shipment from “Scan shipments” below',
+                label: OutboundLabels.useScanDocketForBag,
                 onPressed: busy ? null : controller.useDocketForCreateBag,
               ),
               OutboundPrimaryButton(
@@ -88,7 +87,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
               ),
               OutboundScanField(
                 controller: controller.removeDocketController,
-                hintText: 'Remove / rebag docket no',
+                hintText: OutboundLabels.removeRebagDocket,
               ),
               OutboundPrimaryButton(
                 title: 'Add to bag',
@@ -96,16 +95,16 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
               ),
               OutboundButtonRow(
                 start: OutboundSecondaryButton(
-                  label: 'Remove shipment',
+                  label: OutboundLabels.btnRemoveShipment,
                   onPressed: busy ? null : controller.removeShipment,
                 ),
                 end: OutboundSecondaryButton(
-                  label: 'Bag details',
+                  label: OutboundLabels.btnBagDetails,
                   onPressed: busy ? null : controller.getBagDetails,
                 ),
               ),
               OutboundSecondaryButton(
-                label: 'Full-screen bag detail',
+                label: OutboundLabels.btnFullBagDetail,
                 onPressed: busy ? null : controller.openBagDetailPage,
               ),
               if (controller.bagDetail.value != null)
@@ -119,7 +118,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 hintText: OutboundLabels.newBagCode,
               ),
               OutboundSecondaryButton(
-                label: 'Rebag shipment',
+                label: OutboundLabels.btnRebag,
                 onPressed: busy ? null : controller.rebag,
               ),
             ],
@@ -128,11 +127,11 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
             title: 'Bag list',
             children: [
               OutboundPrimaryButton(
-                title: 'List bags (origin depot)',
+                title: OutboundLabels.btnListBags,
                 onPressed: busy ? null : controller.listBags,
               ),
               OutboundDynamicMapTable(
-                title: 'Bags — tap row to fill bag code',
+                title: OutboundLabels.btnTapRowBag,
                 rows: controller.listRows,
                 onRowTap: busy ? null : controller.applyBagIdFromListRow,
               ),
@@ -150,7 +149,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 hintText: OutboundLabels.reportEnd,
               ),
               OutboundPrimaryButton(
-                title: 'Generate bagging report',
+                title: OutboundLabels.btnBaggingReport,
                 onPressed: busy ? null : controller.baggingReport,
               ),
               _BaggingReportItemsTable(

@@ -23,7 +23,7 @@ class SectorPickupRow {
 
   factory SectorPickupRow.fromJson(Map<String, dynamic> json) {
     return SectorPickupRow(
-      id: json['id']?.toString(),
+      id: OutboundDataParse.firstNonEmptyString(json, ['id', 'pickup_id']),
       mawbNo: json['mawb_no']?.toString(),
       hubId: json['hub_id']?.toString(),
       pickedBy: json['picked_by']?.toString(),

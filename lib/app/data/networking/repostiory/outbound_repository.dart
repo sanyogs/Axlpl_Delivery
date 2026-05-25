@@ -792,11 +792,8 @@ class OutboundRepository {
     );
   }
 
-  String? _validatePickupId(String? pickupId) {
-    final s = pickupId?.trim() ?? '';
-    if (s.isEmpty) return 'Pickup id is required';
-    return null;
-  }
+  String? _validatePickupId(String? pickupId) =>
+      OutboundValidation.validatePositiveId(pickupId, label: 'Pickup id');
 
   Future<APIResponse<dynamic>> pickupReport({
     required String startDate,

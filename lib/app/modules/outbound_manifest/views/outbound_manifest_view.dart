@@ -37,7 +37,7 @@ class OutboundManifestView extends GetView<OutboundManifestController> {
         children: [
           OutboundExpandableSection(
             title: 'Create manifest',
-            subtitle: 'Add sealed bags from origin to destination',
+            subtitle: OutboundLabels.subtitleManifestCreate,
             initiallyExpanded: true,
             children: [
               OutboundScanField(
@@ -70,7 +70,7 @@ class OutboundManifestView extends GetView<OutboundManifestController> {
           ),
           OutboundExpandableSection(
             title: 'Open manifest',
-            subtitle: 'List by depot, tap a row, or enter manifest number',
+            subtitle: OutboundLabels.subtitleManifestOpen,
             initiallyExpanded: true,
             children: [
               Obx(
@@ -102,11 +102,11 @@ class OutboundManifestView extends GetView<OutboundManifestController> {
               ),
               OutboundButtonRow(
                 start: OutboundSecondaryButton(
-                  label: 'View details',
+                  label: OutboundLabels.btnViewDetails,
                   onPressed: busy ? null : controller.getManifestDetails,
                 ),
                 end: OutboundSecondaryButton(
-                  label: 'Print',
+                  label: OutboundLabels.btnPrint,
                   onPressed: busy ? null : controller.printManifestData,
                 ),
               ),
@@ -119,7 +119,7 @@ class OutboundManifestView extends GetView<OutboundManifestController> {
           ),
           OutboundExpandableSection(
             title: 'Manifest report',
-            subtitle: 'Date range for summary report',
+            subtitle: OutboundLabels.subtitleManifestReport,
             initiallyExpanded: false,
             children: [
               OutboundDateField(

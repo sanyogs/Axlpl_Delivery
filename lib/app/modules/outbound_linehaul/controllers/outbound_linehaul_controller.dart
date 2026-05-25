@@ -20,8 +20,8 @@ class OutboundLinehaulController extends GetxController {
   final linehaulRows = <OutboundLinehaulRow>[].obs;
   final linehaulDetail = Rxn<LinehaulDetail>();
 
-  final listFilterStatus = 'In Transit'.obs;
-  final updateStatus = 'ARRIVED'.obs;
+  final listFilterStatus = RxnString();
+  final updateStatus = RxnString();
 
   static const listStatusOptions = [
     'In Transit',
@@ -98,7 +98,11 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> listLinehauls() async {
-    final status = listFilterStatus.value;
+    final status = listFilterStatus.value?.trim();
+    if (status == null || status.isEmpty) {
+      Get.snackbar('Linehaul', 'Select a status filter');
+      return;
+    }
     isBusy.value = true;
     try {
       final rows = await _repo.listLinehauls(status: status);
@@ -155,8 +159,13 @@ class OutboundLinehaulController extends GetxController {
 
   Future<void> updateLinehaulStatus() async {
     final trip = tripNoController.text.trim();
+    final newStatus = updateStatus.value?.trim();
     if (trip.isEmpty) {
-      Get.snackbar('Linehaul', 'Trip no / linehaul ref is required');
+      Get.snackbar('Linehaul', 'Trip no is required');
+      return;
+    }
+    if (newStatus == null || newStatus.isEmpty) {
+      Get.snackbar('Linehaul', 'Select new status');
       return;
     }
     isBusy.value = true;
@@ -165,7 +174,7 @@ class OutboundLinehaulController extends GetxController {
       final branchId = OutboundAuthContext.branchIdForScan(ctx.branchId);
       final r = await _repo.updateLinehaulStatus(
         linehaulId: trip,
-        status: updateStatus.value,
+        status: newStatus,
         branchId: branchId,
       );
       OutboundUiFeedback.apply(

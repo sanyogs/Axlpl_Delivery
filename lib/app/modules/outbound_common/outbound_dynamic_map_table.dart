@@ -1,3 +1,4 @@
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_display_text.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -56,7 +57,14 @@ class OutboundDynamicMapTable extends StatelessWidget {
               dataRowMaxHeight: 56,
               headingTextStyle: themes.fontSize14_500,
               columns: cols
-                  .map((c) => DataColumn(label: Text(c, maxLines: 1)))
+                  .map(
+                    (c) => DataColumn(
+                      label: Text(
+                        OutboundDisplayText.labelForKey(c),
+                        maxLines: 2,
+                      ),
+                    ),
+                  )
                   .toList(),
               rows: rows.map((row) {
                 return DataRow(
