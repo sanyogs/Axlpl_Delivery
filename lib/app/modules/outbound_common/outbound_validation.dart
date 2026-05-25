@@ -5,13 +5,13 @@ class OutboundValidation {
   OutboundValidation._();
 
   static const String invalidBagIdMessage =
-      'Invalid bag id. Create a bag first or enter a valid bag id.';
+      'Invalid bag. Create a bag first or scan a valid bag code.';
 
   static const String invalidManifestIdMessage =
-      'Invalid manifest id. Create or list manifests first.';
+      'Invalid manifest. Create or select a manifest first.';
 
   static const String invalidLinehaulIdMessage =
-      'Invalid linehaul id. Assign linehaul first or enter a valid id.';
+      'Invalid trip. Assign linehaul first or enter a valid trip number.';
 
   static String? validatePositiveId(String? id, {String label = 'Id'}) {
     final s = id?.trim() ?? '';
@@ -24,7 +24,7 @@ class OutboundValidation {
   /// Bag id may be numeric or a server bag code (e.g. `BAG20260515151432`).
   static String? validateBagId(String? bagId) {
     final s = bagId?.trim() ?? '';
-    if (s.isEmpty) return 'Bag id is required';
+    if (s.isEmpty) return 'Bag code is required';
     if (s == '0') return invalidBagIdMessage;
     return null;
   }
@@ -32,7 +32,7 @@ class OutboundValidation {
   /// Manifest id may be numeric or a manifest code (e.g. `MUM074`).
   static String? validateManifestId(String? manifestId) {
     final s = manifestId?.trim() ?? '';
-    if (s.isEmpty) return 'Manifest id is required';
+    if (s.isEmpty) return 'Manifest number is required';
     if (s == '0') return invalidManifestIdMessage;
     return null;
   }
@@ -40,7 +40,7 @@ class OutboundValidation {
   /// Linehaul id or trip number (e.g. `LH1778842087` from assignlinehaul).
   static String? validateLinehaulId(String? linehaulId) {
     final s = linehaulId?.trim() ?? '';
-    if (s.isEmpty) return 'Linehaul id is required';
+    if (s.isEmpty) return 'Trip number is required';
     if (s == '0') return invalidLinehaulIdMessage;
     return null;
   }
@@ -58,8 +58,7 @@ class OutboundValidation {
       if (validateBagId(result.bagCode) == null) {
         return null;
       }
-      return 'Bag was not created (server returned bag_id 0). '
-          'Check branch ids and bag_code with backend.';
+      return 'Bag could not be created. Check depot selection and try again.';
     }
     if (validateBagId(result.bagId) != null && validateBagId(result.bagCode) != null) {
       return invalidBagIdMessage;

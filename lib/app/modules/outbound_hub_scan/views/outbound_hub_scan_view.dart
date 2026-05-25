@@ -7,10 +7,10 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_fiel
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/controllers/outbound_hub_scan_controller.dart';
-import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -58,13 +58,13 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
                 options: controller.statuses,
                 onChanged: (v) => controller.status.value = v,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Submit hub scan',
                 onPressed: busy ? null : controller.submitHubScan,
               ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Load shipment details',
                 onPressed: busy ? null : controller.loadShipmentHint,
-                child: const Text('Load shipment details'),
               ),
               if (controller.shipmentHintText.value.isNotEmpty)
                 OutboundResponsePanel(
@@ -81,7 +81,7 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
                 hintText: OutboundLabels.logLimit,
                 keyboardType: TextInputType.number,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Refresh hub scan logs',
                 onPressed: busy ? null : controller.loadHubScanLogs,
               ),
@@ -96,22 +96,11 @@ class OutboundHubScanView extends GetView<OutboundHubScanController> {
                 controller: controller.scanHistoryDocketController,
                 hintText: OutboundLabels.docketNo,
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: busy ? null : controller.useScanDocketForHistory,
-                      child: const Text('Use scan docket'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: CommonButton(
-                      title: 'Get scan history',
-                      onPressed: busy ? null : controller.loadShipmentScanHistory,
-                    ),
-                  ),
-                ],
+              OutboundSecondaryPrimaryRow(
+                secondaryLabel: 'Use scan docket',
+                primaryTitle: 'Get scan history',
+                onSecondary: busy ? null : controller.useScanDocketForHistory,
+                onPrimary: busy ? null : controller.loadShipmentScanHistory,
               ),
               _ShipmentHistoryTable(rows: controller.shipmentHistory),
             ],

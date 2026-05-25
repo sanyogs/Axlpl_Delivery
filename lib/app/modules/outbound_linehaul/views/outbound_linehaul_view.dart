@@ -5,11 +5,11 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_fiel
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/outbound_linehaul_controller.dart';
-import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -44,7 +44,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 controller: controller.driverController,
                 hintText: OutboundLabels.driverName,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Assign linehaul',
                 onPressed: busy ? null : controller.assignLinehaul,
               ),
@@ -59,7 +59,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 options: OutboundLinehaulController.listStatusOptions,
                 onChanged: (v) => controller.listFilterStatus.value = v,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'List linehauls',
                 onPressed: busy ? null : controller.listLinehauls,
               ),
@@ -76,9 +76,9 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 controller: controller.tripNoController,
                 hintText: OutboundLabels.tripNo,
               ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Linehaul details',
                 onPressed: busy ? null : controller.getLinehaulDetails,
-                child: const Text('Linehaul details'),
               ),
               if (controller.linehaulDetail.value != null)
                 Padding(
@@ -89,9 +89,9 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Full-screen detail',
                 onPressed: busy ? null : controller.openLinehaulDetailPage,
-                child: const Text('Full-screen detail'),
               ),
               OutboundSelectField(
                 label: OutboundLabels.newLinehaulStatus,
@@ -99,7 +99,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 options: OutboundLinehaulController.updateStatusOptions,
                 onChanged: (v) => controller.updateStatus.value = v,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Update linehaul status',
                 onPressed: busy ? null : controller.updateLinehaulStatus,
               ),
@@ -116,7 +116,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 controller: controller.reportEndController,
                 hintText: OutboundLabels.reportEnd,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Generate linehaul report',
                 onPressed: busy ? null : controller.linehaulReport,
               ),

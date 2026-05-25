@@ -9,9 +9,9 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
-import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -65,11 +65,11 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 controller: controller.createBagShipmentsController,
                 hintText: OutboundLabels.shipmentIdsForCreateBag,
               ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Use shipment from “Scan shipments” below',
                 onPressed: busy ? null : controller.useDocketForCreateBag,
-                child: const Text('Use shipment from “Scan shipments” below'),
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Create bag',
                 onPressed: busy ? null : controller.createBag,
               ),
@@ -90,34 +90,27 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 controller: controller.removeDocketController,
                 hintText: 'Remove / rebag docket no',
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Add to bag',
                 onPressed: busy ? null : controller.addShipment,
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: busy ? null : controller.removeShipment,
-                      child: const Text('Remove shipment'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: busy ? null : controller.getBagDetails,
-                      child: const Text('Bag details'),
-                    ),
-                  ),
-                ],
+              OutboundButtonRow(
+                start: OutboundSecondaryButton(
+                  label: 'Remove shipment',
+                  onPressed: busy ? null : controller.removeShipment,
+                ),
+                end: OutboundSecondaryButton(
+                  label: 'Bag details',
+                  onPressed: busy ? null : controller.getBagDetails,
+                ),
               ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Full-screen bag detail',
                 onPressed: busy ? null : controller.openBagDetailPage,
-                child: const Text('Full-screen bag detail'),
               ),
               if (controller.bagDetail.value != null)
                 OutboundBagDetailBody(detail: controller.bagDetail.value!),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Lock bag',
                 onPressed: busy ? null : controller.lockBag,
               ),
@@ -125,16 +118,16 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 controller: controller.newBagCodeController,
                 hintText: OutboundLabels.newBagCode,
               ),
-              OutlinedButton(
+              OutboundSecondaryButton(
+                label: 'Rebag shipment',
                 onPressed: busy ? null : controller.rebag,
-                child: const Text('Rebag shipment'),
               ),
             ],
           ),
           OutboundSection(
             title: 'Bag list',
             children: [
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'List bags (origin depot)',
                 onPressed: busy ? null : controller.listBags,
               ),
@@ -156,7 +149,7 @@ class OutboundBaggingView extends GetView<OutboundBaggingController> {
                 controller: controller.reportEndController,
                 hintText: OutboundLabels.reportEnd,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Generate bagging report',
                 onPressed: busy ? null : controller.baggingReport,
               ),

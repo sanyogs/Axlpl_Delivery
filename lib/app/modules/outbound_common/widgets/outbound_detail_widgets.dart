@@ -142,9 +142,14 @@ class OutboundBagDetailBody extends StatelessWidget {
 
 /// Manifest detail — bags[] + shipments[] (one-to-many).
 class OutboundManifestDetailBody extends StatelessWidget {
-  const OutboundManifestDetailBody({super.key, required this.detail});
+  const OutboundManifestDetailBody({
+    super.key,
+    required this.detail,
+    this.compact = false,
+  });
 
   final ManifestDetail detail;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -159,51 +164,98 @@ class OutboundManifestDetailBody extends StatelessWidget {
       id: detail.destinationBranch,
       resolveId: branchLabel,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 16,
-      children: [
-        OutboundSection(
-          title: 'Manifest summary',
-          subtitle: detail.manifestNo ?? detail.id ?? '',
+    final summaryFields = [
+      OutboundDetailField(
+        label: 'Manifest number',
+        value: detail.manifestNo ?? '—',
+      ),
+      OutboundDetailField(label: 'Origin', value: originLabel),
+      OutboundDetailField(label: 'Destination', value: destinationLabel),
+      OutboundDetailField(
+        label: 'Created',
+        value: detail.createdAt ?? '—',
+      ),
+      if (!compact && (detail.updatedAt?.isNotEmpty ?? false))
+        OutboundDetailField(
+          label: 'Updated',
+          value: detail.updatedAt ?? '—',
+        ),
+    ];
+
+    if (!compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 16,
+        children: [
+          OutboundSection(
+            title: 'Manifest summary',
+            subtitle: detail.manifestNo ?? '',
+            children: summaryFields,
+          ),
+          OutboundSection(
+            title: 'Bags on manifest',
+            subtitle: '${detail.bags.length} bag(s)',
+            children: [
+              OutboundManifestBagsTable(bags: detail.bags),
+            ],
+          ),
+          OutboundSection(
+            title: 'Shipments on manifest',
+            subtitle: '${detail.shipments.length} shipment(s)',
+            children: [
+              OutboundManifestShipmentsTable(shipments: detail.shipments),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Card(
+      elevation: 0,
+      color: themes.lightGrayColor.withValues(alpha: 0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: Column(
           children: [
-            OutboundDetailField(
-              label: 'Manifest no',
-              value: detail.manifestNo ?? '—',
+            Padding(
+              padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 4.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: summaryFields,
+              ),
             ),
-            OutboundDetailField(
-              label: 'Origin',
-              value: originLabel,
-            ),
-            OutboundDetailField(
-              label: 'Destination',
-              value: destinationLabel,
-            ),
-            OutboundDetailField(
-              label: 'Created at',
-              value: detail.createdAt ?? '—',
-            ),
-            OutboundDetailField(
-              label: 'Updated at',
-              value: detail.updatedAt ?? '—',
-            ),
+            if (detail.bags.isNotEmpty)
+              ExpansionTile(
+                tilePadding: EdgeInsets.symmetric(horizontal: 8.w),
+                childrenPadding: EdgeInsets.fromLTRB(8.w, 0, 8.w, 8.h),
+                title: Text(
+                  'Bags (${detail.bags.length})',
+                  style: themes.fontSize14_500,
+                ),
+                iconColor: themes.darkCyanBlue,
+                collapsedIconColor: themes.darkCyanBlue,
+                children: [
+                  OutboundManifestBagsTable(bags: detail.bags),
+                ],
+              ),
+            if (detail.shipments.isNotEmpty)
+              ExpansionTile(
+                tilePadding: EdgeInsets.symmetric(horizontal: 8.w),
+                childrenPadding: EdgeInsets.fromLTRB(8.w, 0, 8.w, 8.h),
+                title: Text(
+                  'Shipments (${detail.shipments.length})',
+                  style: themes.fontSize14_500,
+                ),
+                iconColor: themes.darkCyanBlue,
+                collapsedIconColor: themes.darkCyanBlue,
+                children: [
+                  OutboundManifestShipmentsTable(shipments: detail.shipments),
+                ],
+              ),
           ],
         ),
-        OutboundSection(
-          title: 'Bags on manifest',
-          subtitle: '${detail.bags.length} bag(s)',
-          children: [
-            OutboundManifestBagsTable(bags: detail.bags),
-          ],
-        ),
-        OutboundSection(
-          title: 'Shipments on manifest',
-          subtitle: '${detail.shipments.length} shipment(s)',
-          children: [
-            OutboundManifestShipmentsTable(shipments: detail.shipments),
-          ],
-        ),
-      ],
+      ),
     );
   }
 }

@@ -2,9 +2,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_report_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_manifest_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
-import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -61,20 +59,20 @@ class OutboundManifestController extends GetxController {
         originBranchId: origin,
         destinationBranchId: dest,
       );
-      OutboundUiFeedback.apply(
-        target: lastResponseText,
-        response: r,
-        feature: 'Manifest',
-      );
       r.when(
         success: (data) {
+          lastResponseText.value = '';
           final result = OutboundMutationResult.fromDynamic(data);
           final code = result.effectiveManifestRef;
           if (code != null && code.isNotEmpty) {
             manifestCodeController.text = code;
           }
+          Get.snackbar('Manifest', 'Manifest created');
         },
-        error: (_) {},
+        error: (e) {
+          lastResponseText.value = e.message;
+          Get.snackbar('Manifest', e.message);
+        },
       );
     } finally {
       isBusy.value = false;
@@ -91,16 +89,14 @@ class OutboundManifestController extends GetxController {
     try {
       final rows = await _repo.listManifests(branchId: branch);
       manifestRows.assignAll(rows);
+      lastResponseText.value = '';
       if (rows.isEmpty && _repo.lastMessage.isNotEmpty) {
         lastResponseText.value = _repo.lastMessage;
         Get.snackbar('Manifest', _repo.lastMessage);
       } else {
-        lastResponseText.value = rows.isEmpty
-            ? 'No manifest rows returned.'
-            : OutboundDataParse.pretty(rows.map((r) => r.asMap).toList());
         Get.snackbar(
           'Manifest',
-          rows.isEmpty ? 'Success (no rows)' : '${rows.length} row(s)',
+          rows.isEmpty ? 'No manifests found' : '${rows.length} manifest(s)',
         );
       }
     } finally {
@@ -133,11 +129,8 @@ class OutboundManifestController extends GetxController {
         success: (data) {
           final detail = ManifestDetail.fromDynamic(data);
           manifestDetail.value = detail;
-          final summary = detail.summaryLines;
-          lastResponseText.value = summary.isNotEmpty
-              ? summary.join('\n')
-              : OutboundDataParse.pretty(data);
-          Get.snackbar('Manifest', 'Manifest details loaded');
+          lastResponseText.value = '';
+          Get.snackbar('Manifest', 'Details loaded');
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -157,21 +150,17 @@ class OutboundManifestController extends GetxController {
         endDate: reportEndController.text.trim(),
         manifestNo: manifestCodeController.text.trim(),
       );
-      OutboundUiFeedback.apply(
-        target: lastResponseText,
-        response: r,
-        feature: 'Manifest',
-      );
       r.when(
         success: (data) {
           final report = ManifestReport.fromDynamic(data);
           manifestReportData.value = report;
-          final summary = report.summaryLines;
-          if (summary.isNotEmpty) {
-            lastResponseText.value = summary.join('\n');
-          }
+          lastResponseText.value = '';
+          Get.snackbar('Manifest', 'Report ready');
         },
-        error: (_) {},
+        error: (e) {
+          lastResponseText.value = e.message;
+          Get.snackbar('Manifest', e.message);
+        },
       );
     } finally {
       isBusy.value = false;
@@ -192,11 +181,8 @@ class OutboundManifestController extends GetxController {
           final detail = ManifestDetail.fromDynamic(data);
           printManifestDetail.value = detail;
           manifestDetail.value = detail;
-          final summary = detail.summaryLines;
-          lastResponseText.value = summary.isNotEmpty
-              ? summary.join('\n')
-              : OutboundDataParse.pretty(data);
-          Get.snackbar('Manifest', 'Print data loaded');
+          lastResponseText.value = '';
+          Get.snackbar('Manifest', 'Print view ready');
         },
         error: (e) {
           lastResponseText.value = e.message;

@@ -9,9 +9,10 @@ class OutboundLabels {
   static const branchHub = 'Branch / Hub';
   static const bagCode = 'Bag code';
   static const workingBagCode = 'Bag code (scan or pick from list)';
-  static const bagCodesCsv = 'Bag codes (comma-separated)';
-  static const manifestCode = 'Manifest code';
-  static const manifestCodesCsv = 'Manifest codes (comma-separated)';
+  static const bagCodesCsv = 'Bag codes (comma separated)';
+  static const manifestCode = 'Manifest number';
+  static const manifestCodesCsv = 'Manifest numbers (comma separated)';
+  static const listDepot = 'Depot';
   static const tripNo = 'Trip no / linehaul ref';
   static const mawbNo = 'MAWB no';
   static const pickupId = 'Pickup id';

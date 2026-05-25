@@ -6,10 +6,10 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_fiel
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
-import 'package:axlpl_delivery/common_widget/common_button.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,7 +33,7 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
             title: 'Pickup list (MAWB)',
             subtitle: 'Tap a row to set pickup id — scan docket below',
             children: [
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Load pickup list',
                 onPressed: busy ? null : controller.loadPickupList,
               ),
@@ -66,26 +66,19 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
                 controller: controller.remarksController,
                 hintText: OutboundLabels.remarks,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Submit pickup scan',
                 onPressed: busy ? null : controller.sectorPickupScan,
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: busy ? null : controller.markNotPicked,
-                      child: const Text('Mark not picked'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: busy ? null : controller.addMissedShipment,
-                      child: const Text('Add missed'),
-                    ),
-                  ),
-                ],
+              OutboundButtonRow(
+                start: OutboundSecondaryButton(
+                  label: 'Mark not picked',
+                  onPressed: busy ? null : controller.markNotPicked,
+                ),
+                end: OutboundSecondaryButton(
+                  label: 'Add missed',
+                  onPressed: busy ? null : controller.addMissedShipment,
+                ),
               ),
             ],
           ),
@@ -100,7 +93,7 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
                 controller: controller.reportEndController,
                 hintText: OutboundLabels.reportEnd,
               ),
-              CommonButton(
+              OutboundPrimaryButton(
                 title: 'Generate pickup report',
                 onPressed: busy ? null : controller.pickupReport,
               ),
