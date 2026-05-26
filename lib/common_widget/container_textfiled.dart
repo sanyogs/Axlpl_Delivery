@@ -11,6 +11,7 @@ class ContainerTextfiled extends StatelessWidget {
   final String? Function(String?)? onSubmit;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final FocusNode? focusNode;
   ContainerTextfiled({
     this.hintText,
     super.key,
@@ -21,6 +22,7 @@ class ContainerTextfiled extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.onSubmit,
+    this.focusNode,
   });
 
   @override
@@ -32,6 +34,7 @@ class ContainerTextfiled extends StatelessWidget {
       ),
       // padding: EdgeInsets.symmetric(horizontal: 10.w),
       child: TextFormField(
+        focusNode: focusNode,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
         controller: controller,

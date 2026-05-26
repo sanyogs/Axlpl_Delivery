@@ -14,14 +14,22 @@ class OutboundScanField extends StatelessWidget {
     required this.hintText,
     this.prefixIcon,
     this.keyboardType,
+    this.focusNode,
     this.onSubmitted,
+    this.onScanned,
+    this.onFocusLost,
   });
 
   final TextEditingController controller;
   final String hintText;
   final Widget? prefixIcon;
   final TextInputType? keyboardType;
+  final FocusNode? focusNode;
   final void Function(String)? onSubmitted;
+  /// Called after a successful barcode scan (value already written to [controller]).
+  final Future<void> Function(String)? onScanned;
+  /// Called when the field loses focus (e.g. user tabs away after typing docket).
+  final VoidCallback? onFocusLost;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +38,7 @@ class OutboundScanField extends StatelessWidget {
         Expanded(
           child: ContainerTextfiled(
             controller: controller,
+            focusNode: focusNode,
             hintText: hintText,
             keyboardType: keyboardType,
             prefixIcon: prefixIcon ??
@@ -50,6 +59,7 @@ class OutboundScanField extends StatelessWidget {
             final scanned = await Utils().scanAndPlaySound(context);
             if (scanned != null && scanned != '-1') {
               controller.text = scanned;
+              await onScanned?.call(scanned);
             }
           },
           icon: Icon(

@@ -46,10 +46,7 @@ class OutboundSectorPickupController extends GetxController {
   }
 
   String? _pickupIdError() =>
-      OutboundValidation.validatePositiveId(
-        pickupIdController.text,
-        label: 'Pickup id',
-      );
+      OutboundValidation.validatePickupId(pickupIdController.text);
 
   String? _docketError() => OutboundValidation.validateDocket(docketController.text);
 

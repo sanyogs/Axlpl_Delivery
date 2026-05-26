@@ -3,6 +3,16 @@ class OutboundLabels {
   OutboundLabels._();
 
   static const docketNo = 'Docket no';
+  static const connoteNo = 'Connote no';
+  static const scanDocketNo = 'Scan Docket No';
+  static const scanType = 'Scan Type';
+  static const clientCode = 'Client Code';
+  static const noOfBox = 'No of Box';
+  static const boxWeight = 'Box Weight';
+  static const originPincode = 'Origin Pincode';
+  static const destPincode = 'Dest. Pincode';
+  static const destCity = 'Dest. City';
+  static const receiverName = 'Receiver';
   static const shipmentNo = 'Shipment no';
   static const originDepot = 'Origin depot';
   static const destinationDepot = 'Destination depot';
@@ -43,7 +53,28 @@ class OutboundLabels {
   // Section subtitles
   static const subtitleCreateBag =
       'Scan metal seal and add at least one shipment.';
-  static const subtitleHubScan = 'Scan docket at the hub.';
+  static const subtitleHubScan =
+      'Scan connote, fetch details, then submit hub scan.';
+  static const sectionDocketDetails = 'Docket Scan details';
+  static const sectionScannedDockets = 'Scanned Docket Details';
+  static const btnSave = 'Save';
+  static const btnConfirm = 'Confirm';
+  static const btnShowList = 'Show List';
+  static const totalScanned = 'Total Scanned';
+  static const totalParcels = 'Total Parcels';
+  static const hubScanListTitle = 'Hub Scan List';
+  static const hubScanHistory = 'Hub Scan History';
+  static const btnPerformScan = 'Perform Scan';
+  static const btnNewHubScan = 'New Hub Scan';
+  static const colSlNo = '#';
+  static const colShipmentDocket = 'SHIPMENT ID / DOCKET';
+  static const colScanType = 'SCAN TYPE';
+  static const colBranchHub = 'BRANCH / HUB';
+  static const colScannedAt = 'SCANNED AT';
+  static const colActions = 'ACTIONS';
+  static const hubScanLogId = 'Log id';
+  static const hubScanShipmentId = 'Shipment id';
+  static const hubScanBoxNo = 'Box no';
   static const subtitleScanHistory = 'Look up events for a docket.';
   static const subtitleAssignLinehaul =
       'Assign manifests to a vehicle and driver.';

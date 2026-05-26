@@ -13,12 +13,14 @@ class OutboundScreen extends StatelessWidget {
     required this.children,
     this.busy = false,
     this.onRefresh,
+    this.scrollController,
   });
 
   final String title;
   final List<Widget> children;
   final bool busy;
   final Future<void> Function()? onRefresh;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,7 @@ class OutboundScreen extends StatelessWidget {
             absorbing: busy,
             child: _OutboundScrollBody(
               onRefresh: busy ? null : onRefresh,
+              scrollController: scrollController,
               children: children,
             ),
           ),
@@ -50,14 +53,17 @@ class _OutboundScrollBody extends StatelessWidget {
   const _OutboundScrollBody({
     required this.children,
     this.onRefresh,
+    this.scrollController,
   });
 
   final List<Widget> children;
   final Future<void> Function()? onRefresh;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
     final scroll = SingleChildScrollView(
+      controller: scrollController,
       physics: onRefresh != null
           ? const AlwaysScrollableScrollPhysics()
           : null,

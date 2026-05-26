@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
+import 'package:intl/intl.dart';
 
 class HubScanLog {
   const HubScanLog({
@@ -39,4 +40,52 @@ class HubScanLog {
 
   static List<HubScanLog> listFromDynamic(dynamic data) =>
       OutboundDataParse.mapListFromDynamic(data, HubScanLog.fromJson);
+
+  /// Primary docket / invoice shown in list (admin: shipment id / docket column).
+  String get docketDisplay {
+    final invoice = shipmentInvoiceNo?.trim();
+    if (invoice != null && invoice.isNotEmpty) return invoice;
+    final sid = shipmentId?.trim();
+    if (sid != null && sid.isNotEmpty) return sid;
+    return '—';
+  }
+
+  String scanTypeDisplay(String? uiFallback) {
+    final t = scanType?.trim();
+    if (t == null || t.isEmpty) {
+      final fb = uiFallback?.trim();
+      return (fb != null && fb.isNotEmpty) ? fb : '—';
+    }
+    final u = t.toUpperCase();
+    if (u == 'IN' || u == 'HUB IN') return 'HUB IN';
+    if (u == 'OUT' || u == 'HUB OUT') return 'HUB OUT';
+    return t;
+  }
+
+  static String branchDisplay(
+    String? branchId,
+    String Function(String? id) branchLabel,
+  ) {
+    if (branchId == null || branchId.trim().isEmpty) return '—';
+    final key = branchId.trim();
+    final lbl = branchLabel(key);
+    if (lbl != '—' && lbl != key) return lbl;
+    return 'Branch #$key';
+  }
+
+  static String formatDateTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '—';
+    final s = raw.trim();
+    try {
+      final normalized = s.contains('T') ? s : s.replaceFirst(' ', 'T');
+      final dt = DateTime.parse(normalized);
+      return DateFormat('dd-MMM-yyyy hh:mm a').format(dt.toLocal());
+    } catch (_) {
+      return s;
+    }
+  }
+
+  String get scannedAtDisplay => formatDateTime(scannedAt);
+  String get createdAtDisplay => formatDateTime(createdAt);
+  String get updatedAtDisplay => formatDateTime(updatedAt);
 }

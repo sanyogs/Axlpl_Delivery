@@ -157,10 +157,23 @@ class ApiClient {
   }
 
   /// Success body: unwrap `data` when top-level JSON is a map; pass through strings / lists.
+  /// Preserves top-level `message` on the payload as `__server_message` when present.
   dynamic _unwrapSuccessPayload(dynamic raw) {
     if (raw is! Map) return raw;
     final top = _asStringKeyedMap(raw);
-    return top['data'] != null ? top['data'] : raw;
+    if (top.isEmpty) return raw;
+
+    final serverMessage = top['message']?.toString().trim();
+    final inner = top['data'];
+    final payload = inner != null ? inner : raw;
+
+    if (serverMessage == null || serverMessage.isEmpty) {
+      return payload;
+    }
+
+    final map = _asStringKeyedMap(payload);
+    if (map.isEmpty) return payload;
+    return {...map, '__server_message': serverMessage};
   }
 
   String? _messageFromUnknownBody(dynamic data) {

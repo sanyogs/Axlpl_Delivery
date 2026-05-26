@@ -13,15 +13,14 @@ void main() {
     );
   });
 
-  test('createBagBody includes shipment_ids', () {
+  test('createBagBody matches createbag multipart fields', () {
     final body = OutboundApiParams.createBagBody(
-      bagCode: 'BAG245391779183777',
-      metalSealNo: 'BAG245391779183777',
-      shipmentIdsCsv: '825411779084407',
+      metalSealNo: 'BAG20260525164949980',
+      shipmentIdsCsv: '19051998',
     );
-    expect(body['bag_code'], 'BAG245391779183777');
-    expect(body['metal_seal_no'], 'BAG245391779183777');
-    expect(body['shipment_ids'], '825411779084407');
+    expect(body.containsKey('bag_code'), isFalse);
+    expect(body['metal_seal_no'], 'BAG20260525164949980');
+    expect(body['shipment_ids'], '19051998');
   });
 
   test('assignLinehaulBody uses manifest_codes', () {

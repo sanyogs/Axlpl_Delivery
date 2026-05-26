@@ -59,6 +59,7 @@ const String getBranchesPoint = String.fromEnvironment(
   defaultValue: 'getbranches',
 );
 const String hubScanPoint = 'hubscan';
+const String hubScanFetchShipmentPoint = 'hubScanFetchShipment';
 const String getHubScanLogsPoint = 'gethubscanlogs';
 const String getShipmentScanHistoryPoint = 'getshipmentscanhistory';
 const String createBagPoint = 'createbag';

@@ -96,28 +96,40 @@ class OutboundBaggingController extends GetxController {
       );
       return;
     }
+    final metalSeal = bagCodeController.text.trim();
+    if (metalSeal.isEmpty) {
+      Get.snackbar('Bagging', 'Metal seal no is required');
+      return;
+    }
     isBusy.value = true;
     try {
       final r = await _repo.createBag(
         originBranchId: origin,
         destinationBranchId: dest,
-        bagCode: bagCodeController.text.trim(),
+        metalSealNo: metalSeal,
         shipmentIdsCsv: OutboundApiParams.shipmentIdsCsv(shipmentIds),
       );
       OutboundUiFeedback.apply(
         target: lastResponseText,
         response: r,
         feature: 'Bagging',
+        serverMessageOnly: true,
       );
       r.when(
         success: (data) {
           final created = OutboundMutationResult.fromDynamic(data);
-          final ref = created.effectiveBagRef;
-          if (ref != null && ref.isNotEmpty) {
-            bagCodeWorkingController.text = ref;
-            if (created.bagCode != null) {
-              bagCodeController.text = created.bagCode!;
+          final bagCode = created.bagCode?.trim();
+          if (bagCode != null && bagCode.isNotEmpty) {
+            bagCodeWorkingController.text = bagCode;
+          } else {
+            final id = created.bagId?.trim();
+            if (id != null && id.isNotEmpty) {
+              bagCodeWorkingController.text = id;
             }
+          }
+          final seal = created.metalSealNo?.trim();
+          if (seal != null && seal.isNotEmpty) {
+            bagCodeController.text = seal;
           }
           if (docketController.text.trim().isEmpty && shipmentIds.isNotEmpty) {
             docketController.text = shipmentIds.first;

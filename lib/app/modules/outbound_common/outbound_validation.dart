@@ -51,6 +51,14 @@ class OutboundValidation {
     return null;
   }
 
+  /// Sector pickup batch id — numeric or alphanumeric (e.g. `122`, `PU-MAWB-01`).
+  static String? validatePickupId(String? pickupId) {
+    final s = pickupId?.trim() ?? '';
+    if (s.isEmpty) return 'Pickup id is required';
+    if (s == '0') return 'Pickup id is required';
+    return null;
+  }
+
   /// After [createBag] inner `data`, reject misleading `bag_id: 0` success.
   static String? validateCreateBagPayload(dynamic data) {
     final result = OutboundMutationResult.fromDynamic(data);

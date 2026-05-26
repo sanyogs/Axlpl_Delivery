@@ -48,7 +48,6 @@ class OutboundSectorPickupView extends GetView<OutboundSectorPickupController> {
               OutboundField(
                 controller: controller.pickupIdController,
                 hintText: OutboundLabels.pickupId,
-                keyboardType: TextInputType.number,
               ),
               OutboundScanField(
                 controller: controller.docketController,

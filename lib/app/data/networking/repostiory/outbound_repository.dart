@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/bag_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_branch_option.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
@@ -129,23 +130,206 @@ class OutboundRepository {
     );
   }
 
-  Future<List<HubScanLog>> hubScanLogs({
+  /// POST `hubScanFetchShipment` — populate docket details before save (`connote`).
+  Future<APIResponse<HubScanFetchResult>> hubScanFetchShipment(String connote) async {
+    final trimmed = connote.trim();
+    if (trimmed.isEmpty) {
+      return APIResponse.error(
+        AppException.errorWithMessage('Connote is required'),
+      );
+    }
+    final r = await _requireToken(
+      (token) async {
+        final api = await _api.hubScanFetchShipment(
+          token: token,
+          connote: trimmed,
+        );
+        return api.when(
+          success: (data) {
+            final parsed = HubScanFetchedShipment.parseResponse(data);
+            if (parsed.isFailure) {
+              final msg = parsed.serverMessage?.trim() ?? '';
+              return APIResponse.error(
+                AppException.errorWithMessage(
+                  msg.isNotEmpty ? msg : 'Request failed',
+                ),
+              );
+            }
+            if (parsed.shipment == null) {
+              final msg = parsed.serverMessage?.trim() ?? '';
+              return APIResponse.error(
+                AppException.errorWithMessage(
+                  msg.isNotEmpty ? msg : 'Shipment not found',
+                ),
+              );
+            }
+            return APIResponse.success(parsed);
+          },
+          error: (e) => APIResponse.error(e),
+        );
+      },
+    );
+    return r.when(
+      success: (data) =>
+          APIResponse.success(data as HubScanFetchResult),
+      error: (e) => APIResponse.error(e),
+    );
+  }
+
+  Future<APIResponse<List<HubScanLog>>> hubScanLogsResult({
     required String branchId,
     int limit = 50,
+    int offset = 0,
   }) async {
     _clear();
     final token = (await _auth()).token;
     if (token == null || token.isEmpty) {
       lastMessage = 'Not logged in';
-      return [];
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
     }
     final r = await _api.getHubScanLogs(
       token: token,
       branchId: branchId,
       limit: limit,
+      offset: offset,
     );
     return r.when(
-      success: HubScanLog.listFromDynamic,
+      success: (data) {
+        final rows = HubScanLog.listFromDynamic(data);
+        return APIResponse.success(rows);
+      },
+      error: (e) {
+        lastMessage = e.message;
+        return APIResponse.error(e);
+      },
+    );
+  }
+
+  /// Loads every hub scan log for [branchId] (batched; no UI filters).
+  Future<APIResponse<List<HubScanLog>>> hubScanLogsFetchAll({
+    required String branchId,
+    int batchSize = 200,
+    int maxRows = 5000,
+  }) async {
+    final all = <HubScanLog>[];
+    final seenKeys = <String>{};
+    var offset = 0;
+
+    while (all.length < maxRows) {
+      final r = await hubScanLogsResult(
+        branchId: branchId,
+        limit: batchSize,
+        offset: offset,
+      );
+      final batch = r.when(
+        success: (rows) => rows,
+        error: (e) {
+          if (all.isEmpty) {
+            return null;
+          }
+          lastMessage = e.message;
+          return <HubScanLog>[];
+        },
+      );
+      if (batch == null) {
+        return r.when(
+          success: (_) => APIResponse.error(
+            AppException.errorWithMessage(lastMessage),
+          ),
+          error: (e) => APIResponse.error(e),
+        );
+      }
+      if (batch.isEmpty) break;
+
+      var added = 0;
+      for (final row in batch) {
+        final key = _hubScanLogDedupeKey(row);
+        if (seenKeys.add(key)) {
+          all.add(row);
+          added++;
+        }
+      }
+
+      if (batch.length < batchSize) break;
+      if (added == 0) break;
+      offset += batch.length;
+    }
+
+    _sortHubScanLogsNewestFirst(all);
+    return APIResponse.success(all);
+  }
+
+  /// Every branch — used when hub scan screen has no branch selected.
+  Future<APIResponse<List<HubScanLog>>> hubScanLogsFetchAllBranches({
+    required List<String> branchIds,
+    int batchSize = 200,
+    int maxRowsPerBranch = 5000,
+  }) async {
+    final ids = branchIds.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (ids.isEmpty) {
+      lastMessage = 'No branches available';
+      return APIResponse.error(AppException.errorWithMessage(lastMessage));
+    }
+
+    final all = <HubScanLog>[];
+    final seenKeys = <String>{};
+    var anySuccess = false;
+
+    for (final branchId in ids) {
+      final r = await hubScanLogsFetchAll(
+        branchId: branchId,
+        batchSize: batchSize,
+        maxRows: maxRowsPerBranch,
+      );
+      r.when(
+        success: (rows) {
+          anySuccess = true;
+          for (final row in rows) {
+            final key = _hubScanLogDedupeKey(row);
+            if (seenKeys.add(key)) all.add(row);
+          }
+        },
+        error: (e) {
+          if (!anySuccess && all.isEmpty) {
+            lastMessage = e.message;
+          }
+        },
+      );
+    }
+
+    if (!anySuccess && all.isEmpty) {
+      return APIResponse.error(
+        AppException.errorWithMessage(
+          lastMessage.trim().isNotEmpty ? lastMessage : 'Request failed',
+        ),
+      );
+    }
+
+    _sortHubScanLogsNewestFirst(all);
+    return APIResponse.success(all);
+  }
+
+  static void _sortHubScanLogsNewestFirst(List<HubScanLog> rows) {
+    rows.sort((a, b) {
+      final at = a.scannedAt ?? a.createdAt ?? '';
+      final bt = b.scannedAt ?? b.createdAt ?? '';
+      return bt.compareTo(at);
+    });
+  }
+
+  static String _hubScanLogDedupeKey(HubScanLog row) {
+    final id = row.id?.trim();
+    if (id != null && id.isNotEmpty) return id;
+    return '${row.shipmentId ?? ''}_${row.scannedAt ?? ''}_${row.shipmentInvoiceNo ?? ''}';
+  }
+
+  Future<List<HubScanLog>> hubScanLogs({
+    required String branchId,
+    int limit = 50,
+  }) async {
+    final r = await hubScanLogsResult(branchId: branchId, limit: limit);
+    return r.when(
+      success: (rows) => rows,
       error: (e) {
         lastMessage = e.message;
         return [];
@@ -212,34 +396,17 @@ class OutboundRepository {
   Future<APIResponse<dynamic>> createBag({
     required String originBranchId,
     required String destinationBranchId,
-    required String bagCode,
-    String? metalSealNo,
+    required String metalSealNo,
     required String shipmentIdsCsv,
   }) async {
-    if (originBranchId.trim().isEmpty || destinationBranchId.trim().isEmpty) {
-      lastMessage = 'Origin and destination branch are required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
-    final code = bagCode.trim();
-    final seal = (metalSealNo ?? bagCode).trim();
-    if (code.isEmpty || seal.isEmpty) {
-      lastMessage = 'Metal seal / bag code is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     final shipmentIds = OutboundApiParams.parseShipmentIdsCsv(shipmentIdsCsv);
-    if (shipmentIds.isEmpty) {
-      lastMessage =
-          'At least one shipment id is required for bagging (docket no)';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     final shipmentIdsField = OutboundApiParams.shipmentIdsCsv(shipmentIds);
     final r = await _requireTokenUser(
       (token, userId) => _api.createBag(
         token: token,
         originBranchId: originBranchId.trim(),
         destinationBranchId: destinationBranchId.trim(),
-        bagCode: code,
-        metalSealNo: seal,
+        metalSealNo: metalSealNo.trim(),
         userId: userId,
         shipmentIds: shipmentIdsField,
       ),
@@ -252,15 +419,7 @@ class OutboundRepository {
           return APIResponse.error(AppException.errorWithMessage(err));
         }
         final created = OutboundMutationResult.fromDynamic(data);
-        final ref = created.effectiveBagRef;
-        if (ref != null && ref.isNotEmpty) {
-          return APIResponse.success({
-            ...?created.asMap,
-            'bag_id': ref,
-            'bag_code': created.bagCode ?? ref,
-          });
-        }
-        return APIResponse.success(data);
+        return APIResponse.success(created.asMap ?? data);
       },
       error: (e) => APIResponse.error(e),
     );
@@ -793,7 +952,7 @@ class OutboundRepository {
   }
 
   String? _validatePickupId(String? pickupId) =>
-      OutboundValidation.validatePositiveId(pickupId, label: 'Pickup id');
+      OutboundValidation.validatePickupId(pickupId);
 
   Future<APIResponse<dynamic>> pickupReport({
     required String startDate,

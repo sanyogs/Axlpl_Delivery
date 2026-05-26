@@ -25,6 +25,7 @@ abstract class Routes {
   static const REGISTER = _Paths.REGISTER;
   static const OUTBOUND_MENU = _Paths.OUTBOUND_MENU;
   static const OUTBOUND_HUB_SCAN = _Paths.OUTBOUND_HUB_SCAN;
+  static const OUTBOUND_HUB_SCAN_LIST = _Paths.OUTBOUND_HUB_SCAN_LIST;
   static const OUTBOUND_BAGGING = _Paths.OUTBOUND_BAGGING;
   static const OUTBOUND_MANIFEST = _Paths.OUTBOUND_MANIFEST;
   static const OUTBOUND_LINEHAUL = _Paths.OUTBOUND_LINEHAUL;
@@ -56,6 +57,7 @@ abstract class _Paths {
   static const REGISTER = '/register';
   static const OUTBOUND_MENU = '/outbound-menu';
   static const OUTBOUND_HUB_SCAN = '/outbound-hub-scan';
+  static const OUTBOUND_HUB_SCAN_LIST = '/outbound-hub-scan-list';
   static const OUTBOUND_BAGGING = '/outbound-bagging';
   static const OUTBOUND_MANIFEST = '/outbound-manifest';
   static const OUTBOUND_LINEHAUL = '/outbound-linehaul';

@@ -3,17 +3,38 @@ import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
 import 'package:get/get.dart';
 
-/// Shared snackbar + pretty JSON for outbound submodule screens.
+/// Shared snackbar + response text for outbound submodule screens.
 class OutboundUiFeedback {
   OutboundUiFeedback._();
+
+  static const _serverMessageKey = '__server_message';
+
+  /// Reads server `message` injected by [ApiClient._unwrapSuccessPayload] or on payload.
+  static String? serverMessageFromData(dynamic data) {
+    final map = OutboundDataParse.asStringKeyedMap(data);
+    if (map == null) return null;
+    final injected = OutboundDataParse.optionalString(map, _serverMessageKey);
+    if (injected != null && injected.isNotEmpty) return injected;
+    return OutboundDataParse.optionalString(map, 'message');
+  }
 
   static void apply({
     required RxString target,
     required APIResponse response,
     required String feature,
+    /// When true: only show API `message` (snackbar + panel). No client "Success" or pretty JSON.
+    bool serverMessageOnly = false,
   }) {
     response.when(
       success: (data) {
+        if (serverMessageOnly) {
+          final msg = serverMessageFromData(data) ?? '';
+          target.value = msg;
+          if (msg.isNotEmpty) {
+            Get.snackbar(feature, msg);
+          }
+          return;
+        }
         target.value = OutboundDataParse.pretty(data);
         if (OutboundDataParse.isNonJsonBody(data)) {
           Get.snackbar(
@@ -25,8 +46,15 @@ class OutboundUiFeedback {
         }
       },
       error: (e) {
-        target.value = e.message;
-        final msg = e.message;
+        final msg = e.message.trim();
+        if (serverMessageOnly) {
+          target.value = msg;
+          if (msg.isNotEmpty) {
+            Get.snackbar(feature, msg);
+          }
+          return;
+        }
+        target.value = msg;
         if (outboundIsBenignDuplicate(msg)) {
           Get.snackbar(feature, 'Already recorded — $msg');
         } else {

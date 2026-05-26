@@ -83,16 +83,27 @@ class OutboundPrimaryButtonCompact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
+    final labelColor = enabled ? themes.whiteColor : themes.grayColor;
+    final spinnerColor = enabled ? themes.whiteColor : themes.darkCyanBlue;
     return SizedBox(
       width: double.infinity,
       height: OutboundButtons.height,
       child: OutlinedButton(
         onPressed: onPressed,
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(
-            enabled ? themes.darkCyanBlue : themes.lightGrayColor,
-          ),
-          foregroundColor: WidgetStatePropertyAll(themes.whiteColor),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return themes.lightGrayColor.withValues(alpha: 0.55);
+            }
+            return themes.darkCyanBlue;
+          }),
+          foregroundColor: WidgetStatePropertyAll(labelColor),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return BorderSide(color: themes.grayColor.withValues(alpha: 0.45));
+            }
+            return BorderSide.none;
+          }),
           padding: WidgetStatePropertyAll(
             EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
           ),
@@ -108,7 +119,7 @@ class OutboundPrimaryButtonCompact extends StatelessWidget {
                 width: 18.h,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: themes.whiteColor,
+                  color: spinnerColor,
                 ),
               )
             : FittedBox(
@@ -118,7 +129,7 @@ class OutboundPrimaryButtonCompact extends StatelessWidget {
                   maxLines: 1,
                   style: themes.fontReboto16_600.copyWith(
                     fontSize: 13.sp,
-                    color: themes.whiteColor,
+                    color: labelColor,
                   ),
                 ),
               ),

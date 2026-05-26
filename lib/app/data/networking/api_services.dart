@@ -1087,19 +1087,39 @@ class ApiServices {
     );
   }
 
+  /// POST `hubScanFetchShipment` — multipart `connote` (scanned shipment / docket).
+  Future<APIResponse> hubScanFetchShipment({
+    required String token,
+    required String connote,
+  }) async {
+    final body = FormData.fromMap({'connote': connote.trim()});
+    return _api.postOutbound(
+      hubScanFetchShipmentPoint,
+      body,
+      token: token,
+      contentType: ContentType.multipart,
+      appendPlatform: false,
+    );
+  }
+
   Future<APIResponse> getHubScanLogs({
     required String token,
     required String branchId,
     required int limit,
+    int offset = 0,
   }) async {
-    // GET api.php?request=gethubscanlogs&branch_id=&limit=
+    // GET api.php?request=gethubscanlogs&branch_id=&limit=&offset=
+    final query = <String, String>{
+      'branch_id': branchId,
+      'limit': limit.toString(),
+    };
+    if (offset > 0) {
+      query['offset'] = offset.toString();
+    }
     return _api.getOutbound(
       getHubScanLogsPoint,
       token: token,
-      query: {
-        'branch_id': branchId,
-        'limit': limit.toString(),
-      },
+      query: query,
       appendPlatform: false,
     );
   }
@@ -1125,7 +1145,6 @@ class ApiServices {
     required String token,
     required String originBranchId,
     required String destinationBranchId,
-    required String bagCode,
     required String metalSealNo,
     required String userId,
     required String shipmentIds,
@@ -1135,7 +1154,6 @@ class ApiServices {
       'destination_branch_id': destinationBranchId,
       'user_id': userId,
       ...OutboundApiParams.createBagBody(
-        bagCode: bagCode,
         metalSealNo: metalSealNo,
         shipmentIdsCsv: shipmentIds,
       ),

@@ -5,6 +5,8 @@ class OutboundMutationResult {
   const OutboundMutationResult({
     this.bagId,
     this.bagCode,
+    this.metalSealNo,
+    this.shipmentsCount,
     this.manifestId,
     this.manifestNo,
     this.linehaulId,
@@ -14,6 +16,8 @@ class OutboundMutationResult {
 
   final String? bagId;
   final String? bagCode;
+  final String? metalSealNo;
+  final int? shipmentsCount;
   final String? manifestId;
   final String? manifestNo;
   final String? linehaulId;
@@ -32,6 +36,11 @@ class OutboundMutationResult {
         'bagCode',
         'code',
       ]),
+      metalSealNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'metal_seal_no',
+        'metalSealNo',
+      ]),
+      shipmentsCount: OutboundDataParse.optionalInt(json, 'shipments_count'),
       manifestId: OutboundDataParse.firstNonEmptyString(json, const [
         'manifest_id',
         'id',

@@ -21,6 +21,7 @@ import '../modules/notification/views/notification_view.dart';
 import '../modules/outbound_bagging/bindings/outbound_bagging_binding.dart';
 import '../modules/outbound_bagging/views/outbound_bagging_view.dart';
 import '../modules/outbound_hub_scan/bindings/outbound_hub_scan_binding.dart';
+import '../modules/outbound_hub_scan/views/hub_scan_list_view.dart';
 import '../modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import '../modules/outbound_linehaul/bindings/outbound_linehaul_binding.dart';
 import '../modules/outbound_linehaul/views/outbound_linehaul_view.dart';
@@ -159,6 +160,10 @@ class AppPages {
       name: _Paths.OUTBOUND_HUB_SCAN,
       page: () => const OutboundHubScanView(),
       binding: OutboundHubScanBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_HUB_SCAN_LIST,
+      page: () => const HubScanListView(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_BAGGING,

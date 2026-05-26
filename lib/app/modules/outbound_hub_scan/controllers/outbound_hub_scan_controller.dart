@@ -1,10 +1,11 @@
-import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_response_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
-import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
-import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_table_row.dart';
+import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,115 +20,266 @@ class OutboundHubScanController extends GetxController {
   final OutboundBranchListController _branchList;
 
   final isBusy = false.obs;
-  final lastResponseText = ''.obs;
-  final shipmentHintText = ''.obs;
-  final hubScanLogs = <HubScanLog>[].obs;
-  final shipmentHistory = <ShipmentScanEvent>[].obs;
+  final isHubScanListLoading = false.obs;
+  final fetchStatusMessage = ''.obs;
+  final hubScanListError = ''.obs;
+  final fetchedShipment = Rxn<HubScanFetchedShipment>();
 
+  /// Staging queue: each entry is a snapshot of the form (not server logs).
+  final sessionScannedRows = <HubScanTableRow>[].obs;
+  final hubScanListAllRows = <HubScanLog>[].obs;
+  final hubScanListPage = 1.obs;
+  final scrollToSessionTable = 0.obs;
+
+  static const hubScanListPageSize = 25;
+
+  int get hubScanListTotalCount => hubScanListAllRows.length;
+
+  int get hubScanListTotalPages {
+    if (hubScanListAllRows.isEmpty) return 1;
+    return (hubScanListAllRows.length / hubScanListPageSize).ceil();
+  }
+
+  List<HubScanLog> get hubScanListPageRows {
+    if (hubScanListAllRows.isEmpty) return const [];
+    final page = hubScanListPage.value.clamp(1, hubScanListTotalPages);
+    final start = (page - 1) * hubScanListPageSize;
+    if (start >= hubScanListAllRows.length) return const [];
+    final end = start + hubScanListPageSize;
+    return hubScanListAllRows.sublist(
+      start,
+      end > hubScanListAllRows.length ? hubScanListAllRows.length : end,
+    );
+  }
+
+  int get hubScanListRowNumberOffset =>
+      (hubScanListPage.value.clamp(1, hubScanListTotalPages) - 1) *
+      hubScanListPageSize;
+
+  String get hubScanListRangeLabel {
+    final total = hubScanListTotalCount;
+    if (total == 0) return '0 records';
+    final page = hubScanListPage.value.clamp(1, hubScanListTotalPages);
+    final start = (page - 1) * hubScanListPageSize + 1;
+    final end = start + hubScanListPageRows.length - 1;
+    return '$start–$end of $total';
+  }
+
+  void hubScanListGoToPage(int page) {
+    hubScanListPage.value = page.clamp(1, hubScanListTotalPages);
+  }
+
+  void hubScanListNextPage() {
+    if (hubScanListPage.value < hubScanListTotalPages) {
+      hubScanListPage.value++;
+    }
+  }
+
+  void hubScanListPreviousPage() {
+    if (hubScanListPage.value > 1) {
+      hubScanListPage.value--;
+    }
+  }
+
+  final docketFocusNode = FocusNode();
   final docketController = TextEditingController();
-  final scanHistoryDocketController = TextEditingController();
-  final hubScanLimit = TextEditingController();
+  final clientCodeController = TextEditingController();
+  final noOfBoxController = TextEditingController();
+  final boxWeightController = TextEditingController();
+  final originPincodeController = TextEditingController();
+  final destPincodeController = TextEditingController();
+  final destCityController = TextEditingController();
 
   final status = RxnString();
-  final statuses = const ['Hub In', 'Hub Out'];
+  final statuses = const ['HUB IN', 'HUB OUT'];
+
+  String? _lastFetchedConnote;
+
+  int get totalScanned => sessionScannedRows.length;
+
+  int get totalParcels => sessionScannedRows.fold<int>(
+        0,
+        (sum, row) => sum + (int.tryParse(row.noOfBox ?? '') ?? 0),
+      );
 
   @override
   void onInit() {
     super.onInit();
-    ever(_branchList.isLoadingBranches, (loading) {
-      if (loading == false && _branchList.selectedBranchIdOrNull != null) {
-        loadHubScanLogs();
-      }
-    });
+    status.value = 'HUB IN';
+    docketFocusNode.addListener(_onDocketFocusChanged);
   }
 
-  /// History field first, else main scan docket (copied into history field).
-  String? _resolveHistoryDocket() {
-    final fromHistory = scanHistoryDocketController.text.trim();
-    if (fromHistory.isNotEmpty) return fromHistory;
-    final fromScan = docketController.text.trim();
-    if (fromScan.isEmpty) return null;
-    scanHistoryDocketController.text = fromScan;
-    return fromScan;
-  }
-
-  void useScanDocketForHistory() {
-    final docket = docketController.text.trim();
-    if (docket.isEmpty) {
-      Get.snackbar('Hub scan', 'Enter docket on scan field first');
-      return;
+  void _onDocketFocusChanged() {
+    if (!docketFocusNode.hasFocus) {
+      onDocketFocusLost();
     }
-    scanHistoryDocketController.text = docket;
-    loadShipmentScanHistory();
   }
 
   @override
   void onClose() {
+    docketFocusNode.removeListener(_onDocketFocusChanged);
+    docketFocusNode.dispose();
     docketController.dispose();
-    scanHistoryDocketController.dispose();
-    hubScanLimit.dispose();
+    clientCodeController.dispose();
+    noOfBoxController.dispose();
+    boxWeightController.dispose();
+    originPincodeController.dispose();
+    destPincodeController.dispose();
+    destCityController.dispose();
     super.onClose();
   }
 
-  Future<void> submitHubScan() async {
-    final docket = docketController.text.trim();
-    final branchId = _branchList.selectedBranchIdOrNull;
-    final scanStatus = status.value?.trim();
-    if (docket.isEmpty || branchId == null) {
-      Get.snackbar('Hub scan', 'Docket no and branch / hub are required');
-      return;
-    }
-    if (scanStatus == null || scanStatus.isEmpty) {
-      Get.snackbar('Hub scan', 'Select hub scan status');
-      return;
-    }
-    isBusy.value = true;
-    try {
-      final r = await _repo.hubScanSubmit(
-        docketNo: docket,
-        branchId: branchId,
-        status: scanStatus,
-      );
-      OutboundUiFeedback.apply(
-        target: lastResponseText,
-        response: r,
-        feature: 'Hub scan',
-      );
-      r.when(
-        success: (data) {
-          final scan = HubScanResponse.fromDynamic(data);
-          lastResponseText.value = scan.isOk
-              ? '${scan.successMessage ?? 'OK'} — ${scan.docketNo ?? scan.shipmentId ?? ''}'
-              : OutboundDataParse.pretty(data);
-          scanHistoryDocketController.text = docket;
-          loadHubScanLogs();
-          loadShipmentScanHistory();
-        },
-        error: (_) {},
-      );
-    } finally {
-      isBusy.value = false;
-    }
+  void _setField(TextEditingController c, String? value) {
+    c.text = value?.trim() ?? '';
   }
 
-  /// Optional shipment master hint (existing `getShipmentByConsignmentId`).
-  Future<void> loadShipmentHint() async {
-    final docket = docketController.text.trim();
-    if (docket.isEmpty) {
-      Get.snackbar('Hub scan', 'Enter docket no first');
+  void _applyShipmentToFields(HubScanFetchedShipment? shipment) {
+    if (shipment == null) {
+      _setField(clientCodeController, null);
+      _setField(noOfBoxController, null);
+      _setField(boxWeightController, null);
+      _setField(originPincodeController, null);
+      _setField(destPincodeController, null);
+      _setField(destCityController, null);
+      return;
+    }
+    _setField(clientCodeController, shipment.clientCode);
+    _setField(noOfBoxController, shipment.numberOfParcel);
+    _setField(boxWeightController, shipment.actualValue);
+    _setField(originPincodeController, shipment.originPincode);
+    _setField(destPincodeController, shipment.destinationPincode);
+    _setField(destCityController, shipment.destinationCity);
+  }
+
+  void _clearDocketFieldsOnly() {
+    docketController.clear();
+    fetchedShipment.value = null;
+    _lastFetchedConnote = null;
+    _applyShipmentToFields(null);
+    fetchStatusMessage.value = '';
+  }
+
+  String _statusForApi(String? uiStatus) {
+    final s = uiStatus?.trim().toUpperCase() ?? '';
+    if (s == 'HUB IN') return 'Hub In';
+    if (s == 'HUB OUT') return 'Hub Out';
+    return uiStatus?.trim() ?? '';
+  }
+
+  bool _canStageScan() {
+    if (_branchList.selectedBranchIdOrNull == null) {
+      Get.snackbar('Hub scan', 'Select branch / hub first');
+      return false;
+    }
+    if (status.value == null || status.value!.trim().isEmpty) {
+      Get.snackbar('Hub scan', 'Select scan type');
+      return false;
+    }
+    return true;
+  }
+
+  /// Push current form + shipment into Scanned Docket Details (staging).
+  void _stageCurrentForm(HubScanFetchedShipment shipment) {
+    if (!_canStageScan()) return;
+
+    final row = HubScanTableRow.fromFormSnapshot(
+      shipment: shipment,
+      scanDocketTyped: docketController.text.trim(),
+      scanType: status.value!.trim(),
+      branchId: _branchList.selectedBranchIdOrNull!,
+    );
+    final key = row.sessionKey;
+    if (key.isEmpty) return;
+
+    final next = List<HubScanTableRow>.from(sessionScannedRows);
+    final idx = next.indexWhere((r) => r.sessionKey == key && !r.saved);
+    if (idx >= 0) {
+      next[idx] = row;
+    } else {
+      next.insert(0, row);
+    }
+    sessionScannedRows.assignAll(next);
+    scrollToSessionTable.value++;
+  }
+
+  void _markSessionRowSaved(String sessionKey) {
+    final key = sessionKey.trim();
+    if (key.isEmpty) return;
+    final next = sessionScannedRows
+        .map((r) => r.sessionKey == key ? r.copyWith(saved: true) : r)
+        .toList(growable: false);
+    sessionScannedRows.assignAll(next);
+  }
+
+  /// Remove a staged docket before Save (not allowed after server save).
+  void removeSessionRow(String sessionKey) {
+    final key = sessionKey.trim();
+    if (key.isEmpty) return;
+    HubScanTableRow? match;
+    for (final r in sessionScannedRows) {
+      if (r.sessionKey == key) {
+        match = r;
+        break;
+      }
+    }
+    if (match == null) return;
+    if (match.saved) {
+      Get.snackbar('Hub scan', 'This docket is already saved and cannot be removed.');
+      return;
+    }
+    sessionScannedRows.assignAll(
+      sessionScannedRows.where((r) => r.sessionKey != key).toList(growable: false),
+    );
+  }
+
+  /// Leave Scan Docket No → fetch API → fill form → add snapshot below.
+  Future<void> onDocketFocusLost() async {
+    final connote = docketController.text.trim();
+    if (connote.isEmpty) return;
+    await fetchShipment(connoteOverride: connote);
+  }
+
+  Future<void> fetchShipment({String? connoteOverride}) async {
+    final connote = (connoteOverride ?? docketController.text).trim();
+    final err = OutboundValidation.validateDocket(connote);
+    if (err != null) {
+      Get.snackbar('Hub scan', err);
+      return;
+    }
+    if (connote == _lastFetchedConnote && fetchedShipment.value != null) {
       return;
     }
     isBusy.value = true;
+    fetchStatusMessage.value = '';
     try {
-      final r = await _repo.shipmentByDocket(docket);
+      final r = await _repo.hubScanFetchShipment(connote);
       r.when(
-        success: (data) {
-          shipmentHintText.value = OutboundDataParse.pretty(data);
-          Get.snackbar('Hub scan', 'Shipment hint loaded');
+        success: (result) {
+          final shipment = result.shipment;
+          if (shipment == null) {
+            fetchedShipment.value = null;
+            _applyShipmentToFields(null);
+            return;
+          }
+          fetchedShipment.value = shipment;
+          _lastFetchedConnote = connote;
+          _applyShipmentToFields(shipment);
+          _stageCurrentForm(shipment);
+          final msg = result.serverMessage?.trim() ?? '';
+          fetchStatusMessage.value = msg;
+          if (msg.isNotEmpty) {
+            Get.snackbar('Hub scan', msg);
+          }
         },
         error: (e) {
-          shipmentHintText.value = e.message;
-          Get.snackbar('Hub scan', e.message);
+          fetchedShipment.value = null;
+          _lastFetchedConnote = null;
+          _applyShipmentToFields(null);
+          final msg = e.message.trim();
+          fetchStatusMessage.value = msg;
+          if (msg.isNotEmpty) {
+            Get.snackbar('Hub scan', msg);
+          }
         },
       );
     } finally {
@@ -135,54 +287,132 @@ class OutboundHubScanController extends GetxController {
     }
   }
 
-  Future<void> loadHubScanLogs() async {
-    final branchId = _branchList.selectedBranchIdOrNull;
-    if (branchId == null) {
-      Get.snackbar('Hub scan', 'Select branch / hub first');
-      return;
-    }
-    final limit = int.tryParse(hubScanLimit.text.trim()) ?? 50;
-    isBusy.value = true;
+  Future<void> onConnoteScanned(String value) async {
+    if (value.trim().isEmpty || value == '-1') return;
+    docketController.text = value.trim();
+    await fetchShipment(connoteOverride: value.trim());
+  }
+
+  bool get hubScanListShowsAllBranches =>
+      _branchList.selectedBranchIdOrNull == null;
+
+  Future<bool> loadHubScanList() async {
+    isHubScanListLoading.value = true;
+    hubScanListError.value = '';
+    hubScanListAllRows.clear();
+    hubScanListPage.value = 1;
     try {
-      final rows = await _repo.hubScanLogs(branchId: branchId, limit: limit);
-      hubScanLogs.assignAll(rows);
-      if (rows.isEmpty && _repo.lastMessage.isNotEmpty) {
-        Get.snackbar('Outbound', _repo.lastMessage);
-        lastResponseText.value = _repo.lastMessage;
+      final branchId = _branchList.selectedBranchIdOrNull;
+      final APIResponse<List<HubScanLog>> r;
+      if (branchId != null) {
+        r = await _repo.hubScanLogsFetchAll(branchId: branchId);
       } else {
-        lastResponseText.value = rows.isEmpty
-            ? 'No hub scan rows for branch $branchId.'
-            : '${rows.length} row(s) for branch $branchId.';
-        Get.snackbar(
-          'Outbound',
-          rows.isEmpty ? 'No logs for branch $branchId' : 'Loaded ${rows.length} log(s)',
-        );
+        if (_branchList.branches.isEmpty) {
+          await _branchList.loadBranches();
+        }
+        final ids = _branchList.branches.map((b) => b.id).toList(growable: false);
+        r = await _repo.hubScanLogsFetchAllBranches(branchIds: ids);
       }
+      return r.when(
+        success: (rows) {
+          hubScanListAllRows.assignAll(rows);
+          if (rows.isEmpty) {
+            final msg = _repo.lastMessage.trim();
+            hubScanListError.value =
+                msg.isNotEmpty ? msg : 'No hub scans found.';
+          }
+          return hubScanListError.value.isEmpty;
+        },
+        error: (e) {
+          hubScanListError.value =
+              e.message.trim().isNotEmpty ? e.message.trim() : 'Request failed';
+          return false;
+        },
+      );
     } finally {
-      isBusy.value = false;
+      isHubScanListLoading.value = false;
     }
   }
 
-  Future<void> loadShipmentScanHistory() async {
-    final docket = _resolveHistoryDocket();
-    if (docket == null) {
-      Get.snackbar('Outbound', 'Docket no required for scan history');
+  /// Confirm — ready for next docket (row already staged below after fetch).
+  Future<void> confirmHubScan() async {
+    if (fetchedShipment.value != null) {
+      _stageCurrentForm(fetchedShipment.value!);
+    } else if (docketController.text.trim().isNotEmpty) {
+      await fetchShipment();
+      if (fetchedShipment.value != null) {
+        _stageCurrentForm(fetchedShipment.value!);
+      }
+    }
+    docketFocusNode.unfocus();
+    _clearDocketFieldsOnly();
+    Get.snackbar('Hub scan', 'Ready for next docket — tap Save when done');
+  }
+
+  /// Save — hubscan API for every pending row in Scanned Docket Details.
+  Future<void> saveHubScan() async {
+    final pending =
+        sessionScannedRows.where((r) => !r.saved).toList(growable: false);
+    if (pending.isEmpty) {
+      Get.snackbar(
+        'Hub scan',
+        'Nothing to save — scan a docket (leave field) to add it below first',
+      );
       return;
     }
+
     isBusy.value = true;
+    var savedCount = 0;
     try {
-      final rows = await _repo.shipmentScanHistory(docket);
-      shipmentHistory.assignAll(rows);
-      if (rows.isEmpty && _repo.lastMessage.isNotEmpty) {
-        Get.snackbar('Outbound', _repo.lastMessage);
-        lastResponseText.value = _repo.lastMessage;
-      } else {
-        lastResponseText.value = rows.isEmpty
-            ? 'No scan history for $docket.'
-            : '${rows.length} event(s) for $docket.';
+      for (final row in pending) {
+        final connote = row.shipmentId?.trim().isNotEmpty == true
+            ? row.shipmentId!.trim()
+            : (row.docketNo?.trim() ?? '');
+        if (connote.isEmpty) continue;
+
+        final branchId = row.branchId ?? _branchList.selectedBranchIdOrNull;
+        final scanStatus = _statusForApi(row.scanType ?? status.value);
+        if (branchId == null || branchId.isEmpty) {
+          Get.snackbar('Hub scan', 'Branch missing on staged docket $connote');
+          break;
+        }
+        if (scanStatus.isEmpty) {
+          Get.snackbar('Hub scan', 'Scan type missing on staged docket $connote');
+          break;
+        }
+
+        final r = await _repo.hubScanSubmit(
+          docketNo: connote,
+          branchId: branchId,
+          status: scanStatus,
+        );
+        var ok = false;
+        r.when(
+          success: (data) {
+            ok = true;
+            _markSessionRowSaved(row.sessionKey);
+            savedCount++;
+            final msg = OutboundUiFeedback.serverMessageFromData(data) ?? '';
+            if (msg.isNotEmpty) {
+              Get.snackbar('Hub scan', msg);
+            }
+          },
+          error: (e) {
+            final msg = e.message.trim();
+            if (msg.isNotEmpty) {
+              Get.snackbar('Hub scan', '$connote: $msg');
+            }
+          },
+        );
+        if (!ok) break;
+      }
+
+      if (savedCount > 0) {
         Get.snackbar(
-          'Outbound',
-          rows.isEmpty ? 'No history for $docket' : 'Loaded ${rows.length} event(s)',
+          'Hub scan',
+          savedCount == pending.length
+              ? 'Hub scan successfully added.'
+              : '$savedCount of ${pending.length} saved.',
         );
       }
     } finally {
