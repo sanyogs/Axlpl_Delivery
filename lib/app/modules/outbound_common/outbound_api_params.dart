@@ -72,15 +72,22 @@ class OutboundApiParams {
 
   static String shipmentIdsCsv(List<String> ids) => ids.join(',');
 
-  /// POST `createbag` — `metal_seal_no` + `shipment_ids` (no `bag_code` on create).
+  /// POST `createbag` — Postman: `origin_branch_id`, `destination_branch_id`, `user_id`,
+  /// optional `bag_code`; production also requires `metal_seal_no` + `shipment_ids`.
   static Map<String, String> createBagBody({
     required String metalSealNo,
     required String shipmentIdsCsv,
+    String? bagCode,
   }) {
-    return {
+    final body = <String, String>{
       'metal_seal_no': metalSealNo.trim(),
       'shipment_ids': shipmentIdsCsv.trim(),
     };
+    final code = bagCode?.trim();
+    if (code != null && code.isNotEmpty && looksLikeBagCode(code)) {
+      body['bag_code'] = code;
+    }
+    return body;
   }
 
   static Map<String, String> createManifestBagFields(String bagIdsCsv) {

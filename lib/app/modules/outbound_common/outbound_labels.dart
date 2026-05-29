@@ -16,6 +16,22 @@ class OutboundLabels {
   static const shipmentNo = 'Shipment no';
   static const originDepot = 'Origin depot';
   static const destinationDepot = 'Destination depot';
+  static const originDepotCode = 'Origin Depot Code';
+  static const destinationDepotCode = 'Destination Depot Code';
+  static const mBagNo = 'M/Bag No';
+  static const scanShipmentId = 'Scan Shipment ID';
+  static const baggingScreenTitle = 'Bagging Screen';
+  static const sectionBaggingDetails = 'Bagging Screen details';
+  static const sectionScannedBoxes = 'Scanned Box Details';
+  static const btnViewReport = 'View Report';
+  static const bagListTitle = 'Bag List';
+  static const baggingReportTitle = 'Bagging Report';
+  static const colBoxNumber = 'BOX NUMBER';
+  static const colShipmentId = 'SHIPMENT ID';
+  static const colDestination = 'DESTINATION';
+  static const colMode = 'MODE';
+  static const btnNewBagging = 'New Bagging';
+  static const btnPerformBagging = 'Perform Bagging';
   static const branchHub = 'Branch / hub';
   static const bagCode = 'Bag code';
   static const workingBagCode = 'Bag code';
@@ -84,12 +100,14 @@ class OutboundLabels {
   static const subtitleManifestOpen =
       'List by depot, tap a row, or enter manifest number.';
   static const subtitleManifestReport = 'Choose a date range.';
+  static const subtitleBaggingReport =
+      'Enter bag code to view shipments and weights for that bag.';
 
   // Short button labels
   static const btnShipmentInfo = 'Shipment info';
   static const btnScanHistory = 'History';
   static const btnListBags = 'List bags';
-  static const btnBaggingReport = 'Report';
+  static const btnBaggingReport = 'Load report';
   static const btnLinehaulReport = 'Report';
   static const btnPickupReport = 'Report';
   static const btnRemoveShipment = 'Remove';

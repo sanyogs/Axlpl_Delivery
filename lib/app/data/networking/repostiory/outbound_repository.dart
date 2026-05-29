@@ -398,6 +398,7 @@ class OutboundRepository {
     required String destinationBranchId,
     required String metalSealNo,
     required String shipmentIdsCsv,
+    String? bagCode,
   }) async {
     final shipmentIds = OutboundApiParams.parseShipmentIdsCsv(shipmentIdsCsv);
     final shipmentIdsField = OutboundApiParams.shipmentIdsCsv(shipmentIds);
@@ -409,6 +410,7 @@ class OutboundRepository {
         metalSealNo: metalSealNo.trim(),
         userId: userId,
         shipmentIds: shipmentIdsField,
+        bagCode: bagCode,
       ),
     );
     return r.when(
@@ -575,16 +577,16 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> baggingReport({
-    required String startDate,
-    required String endDate,
     String? bagCode,
+    String? startDate,
+    String? endDate,
   }) =>
       _requireToken(
         (token) => _api.baggingReport(
           token: token,
+          bagCode: bagCode,
           startDate: startDate,
           endDate: endDate,
-          bagCode: bagCode,
         ),
       );
 

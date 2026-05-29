@@ -19,6 +19,8 @@ import '../modules/myorders/views/myorders_view.dart';
 import '../modules/notification/bindings/notification_binding.dart';
 import '../modules/notification/views/notification_view.dart';
 import '../modules/outbound_bagging/bindings/outbound_bagging_binding.dart';
+import '../modules/outbound_bagging/views/bag_list_view.dart';
+import '../modules/outbound_bagging/views/bagging_report_view.dart';
 import '../modules/outbound_bagging/views/outbound_bagging_view.dart';
 import '../modules/outbound_hub_scan/bindings/outbound_hub_scan_binding.dart';
 import '../modules/outbound_hub_scan/views/hub_scan_list_view.dart';
@@ -169,6 +171,14 @@ class AppPages {
       name: _Paths.OUTBOUND_BAGGING,
       page: () => const OutboundBaggingView(),
       binding: OutboundBaggingBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_BAG_LIST,
+      page: () => const BagListView(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_BAGGING_REPORT,
+      page: () => const BaggingReportView(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_MANIFEST,

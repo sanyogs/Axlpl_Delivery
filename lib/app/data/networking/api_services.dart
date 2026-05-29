@@ -1148,14 +1148,16 @@ class ApiServices {
     required String metalSealNo,
     required String userId,
     required String shipmentIds,
+    String? bagCode,
   }) async {
     final body = FormData.fromMap({
-      'origin_branch_id': originBranchId,
-      'destination_branch_id': destinationBranchId,
+      'origin_branch_id': originBranchId.trim(),
+      'destination_branch_id': destinationBranchId.trim(),
       'user_id': userId,
       ...OutboundApiParams.createBagBody(
         metalSealNo: metalSealNo,
         shipmentIdsCsv: shipmentIds,
+        bagCode: bagCode,
       ),
     });
     return _api.postOutbound(
@@ -1282,18 +1284,20 @@ class ApiServices {
 
   Future<APIResponse> baggingReport({
     required String token,
-    required String startDate,
-    required String endDate,
     String? bagCode,
+    String? startDate,
+    String? endDate,
   }) async {
     return _api.getOutbound(
       baggingReportPoint,
       token: token,
       query: {
-        'start_date': startDate,
-        'end_date': endDate,
         if (bagCode != null && bagCode.trim().isNotEmpty)
           'bag_code': bagCode.trim(),
+        if (startDate != null && startDate.trim().isNotEmpty)
+          'start_date': startDate.trim(),
+        if (endDate != null && endDate.trim().isNotEmpty)
+          'end_date': endDate.trim(),
       },
       appendPlatform: false,
     );

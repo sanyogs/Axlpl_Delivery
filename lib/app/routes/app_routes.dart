@@ -27,6 +27,8 @@ abstract class Routes {
   static const OUTBOUND_HUB_SCAN = _Paths.OUTBOUND_HUB_SCAN;
   static const OUTBOUND_HUB_SCAN_LIST = _Paths.OUTBOUND_HUB_SCAN_LIST;
   static const OUTBOUND_BAGGING = _Paths.OUTBOUND_BAGGING;
+  static const OUTBOUND_BAG_LIST = _Paths.OUTBOUND_BAG_LIST;
+  static const OUTBOUND_BAGGING_REPORT = _Paths.OUTBOUND_BAGGING_REPORT;
   static const OUTBOUND_MANIFEST = _Paths.OUTBOUND_MANIFEST;
   static const OUTBOUND_LINEHAUL = _Paths.OUTBOUND_LINEHAUL;
   static const OUTBOUND_SECTOR_PICKUP = _Paths.OUTBOUND_SECTOR_PICKUP;
@@ -59,6 +61,8 @@ abstract class _Paths {
   static const OUTBOUND_HUB_SCAN = '/outbound-hub-scan';
   static const OUTBOUND_HUB_SCAN_LIST = '/outbound-hub-scan-list';
   static const OUTBOUND_BAGGING = '/outbound-bagging';
+  static const OUTBOUND_BAG_LIST = '/outbound-bag-list';
+  static const OUTBOUND_BAGGING_REPORT = '/outbound-bagging-report';
   static const OUTBOUND_MANIFEST = '/outbound-manifest';
   static const OUTBOUND_LINEHAUL = '/outbound-linehaul';
   static const OUTBOUND_SECTOR_PICKUP = '/outbound-sector-pickup';
