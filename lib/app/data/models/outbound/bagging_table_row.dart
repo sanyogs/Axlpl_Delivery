@@ -51,7 +51,7 @@ class BaggingTableRow {
       destination: destination ??
           shipment.destinationCity ??
           shipment.destinationPincode,
-      mode: 'Pending',
+      mode: null,
       saved: saved,
     );
   }

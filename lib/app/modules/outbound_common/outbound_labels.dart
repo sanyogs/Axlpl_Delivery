@@ -30,6 +30,10 @@ class OutboundLabels {
   static const colShipmentId = 'SHIPMENT ID';
   static const colDestination = 'DESTINATION';
   static const colMode = 'MODE';
+  static const colShipmentStatus = 'SHIPMENT STATUS';
+  static const colInvoiceNo = 'INVOICE NO';
+  static const colOrigin = 'ORIGIN';
+  static const labelStagingRow = 'Not saved';
   static const btnNewBagging = 'New Bagging';
   static const btnPerformBagging = 'Perform Bagging';
   static const branchHub = 'Branch / hub';

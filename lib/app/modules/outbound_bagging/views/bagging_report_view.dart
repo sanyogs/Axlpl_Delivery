@@ -6,17 +6,15 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_acti
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
-import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-/// `baggingreport` — Postman: `start_date` + `end_date`; QA: optional `bag_code` for bag detail.
 class BaggingReportView extends StatefulWidget {
   const BaggingReportView({super.key});
 
@@ -42,8 +40,6 @@ class _BaggingReportViewState extends State<BaggingReportView> {
       final busy = controller.isBusy.value;
       final report = controller.baggingReportData.value;
       final items = report?.items ?? [];
-      final _ = controller.baggingReportData.value;
-
       return OutboundScreen(
         title: OutboundLabels.baggingReportTitle,
         busy: busy,
@@ -59,31 +55,30 @@ class _BaggingReportViewState extends State<BaggingReportView> {
             title: OutboundLabels.baggingReportTitle,
             children: [
               Text(
-                'Dates → start_date & end_date. Bag code → bag_code (detail).',
+                OutboundLabels.subtitleBaggingReport,
                 style: themes.fontSize14_400.copyWith(color: themes.grayColor),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.reportStart,
-                required: true,
                 child: OutboundDateField(
                   controller: controller.reportStartController,
-                  hintText: 'YYYY-MM-DD',
+                  hintText: OutboundLabels.reportStart,
                 ),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.reportEnd,
-                required: true,
                 child: OutboundDateField(
                   controller: controller.reportEndController,
-                  hintText: 'YYYY-MM-DD',
+                  hintText: OutboundLabels.reportEnd,
                 ),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.bagCode,
-                child: OutboundField(
+                child: OutboundScanField(
                   controller: controller.reportBagCodeController,
-                  hintText: 'Optional BAG… (overrides dates)',
-                  prefixIcon: const Icon(CupertinoIcons.barcode),
+                  hintText: OutboundLabels.bagCode,
+                  prefixIcon: const Icon(CupertinoIcons.cube_box),
+                  onSubmitted: (_) => controller.baggingReport(),
                 ),
               ),
               OutboundPrimaryButton(
@@ -95,9 +90,9 @@ class _BaggingReportViewState extends State<BaggingReportView> {
                 _BaggingReportSummary(report: report),
               ],
               OutboundSection(
-                title: 'Shipments in bag',
+                title: OutboundLabels.sectionScannedBoxes,
                 subtitle: items.isEmpty
-                    ? 'No shipments in report'
+                    ? 'No shipments returned'
                     : '${items.length} shipment(s)',
                 children: [
                   _BaggingReportItemsTable(items: items),
@@ -160,7 +155,10 @@ class _BaggingReportItemsTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const OutboundDynamicMapTablePlaceholder();
+      return Text(
+        'Run report with dates or a bag code to load shipments.',
+        style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+      );
     }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -168,10 +166,11 @@ class _BaggingReportItemsTable extends StatelessWidget {
         columns: const [
           DataColumn(label: Text(OutboundLabels.colSlNo)),
           DataColumn(label: Text(OutboundLabels.colShipmentId)),
+          DataColumn(label: Text(OutboundLabels.colInvoiceNo)),
           DataColumn(label: Text(OutboundLabels.receiverName)),
           DataColumn(label: Text(OutboundLabels.colDestination)),
-          DataColumn(label: Text('WEIGHT (KG)')),
-          DataColumn(label: Text('PKGS')),
+          DataColumn(label: Text(OutboundLabels.boxWeight)),
+          DataColumn(label: Text(OutboundLabels.noOfBox)),
         ],
         rows: [
           for (var i = 0; i < items.length; i++)
@@ -179,6 +178,7 @@ class _BaggingReportItemsTable extends StatelessWidget {
               cells: [
                 DataCell(Text('${i + 1}')),
                 DataCell(Text(items[i].shipmentId ?? '—')),
+                DataCell(Text(items[i].shipmentInvoiceNo ?? '—')),
                 DataCell(Text(items[i].receiverName ?? items[i].senderName ?? '—')),
                 DataCell(Text(items[i].destinationCity ?? '—')),
                 DataCell(Text(items[i].totalWeight ?? '—')),

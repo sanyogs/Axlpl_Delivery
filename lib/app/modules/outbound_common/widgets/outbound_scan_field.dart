@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// Search-style field with barcode scanner on the right (POD / shipnow pattern).
-class OutboundScanField extends StatelessWidget {
+class OutboundScanField extends StatefulWidget {
   const OutboundScanField({
     super.key,
     required this.controller,
@@ -32,24 +32,56 @@ class OutboundScanField extends StatelessWidget {
   final VoidCallback? onFocusLost;
 
   @override
+  State<OutboundScanField> createState() => _OutboundScanFieldState();
+}
+
+class _OutboundScanFieldState extends State<OutboundScanField> {
+  FocusNode? _ownedFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    final node = widget.focusNode ?? FocusNode();
+    if (widget.focusNode == null) _ownedFocusNode = node;
+    if (widget.onFocusLost != null) {
+      node.addListener(_handleFocus);
+    }
+  }
+
+  void _handleFocus() {
+    final node = widget.focusNode ?? _ownedFocusNode;
+    if (node != null && !node.hasFocus) {
+      widget.onFocusLost?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    final node = widget.focusNode ?? _ownedFocusNode;
+    node?.removeListener(_handleFocus);
+    _ownedFocusNode?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: ContainerTextfiled(
-            controller: controller,
-            focusNode: focusNode,
-            hintText: hintText,
-            keyboardType: keyboardType,
-            prefixIcon: prefixIcon ??
+            controller: widget.controller,
+            focusNode: widget.focusNode ?? _ownedFocusNode,
+            hintText: widget.hintText,
+            keyboardType: widget.keyboardType,
+            prefixIcon: widget.prefixIcon ??
                 Icon(
                   CupertinoIcons.barcode,
                   color: themes.grayColor,
                 ),
-            onSubmit: onSubmitted == null
+            onSubmit: widget.onSubmitted == null
                 ? null
                 : (v) {
-                    onSubmitted!(v ?? '');
+                    widget.onSubmitted!(v ?? '');
                     return null;
                   },
           ),
@@ -58,8 +90,8 @@ class OutboundScanField extends StatelessWidget {
           onPressed: () async {
             final scanned = await Utils().scanAndPlaySound(context);
             if (scanned != null && scanned != '-1') {
-              controller.text = scanned;
-              await onScanned?.call(scanned);
+              widget.controller.text = scanned;
+              await widget.onScanned?.call(scanned);
             }
           },
           icon: Icon(

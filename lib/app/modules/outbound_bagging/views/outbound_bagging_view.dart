@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/modules/outbound_bagging/controllers/outbound_bagging_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_bagging/widgets/bagging_bag_summary.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/widgets/bagging_scanned_box_table.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
@@ -55,16 +56,12 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
     final branchList = Get.find<OutboundBranchListController>();
     return Obx(() {
       final busy = controller.isBusy.value;
-      final _ = controller.fetchStatusMessage.value;
-      final __ = controller.fetchedShipment.value;
-      final ___ = controller.sessionScannedRows
-          .map((r) => '${r.sessionKey}:${r.saved}')
-          .join('|');
-      final ____ = branchList.branches.length;
-      final _____ = controller.selectedOriginDepotId.value;
-      final ______ = controller.selectedDestDepotId.value;
-      final _______ = controller.bagDetail.value;
-      final ________ = controller.scannedBoxRows.length;
+      final detail = controller.bagDetail.value;
+      final statusMsg = controller.fetchStatusMessage.value.trim();
+      final _ = controller.sessionScannedRows.length;
+      final __ = controller.scannedBoxRows.length;
+      final ___ = controller.selectedOriginDepotId.value;
+      final ____ = controller.selectedDestDepotId.value;
 
       return OutboundScreen(
         title: OutboundLabels.baggingScreenTitle,
@@ -83,17 +80,21 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
           OutboundAdminSection(
             title: OutboundLabels.sectionBaggingDetails,
             children: [
+              Text(
+                OutboundLabels.subtitleCreateBag,
+                style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+              ),
               if (controller.selectedDepotSummary.isNotEmpty)
                 Text(
                   controller.selectedDepotSummary,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style: themes.fontSize14_500,
                 ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.originDepotCode,
                 required: true,
                 child: Obx(
                   () => OutboundBranchSelect(
-                    label: '',
+                    label: OutboundLabels.originDepot,
                     items: branchList.branches,
                     selectedId: controller.selectedOriginDepotId.value,
                     isLoading: branchList.isLoadingBranches.value,
@@ -106,7 +107,7 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                 required: true,
                 child: Obx(
                   () => OutboundBranchSelect(
-                    label: '',
+                    label: OutboundLabels.destinationDepot,
                     items: branchList.branches,
                     selectedId: controller.selectedDestDepotId.value,
                     isLoading: branchList.isLoadingBranches.value,
@@ -119,7 +120,7 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                 required: true,
                 child: OutboundScanField(
                   controller: controller.metalSealController,
-                  hintText: 'Metal seal → metal_seal_no on createbag',
+                  hintText: OutboundLabels.metalSeal,
                   prefixIcon: const Icon(CupertinoIcons.tag),
                 ),
               ),
@@ -131,9 +132,7 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                     child: OutboundScanField(
                       controller: controller.bagCodeWorkingController,
                       focusNode: controller.bagCodeFocusNode,
-                      hintText: controller.isBagCodeFromServer
-                          ? 'bag_code (assigned)'
-                          : 'BAG… → getbagdetails / addshipmenttobag',
+                      hintText: OutboundLabels.bagCode,
                       prefixIcon: const Icon(CupertinoIcons.cube_box),
                       onSubmitted: (_) => controller.loadBagByCode(),
                       onScanned: controller.onBagCodeScanned,
@@ -143,15 +142,25 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.scanShipmentId,
+                required: true,
                 child: OutboundScanField(
                   controller: controller.shipmentController,
                   focusNode: controller.shipmentFocusNode,
-                  hintText: 'Scan Shipment ID.',
+                  hintText: OutboundLabels.docketNo,
                   prefixIcon: const Icon(CupertinoIcons.barcode),
                   onSubmitted: (_) => controller.fetchShipment(),
                   onScanned: controller.onShipmentScanned,
                 ),
               ),
+              if (statusMsg.isNotEmpty)
+                Text(
+                  statusMsg,
+                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                ),
+              if (detail != null) ...[
+                SizedBox(height: 4.h),
+                BaggingBagSummaryBanner(detail: detail),
+              ],
               Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(
@@ -170,13 +179,18 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
               ),
             ],
           ),
+          if (detail != null)
+            OutboundAdminSection(
+              title: 'Current bag',
+              children: [BaggingBagSummary(detail: detail)],
+            ),
           KeyedSubtree(
             key: _scannedTableKey,
             child: OutboundAdminSection(
               title: OutboundLabels.sectionScannedBoxes,
               children: [
                 Text(
-                  'Total boxes: ${controller.totalScannedBoxes}',
+                  '${OutboundLabels.shipmentCount}: ${controller.totalScannedBoxes}',
                   style: themes.fontSize14_500,
                 ),
                 BaggingScannedBoxTable(

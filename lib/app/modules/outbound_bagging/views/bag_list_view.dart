@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-/// Admin **Show List** — bags at origin depot (`listbags`).
+/// `listbags` — filtered by origin `branch_id` + selected destination sector.
 class BagListView extends StatefulWidget {
   const BagListView({super.key});
 
@@ -41,7 +41,7 @@ class _BagListViewState extends State<BagListView> {
       final page = controller.bagListPage.value;
       final totalPages = controller.bagListTotalPages;
       final rangeLabel = controller.bagListRangeLabel;
-      final _ = '${controller.bagListFilteredRows.length}|${controller.bagListAllRows.length}';
+      final filterNote = controller.selectedDepotSummary;
 
       return OutboundScreen(
         title: OutboundLabels.bagListTitle,
@@ -80,6 +80,11 @@ class _BagListViewState extends State<BagListView> {
               ),
             ),
             children: [
+              if (filterNote.isNotEmpty)
+                Text(
+                  filterNote,
+                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                ),
               if (loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
@@ -91,7 +96,7 @@ class _BagListViewState extends State<BagListView> {
                 _ListMessage(text: err, onRetry: controller.loadBagList)
               else if (rows.isEmpty)
                 _ListMessage(
-                  text: 'No bags found.',
+                  text: 'No bags match the selected depots.',
                   onRetry: controller.loadBagList,
                 )
               else ...[
@@ -169,9 +174,10 @@ class _BagListTable extends StatelessWidget {
           ),
           columns: const [
             DataColumn(label: Text(OutboundLabels.colSlNo)),
-            DataColumn(label: Text('BAG CODE')),
-            DataColumn(label: Text('METAL SEAL')),
-            DataColumn(label: Text('DESTINATION')),
+            DataColumn(label: Text(OutboundLabels.bagCode)),
+            DataColumn(label: Text(OutboundLabels.metalSeal)),
+            DataColumn(label: Text(OutboundLabels.colOrigin)),
+            DataColumn(label: Text(OutboundLabels.colDestination)),
             DataColumn(label: Text(OutboundLabels.colActions)),
           ],
           rows: [
@@ -189,7 +195,14 @@ class _BagListTable extends StatelessWidget {
                     ),
                   ),
                   DataCell(Text(rows[i].metalSealNo ?? '—')),
-                  DataCell(Text(branchLabel(rows[i].destinationBranchId))),
+                  DataCell(Text(branchLabel(rows[i].originBranchId))),
+                  DataCell(
+                    Text(
+                      branchLabel(
+                        rows[i].destinationSectorId ?? rows[i].destinationBranchId,
+                      ),
+                    ),
+                  ),
                   DataCell(
                     TextButton(
                       onPressed: () => onTap(rows[i]),
