@@ -578,7 +578,7 @@ class HomeView extends GetView<HomeController> {
                     if (bottomController.isLoading.value) {
                       return const SizedBox.shrink();
                     }
-                    if (bottomController.userData.value == null) {
+                    if (bottomController.userData.value?.role != 'messanger') {
                       return const SizedBox.shrink();
                     }
                     return Row(

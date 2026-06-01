@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_table_row.dart'
 import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,8 @@ class OutboundHubScanController extends GetxController {
   final sessionScannedRows = <HubScanTableRow>[].obs;
   final hubScanListAllRows = <HubScanLog>[].obs;
   final hubScanListPage = 1.obs;
+  final hubScanListBranchId = ''.obs;
+  final hubScanListBranchName = ''.obs;
   final scrollToSessionTable = 0.obs;
   final shipmentScanHistoryRows = <ShipmentScanEvent>[].obs;
   final isScanHistoryLoading = false.obs;
@@ -221,7 +224,9 @@ class OutboundHubScanController extends GetxController {
       return;
     }
     sessionScannedRows.assignAll(
-      sessionScannedRows.where((r) => r.sessionKey != key).toList(growable: false),
+      sessionScannedRows
+          .where((r) => r.sessionKey != key)
+          .toList(growable: false),
     );
   }
 
@@ -281,8 +286,7 @@ class OutboundHubScanController extends GetxController {
     await fetchShipment(connoteOverride: value.trim());
   }
 
-  bool get hubScanListShowsAllBranches =>
-      _branchList.selectedBranchIdOrNull == null;
+  bool get hubScanListShowsAllBranches => false;
 
   Future<bool> loadHubScanList() async {
     isHubScanListLoading.value = true;
@@ -290,17 +294,17 @@ class OutboundHubScanController extends GetxController {
     hubScanListAllRows.clear();
     hubScanListPage.value = 1;
     try {
-      final branchId = _branchList.selectedBranchIdOrNull;
-      final APIResponse<List<HubScanLog>> r;
-      if (branchId != null) {
-        r = await _repo.hubScanLogsFetchAll(branchId: branchId);
-      } else {
-        if (_branchList.branches.isEmpty) {
-          await _branchList.loadBranches();
-        }
-        final ids = _branchList.branches.map((b) => b.id).toList(growable: false);
-        r = await _repo.hubScanLogsFetchAllBranches(branchIds: ids);
+      final ctx = await OutboundAuthContext.load();
+      final branchId = ctx.branchId?.trim();
+      if (branchId == null || branchId.isEmpty) {
+        hubScanListError.value = 'Messenger branch id is missing.';
+        return false;
       }
+      hubScanListBranchId.value = branchId;
+      hubScanListBranchName.value = ctx.branchName?.trim() ?? '';
+      _branchList.selectedBranchId.value = branchId;
+      final APIResponse<List<HubScanLog>> r =
+          await _repo.hubScanLogsFetchAll(branchId: branchId);
       return r.when(
         success: (rows) {
           hubScanListAllRows.assignAll(rows);
@@ -367,7 +371,8 @@ class OutboundHubScanController extends GetxController {
             : (row.docketNo?.trim() ?? '');
         if (connote.isEmpty) continue;
 
-        final branchId = row.branchId ?? _branchList.selectedBranchIdOrNull ?? '';
+        final branchId =
+            row.branchId ?? _branchList.selectedBranchIdOrNull ?? '';
         final scanStatus = _statusForApi(row.scanType ?? status.value ?? '');
 
         final r = await _repo.hubScanSubmit(
@@ -392,7 +397,6 @@ class OutboundHubScanController extends GetxController {
         );
         if (!ok) break;
       }
-
     } finally {
       isBusy.value = false;
     }

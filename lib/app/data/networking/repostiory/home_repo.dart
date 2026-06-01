@@ -4,20 +4,16 @@ import 'dart:developer';
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/contract_view_model.dart';
 import 'package:axlpl_delivery/app/data/models/customer_dashboard_model.dart';
-import 'package:axlpl_delivery/app/data/models/customer_details_model.dart';
 import 'package:axlpl_delivery/app/data/models/customer_invoice_model.dart';
 import 'package:axlpl_delivery/app/data/models/dashboard_model.dart';
 import 'package:axlpl_delivery/app/data/models/get_ratting_model.dart';
 import 'package:axlpl_delivery/app/data/models/used_contract_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_services.dart';
-import 'package:axlpl_delivery/common_widget/my_invoices_list.dart';
-import 'package:axlpl_delivery/const/const.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 
 class HomeRepository {
   final ApiServices _apiServices = ApiServices();
 
-  final LocalStorage _localStorage = LocalStorage();
   Future<DashboardDataModel?> dashboardDataRepo() async {
     try {
       final userData = await LocalStorage().getUserLocalData();
@@ -112,8 +108,11 @@ class HomeRepository {
   Future<ContractViewModel?> contractViewRepo() async {
     try {
       final userData = await LocalStorage().getUserLocalData();
-      final userID = userData?.customerdetail?.id?.toString() ??
-          userData?.customerdetail?.id.toString();
+      final userID = userData?.customerdetail?.id?.toString().trim();
+      if (userID == null || userID.isEmpty) {
+        Utils().logInfo('Skipping contract view: customer id is missing');
+        return null;
+      }
       final response = await _apiServices.contractView(userID);
 
       return response.when(
@@ -143,8 +142,11 @@ class HomeRepository {
   Future<UsedContractModel?> usedContractRepo(final contractID) async {
     try {
       final userData = await LocalStorage().getUserLocalData();
-      final userID = userData?.customerdetail?.id?.toString() ??
-          userData?.customerdetail?.id.toString();
+      final userID = userData?.customerdetail?.id?.toString().trim();
+      if (userID == null || userID.isEmpty) {
+        Utils().logInfo('Skipping used contract: customer id is missing');
+        return null;
+      }
       final response = await _apiServices.usedContract(
         userID,
         contractID,
@@ -177,7 +179,11 @@ class HomeRepository {
   Future<List<CustomerInvoiceModel?>> myInvoiceRepo() async {
     try {
       final userData = await LocalStorage().getUserLocalData();
-      final userID = userData?.customerdetail?.id?.toString();
+      final userID = userData?.customerdetail?.id?.toString().trim();
+      if (userID == null || userID.isEmpty) {
+        Utils().logInfo('Skipping invoices: customer id is missing');
+        return [];
+      }
 
       final response = await _apiServices.getCustomerInvoice(userID);
 

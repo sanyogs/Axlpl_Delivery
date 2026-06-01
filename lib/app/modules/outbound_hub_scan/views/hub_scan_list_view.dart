@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admi
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/controllers/outbound_hub_scan_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/widgets/hub_scan_history_table.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,7 +43,14 @@ class _HubScanListViewState extends State<HubScanListView> {
       final page = controller.hubScanListPage.value;
       final totalPages = controller.hubScanListTotalPages;
       final rangeLabel = controller.hubScanListRangeLabel;
-      final allBranches = controller.hubScanListShowsAllBranches;
+      final activeBranchId = controller.hubScanListBranchId.value.trim().isEmpty
+          ? branchList.selectedBranchId.value
+          : controller.hubScanListBranchId.value.trim();
+      final activeBranchName = _branchDisplayName(
+        branchId: activeBranchId,
+        branchName: controller.hubScanListBranchName.value,
+        branchLabel: branchLabel,
+      );
       final _ = controller.hubScanListAllRows.length;
 
       return OutboundScreen(
@@ -58,16 +66,17 @@ class _HubScanListViewState extends State<HubScanListView> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnPerformScan,
-              onPressed: () => Get.back(),
+              onPressed: _openDocketScan,
             ),
           ),
           OutboundAdminSection(
             title: OutboundLabels.hubScanHistory,
             trailing: _NewHubScanHeaderButton(
               enabled: true,
-              onPressed: () => Get.back(),
+              onPressed: _openDocketScan,
             ),
             children: [
+              _HubScanListBranchLabel(branchName: activeBranchName),
               if (loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
@@ -80,25 +89,10 @@ class _HubScanListViewState extends State<HubScanListView> {
               else if (err.isNotEmpty)
                 _ListMessage(
                   text: err,
-                  onRetry: controller.loadHubScanList,
                 )
               else if (rows.isEmpty)
-                _ListMessage(
-                  text: 'No hub scans found.',
-                  onRetry: controller.loadHubScanList,
-                )
+                const _ListMessage(text: 'No hub scans found.')
               else ...[
-                if (allBranches)
-                  Text(
-                    'All branches',
-                    style: themes.fontSize14_500.copyWith(
-                      color: themes.darkCyanBlue,
-                    ),
-                  ),
-                Text(
-                  rangeLabel,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-                ),
                 HubScanHistoryTable(
                   rows: rows,
                   branchLabel: branchLabel,
@@ -115,21 +109,13 @@ class _HubScanListViewState extends State<HubScanListView> {
                     );
                   },
                 ),
-                if (totalPages > 1) ...[
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Page $page of $totalPages',
-                    textAlign: TextAlign.center,
-                    style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-                  ),
-                  SizedBox(height: 8.h),
-                  _HubScanListPagination(
-                    page: page,
-                    totalPages: totalPages,
-                    onPrevious: controller.hubScanListPreviousPage,
-                    onNext: controller.hubScanListNextPage,
-                  ),
-                ],
+                _HubScanListFooter(
+                  rangeLabel: rangeLabel,
+                  page: page,
+                  totalPages: totalPages,
+                  onPrevious: controller.hubScanListPreviousPage,
+                  onNext: controller.hubScanListNextPage,
+                ),
               ],
             ],
           ),
@@ -137,31 +123,105 @@ class _HubScanListViewState extends State<HubScanListView> {
       );
     });
   }
+
+  void _openDocketScan() {
+    Get.offNamed(Routes.OUTBOUND_HUB_SCAN);
+  }
 }
 
-class _HubScanListPagination extends StatelessWidget {
-  const _HubScanListPagination({
+String _branchDisplayName({
+  required String? branchId,
+  required String branchName,
+  required String Function(String? id) branchLabel,
+}) {
+  final name = branchName.trim();
+  if (name.isNotEmpty) return name;
+  final label = branchLabel(branchId).trim();
+  if (label.isNotEmpty && label != '—') return label;
+  final id = branchId?.trim();
+  return id == null || id.isEmpty ? 'Branch' : 'Branch $id';
+}
+
+class _HubScanListBranchLabel extends StatelessWidget {
+  const _HubScanListBranchLabel({required this.branchName});
+
+  final String branchName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        branchName,
+        style: themes.fontSize14_500.copyWith(
+          color: themes.darkCyanBlue,
+        ),
+      ),
+    );
+  }
+}
+
+class _HubScanListFooter extends StatelessWidget {
+  const _HubScanListFooter({
     required this.page,
     required this.totalPages,
+    required this.rangeLabel,
     required this.onPrevious,
     required this.onNext,
   });
 
   final int page;
   final int totalPages;
+  final String rangeLabel;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
-    return OutboundButtonRow(
-      start: OutboundSecondaryButton(
-        label: 'Previous',
-        onPressed: page > 1 ? onPrevious : null,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          rangeLabel,
+          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+        ),
+        SizedBox(width: 8.w),
+        _TableFooterIconButton(
+          icon: Icons.chevron_left,
+          onPressed: page > 1 ? onPrevious : null,
+        ),
+        _TableFooterIconButton(
+          icon: Icons.chevron_right,
+          onPressed: page < totalPages ? onNext : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _TableFooterIconButton extends StatelessWidget {
+  const _TableFooterIconButton({
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+    return IconButton(
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        minimumSize: Size(32.w, 32.w),
+        padding: EdgeInsets.zero,
       ),
-      end: OutboundSecondaryButton(
-        label: 'Next',
-        onPressed: page < totalPages ? onNext : null,
+      icon: Icon(
+        icon,
+        size: 22.sp,
+        color: enabled ? themes.darkCyanBlue : themes.grayColor,
       ),
     );
   }
@@ -202,27 +262,19 @@ class _NewHubScanHeaderButton extends StatelessWidget {
 class _ListMessage extends StatelessWidget {
   const _ListMessage({
     required this.text,
-    required this.onRetry,
   });
 
   final String text;
-  final Future<bool> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-        ),
-        SizedBox(height: 12.h),
-        OutboundSecondaryButton(
-          label: 'Retry',
-          onPressed: () => onRetry(),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 20.h),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+      ),
     );
   }
 }

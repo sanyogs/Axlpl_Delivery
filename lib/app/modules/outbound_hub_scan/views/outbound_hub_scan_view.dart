@@ -1,5 +1,4 @@
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_table_row.dart';
-import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
@@ -13,7 +12,6 @@ import 'package:axlpl_delivery/app/modules/outbound_hub_scan/widgets/hub_scan_se
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -66,8 +64,6 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
           .join('|');
       final ____ = branchList.branches.length;
       final _____ = branchList.selectedBranchId.value;
-      final ______ = controller.shipmentScanHistoryRows.length;
-      final _______ = controller.isScanHistoryLoading.value;
       return OutboundScreen(
         title: OutboundLabels.hubScanScreenTitle,
         busy: busy,
@@ -94,14 +90,6 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
                   onScanned: controller.onConnoteScanned,
                 ),
               ),
-              OutboundSecondaryButton(
-                label: OutboundLabels.btnScanHistory,
-                onPressed: busy || controller.isScanHistoryLoading.value
-                    ? null
-                    : controller.loadShipmentScanHistory,
-              ),
-              if (controller.shipmentScanHistoryRows.isNotEmpty)
-                _ScanHistoryTable(rows: controller.shipmentScanHistoryRows),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.scanType,
                 required: true,
@@ -129,27 +117,33 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.clientCode,
-                child: OutboundReadOnlyInput(controller: controller.clientCodeController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.clientCodeController),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.noOfBox,
-                child: OutboundReadOnlyInput(controller: controller.noOfBoxController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.noOfBoxController),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.boxWeight,
-                child: OutboundReadOnlyInput(controller: controller.boxWeightController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.boxWeightController),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.originPincode,
-                child: OutboundReadOnlyInput(controller: controller.originPincodeController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.originPincodeController),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.destPincode,
-                child: OutboundReadOnlyInput(controller: controller.destPincodeController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.destPincodeController),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.destCity,
-                child: OutboundReadOnlyInput(controller: controller.destCityController),
+                child: OutboundReadOnlyInput(
+                    controller: controller.destCityController),
               ),
               Align(
                 alignment: Alignment.centerRight,
@@ -253,46 +247,6 @@ class _ScannedDocketDetailsList extends StatelessWidget {
             onRemove: row.saved ? null : () => onRemove(row.sessionKey),
           ),
       ],
-    );
-  }
-}
-
-class _ScanHistoryTable extends StatelessWidget {
-  const _ScanHistoryTable({required this.rows});
-
-  final List<ShipmentScanEvent> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.only(top: 8.h),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 40,
-          columns: const [
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Date')),
-            DataColumn(label: Text('Branch')),
-            DataColumn(label: Text('Remark')),
-          ],
-          rows: rows.map((e) {
-            final status = e.status?.toString() ?? '—';
-            final date = e.createdDate?.toString() ?? '—';
-            final branch = e.branchId?.toString() ?? '—';
-            final remark = e.remark?.toString() ?? '—';
-            return DataRow(
-              cells: [
-                DataCell(Text(status)),
-                DataCell(Text(date)),
-                DataCell(Text(branch)),
-                DataCell(Text(remark)),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
     );
   }
 }
