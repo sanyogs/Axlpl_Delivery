@@ -6,6 +6,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_resp
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
@@ -81,13 +82,8 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 onPressed: busy ? null : controller.getLinehaulDetails,
               ),
               if (controller.linehaulDetail.value != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Trip ${controller.linehaulDetail.value?.tripNo ?? ''} · '
-                    '${controller.linehaulDetail.value?.status ?? ''}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                OutboundLinehaulDetailBody(
+                  detail: controller.linehaulDetail.value!,
                 ),
               OutboundSecondaryButton(
                 label: OutboundLabels.btnFullLinehaulDetail,

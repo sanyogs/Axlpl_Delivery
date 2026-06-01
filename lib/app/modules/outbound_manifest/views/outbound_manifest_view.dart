@@ -115,6 +115,10 @@ class OutboundManifestView extends GetView<OutboundManifestController> {
                   detail: controller.manifestDetail.value!,
                   compact: true,
                 ),
+              OutboundSecondaryButton(
+                label: OutboundLabels.btnFullManifestDetail,
+                onPressed: busy ? null : controller.openManifestDetailPage,
+              ),
             ],
           ),
           OutboundExpandableSection(

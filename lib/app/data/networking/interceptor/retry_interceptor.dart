@@ -4,19 +4,30 @@ import 'package:axlpl_delivery/app/data/networking/interceptor/dio_connectivity_
 import 'package:dio/dio.dart';
 
 class RetryOnConnectionChangeInterceptor extends Interceptor {
-  final DioConnectivityRequestRetrier requestRetrier;
-
   RetryOnConnectionChangeInterceptor({
     required this.requestRetrier,
   });
 
+  final DioConnectivityRequestRetrier requestRetrier;
+
+  static const Duration _retryWaitTimeout = Duration(seconds: 20);
+
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     if (_shouldRetry(err)) {
       try {
-        requestRetrier.scheduleRequestRetry(err.requestOptions);
-      } catch (e) {}
+        final response = await requestRetrier
+            .scheduleRequestRetry(err.requestOptions)
+            .timeout(_retryWaitTimeout);
+        return handler.resolve(response);
+      } catch (_) {
+        // Forward the original error when retry fails or times out.
+      }
     }
+    handler.next(err);
   }
 
   bool _shouldRetry(DioException err) {

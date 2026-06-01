@@ -31,6 +31,10 @@ class OutboundLabels {
   static const colDestination = 'DESTINATION';
   static const colMode = 'MODE';
   static const colShipmentStatus = 'SHIPMENT STATUS';
+  static const hintSelectOption = 'Select an option';
+  static const hintMetalSealInput = 'Enter Bag No/Metal Seal';
+  static const hintScanShipmentInput = 'Scan Shipment ID.';
+  static const hubScanScreenTitle = 'Docket Scan Screen';
   static const colInvoiceNo = 'INVOICE NO';
   static const colOrigin = 'ORIGIN';
   static const labelStagingRow = 'Not saved';
@@ -123,6 +127,7 @@ class OutboundLabels {
   static const btnAddMissed = 'Add missed';
   static const btnRebag = 'Rebag';
   static const btnViewDetails = 'Details';
+  static const btnFullManifestDetail = 'Full manifest detail';
   static const btnPrint = 'Print';
   static const btnRefreshLogs = 'Refresh logs';
   static const btnTapRowBag = 'Tap a row to use bag code';

@@ -62,14 +62,6 @@ class OutboundLinehaulController extends GetxController {
     final manifests = manifestCodesController.text.trim();
     final vehicle = vehicleController.text.trim();
     final driver = driverController.text.trim();
-    if (manifests.isEmpty) {
-      Get.snackbar('Linehaul', 'Manifest code(s) required');
-      return;
-    }
-    if (vehicle.isEmpty || driver.isEmpty) {
-      Get.snackbar('Linehaul', 'Vehicle no and driver name are required');
-      return;
-    }
     isBusy.value = true;
     try {
       final r = await _repo.assignLinehaul(
@@ -98,26 +90,18 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> listLinehauls() async {
-    final status = listFilterStatus.value?.trim();
-    if (status == null || status.isEmpty) {
-      Get.snackbar('Linehaul', 'Select a status filter');
-      return;
-    }
+    final status = listFilterStatus.value?.trim() ?? '';
     isBusy.value = true;
     try {
       final rows = await _repo.listLinehauls(status: status);
       linehaulRows.assignAll(rows);
-      if (rows.isEmpty && _repo.lastMessage.isNotEmpty) {
-        lastResponseText.value = _repo.lastMessage;
-        Get.snackbar('Linehaul', _repo.lastMessage);
-      } else {
-        lastResponseText.value = rows.isEmpty
-            ? 'No linehaul rows returned.'
-            : OutboundDataParse.pretty(rows.map((r) => r.asMap).toList());
-        Get.snackbar(
-          'Linehaul',
-          rows.isEmpty ? 'Success (no rows)' : '${rows.length} row(s)',
-        );
+      final msg = _repo.lastMessage.trim();
+      if (msg.isNotEmpty) {
+        lastResponseText.value = msg;
+        Get.snackbar('Linehaul', msg);
+      } else if (rows.isNotEmpty) {
+        lastResponseText.value =
+            OutboundDataParse.pretty(rows.map((r) => r.asMap).toList());
       }
     } finally {
       isBusy.value = false;
@@ -145,7 +129,8 @@ class OutboundLinehaulController extends GetxController {
           lastResponseText.value = summary.isNotEmpty
               ? summary.join('\n')
               : OutboundDataParse.pretty(data);
-          Get.snackbar('Linehaul', 'Linehaul details loaded');
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -159,15 +144,7 @@ class OutboundLinehaulController extends GetxController {
 
   Future<void> updateLinehaulStatus() async {
     final trip = tripNoController.text.trim();
-    final newStatus = updateStatus.value?.trim();
-    if (trip.isEmpty) {
-      Get.snackbar('Linehaul', 'Trip no is required');
-      return;
-    }
-    if (newStatus == null || newStatus.isEmpty) {
-      Get.snackbar('Linehaul', 'Select new status');
-      return;
-    }
+    final newStatus = updateStatus.value?.trim() ?? '';
     isBusy.value = true;
     try {
       final ctx = await OutboundAuthContext.load();
@@ -206,10 +183,6 @@ class OutboundLinehaulController extends GetxController {
 
   void openLinehaulDetailPage() {
     final ref = tripNoController.text.trim();
-    if (ref.isEmpty) {
-      Get.snackbar('Linehaul', 'Enter trip no from assign or list');
-      return;
-    }
     Get.toNamed(
       Routes.OUTBOUND_REMOTE_DETAIL,
       arguments: {'kind': 'linehaul', 'id': ref},

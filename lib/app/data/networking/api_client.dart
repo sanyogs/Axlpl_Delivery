@@ -18,12 +18,23 @@ class ApiClient {
   final String baseUrl = 'https://my.axlpl.com/messenger/services_v8/';
   late final Future<String> _appVersionFuture = _loadAppVersion();
 
+  static Future<bool> _hasNetworkConnection() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      // Plugin may return [] briefly; let Dio attempt the request.
+      if (results.isEmpty) return true;
+      return results.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      return true;
+    }
+  }
+
   ApiClient() {
     _dio = Dio();
     _dio.options.baseUrl = baseUrl;
-    _dio.options.sendTimeout = Duration(seconds: 5);
-    _dio.options.connectTimeout = Duration(seconds: 5);
-    _dio.options.receiveTimeout = Duration(seconds: 5);
+    _dio.options.sendTimeout = const Duration(seconds: 30);
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
     _dio.interceptors.add(
       RetryOnConnectionChangeInterceptor(
         requestRetrier: DioConnectivityRequestRetrier(
@@ -171,9 +182,16 @@ class ApiClient {
       return payload;
     }
 
-    final map = _asStringKeyedMap(payload);
-    if (map.isEmpty) return payload;
-    return {...map, '__server_message': serverMessage};
+    if (payload is Map) {
+      return {
+        ..._asStringKeyedMap(payload),
+        '__server_message': serverMessage,
+      };
+    }
+    if (payload is List) {
+      return {'items': payload, '__server_message': serverMessage};
+    }
+    return {'value': payload, '__server_message': serverMessage};
   }
 
   String? _messageFromUnknownBody(dynamic data) {
@@ -275,8 +293,7 @@ class ApiClient {
     bool appendPlatform = true,
   }) async {
     // ✅ Step 1: Check Internet Connectivity
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    if (!await _hasNetworkConnection()) {
       return APIResponse.error(AppException.connectivity());
     }
 
@@ -406,8 +423,7 @@ class ApiClient {
   }) async {
     // Check for network connectivity with potential error handling
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (!await _hasNetworkConnection()) {
         return APIResponse.error(AppException.connectivity());
       }
     } catch (e) {
@@ -558,8 +574,7 @@ class ApiClient {
     ContentType contentType = ContentType.urlEncoded,
   }) async {
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (!await _hasNetworkConnection()) {
         return null;
       }
     } catch (e) {

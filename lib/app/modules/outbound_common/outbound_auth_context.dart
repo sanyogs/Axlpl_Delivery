@@ -19,9 +19,15 @@ class OutboundAuthContext {
         String? branchName,
         String hubBranchId,
       })> load() async {
-    final user = await LocalStorage().getUserLocalData();
+    final ls = LocalStorage();
+    final user = await ls.getUserLocalData();
     final m = user?.messangerdetail;
-    final token = m?.token ?? user?.customerdetail?.token;
+    final storedToken = await storage.read(key: ls.tokenKey);
+    final token = _firstNonEmpty([
+      m?.token,
+      storedToken,
+      user?.customerdetail?.token,
+    ]);
     final messengerBranch = m?.branchId?.trim();
     return (
       token: token,
@@ -44,5 +50,13 @@ class OutboundAuthContext {
     final m = messengerBranchId?.trim();
     if (m != null && m.isNotEmpty && m != '2') return m;
     return hubDataBranchId;
+  }
+
+  static String? _firstNonEmpty(List<String?> candidates) {
+    for (final c in candidates) {
+      final t = c?.trim();
+      if (t != null && t.isNotEmpty) return t;
+    }
+    return null;
   }
 }

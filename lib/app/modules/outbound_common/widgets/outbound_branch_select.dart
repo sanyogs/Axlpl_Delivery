@@ -12,6 +12,7 @@ class OutboundBranchSelect extends StatelessWidget {
     required this.onChanged,
     this.isLoading = false,
     this.isSearchable = true,
+    this.dropdownHint,
   });
 
   final String label;
@@ -20,6 +21,7 @@ class OutboundBranchSelect extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final bool isLoading;
   final bool isSearchable;
+  final String? dropdownHint;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class OutboundBranchSelect extends StatelessWidget {
       children: [
         dropdownText(label),
         CommonDropdown<OutboundBranchOption>(
-          hint: label,
+          hint: dropdownHint ?? label,
           isSearchable: isSearchable,
           isLoading: isLoading,
           selectedValue: selectedId,

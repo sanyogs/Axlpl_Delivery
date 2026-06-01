@@ -61,7 +61,7 @@ class BaggingTableRow {
     String? destination,
   }) {
     return BaggingTableRow(
-      boxNumber: item.shipmentInvoiceNo ?? '1',
+      boxNumber: item.boxNo ?? item.shipmentInvoiceNo ?? '1',
       shipmentId: item.shipmentId,
       destination: destination,
       mode: item.shipmentStatus ?? '—',

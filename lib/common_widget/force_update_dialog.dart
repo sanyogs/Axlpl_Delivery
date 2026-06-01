@@ -21,7 +21,23 @@ void showForceUpdateDialog({
     Get.back();
   }
 
-  _isForceUpdateDialogVisible = true;
+  void present() {
+    if (_isForceUpdateDialogVisible) return;
+    _isForceUpdateDialogVisible = true;
+    _showForceUpdateDialogContent(message: message, updateUrl: updateUrl);
+  }
+
+  if (Get.key.currentContext == null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => present());
+    return;
+  }
+  present();
+}
+
+void _showForceUpdateDialogContent({
+  String? message,
+  String? updateUrl,
+}) {
   final themes = Themes();
   final storeUrl = updateUrl?.trim().isNotEmpty == true
       ? updateUrl!.trim()

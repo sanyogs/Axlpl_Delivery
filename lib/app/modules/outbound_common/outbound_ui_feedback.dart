@@ -55,9 +55,7 @@ class OutboundUiFeedback {
           return;
         }
         target.value = msg;
-        if (outboundIsBenignDuplicate(msg)) {
-          Get.snackbar(feature, 'Already recorded — $msg');
-        } else {
+        if (msg.isNotEmpty) {
           Get.snackbar(feature, msg);
         }
       },

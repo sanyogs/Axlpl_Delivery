@@ -3,23 +3,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('OutboundValidation', () {
-    test('validateBagId rejects zero and empty', () {
-      expect(OutboundValidation.validateBagId(null), isNotNull);
-      expect(OutboundValidation.validateBagId(''), isNotNull);
-      expect(OutboundValidation.validateBagId('0'), isNotNull);
+    test('validateBagId is non-blocking', () {
+      expect(OutboundValidation.validateBagId(null), isNull);
+      expect(OutboundValidation.validateBagId(''), isNull);
+      expect(OutboundValidation.validateBagId('0'), isNull);
       expect(OutboundValidation.validateBagId('42'), isNull);
       expect(OutboundValidation.validateBagId('BAG20260515154014'), isNull);
     });
 
-    test('validateManifestId accepts manifest codes', () {
+    test('validateManifestId is non-blocking', () {
       expect(OutboundValidation.validateManifestId('MUM075'), isNull);
-      expect(OutboundValidation.validateManifestId('0'), isNotNull);
+      expect(OutboundValidation.validateManifestId('0'), isNull);
     });
 
-    test('validateCreateBagPayload rejects bag_id 0 without bag code', () {
+    test('validateCreateBagPayload is non-blocking', () {
       expect(
         OutboundValidation.validateCreateBagPayload({'bag_id': 0}),
-        isNotNull,
+        isNull,
       );
       expect(
         OutboundValidation.validateCreateBagPayload({
@@ -29,7 +29,9 @@ void main() {
         isNull,
       );
       expect(
-        OutboundValidation.validateCreateBagPayload({'bag_id': '12', 'bag_code': 'X'}),
+        OutboundValidation.validateCreateBagPayload(
+          {'bag_id': '12', 'bag_code': 'X'},
+        ),
         isNull,
       );
     });

@@ -4,8 +4,8 @@ import 'package:axlpl_delivery/app/data/models/outbound/bagging_table_row.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_bag_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
+import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
-import 'package:axlpl_delivery/app/modules/outbound_bagging/outbound_bagging_validation.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
@@ -115,10 +115,6 @@ class OutboundBaggingController extends GetxController {
     }
 
     final detail = bagDetail.value;
-    if (detail != null && !_bagMatchesSelectedDepots(detail)) {
-      return rows;
-    }
-
     final savedDestLabel = detail == null
         ? destLabel
         : _labelForDestinationSector(
@@ -214,16 +210,15 @@ class OutboundBaggingController extends GetxController {
 
   String _buildDepotContextKey() => '${_originId ?? ''}|${_destId ?? ''}';
 
-  bool _validateDepotsForAction(String action) {
-    final err = OutboundBaggingValidation.validateDepots(
-      originBranchId: _originId,
-      destinationBranchId: _destId,
-    );
-    if (err != null) {
-      Get.snackbar('Bagging', '$err before $action');
-      return false;
-    }
-    return true;
+  /// Snackbar text from API `message` / `__server_message` only — never client copy.
+  void _snackServerData(dynamic data) {
+    final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+    if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
+  }
+
+  void _snackServerError(AppException e) {
+    final msg = e.message.trim();
+    if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
   }
 
   void onOriginDepotChanged(String? id) {
@@ -272,41 +267,7 @@ class OutboundBaggingController extends GetxController {
     _depotContextKey = _buildDepotContextKey();
   }
 
-  bool _bagMatchesSelectedDepots(BagDetail? detail) {
-    if (detail == null) return true;
-    final origin = _originId;
-    final dest = _destId;
-    if (origin != null &&
-        origin.isNotEmpty &&
-        detail.originBranchId != null &&
-        detail.originBranchId!.isNotEmpty &&
-        detail.originBranchId != origin) {
-      return false;
-    }
-    if (dest != null && dest.isNotEmpty) {
-      final bagDest = detail.destinationSectorId ?? detail.destinationBranchId;
-      if (bagDest != null && bagDest.isNotEmpty && bagDest != dest) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  bool _canStageScan() {
-    if (!_validateDepotsForAction('scanning')) return false;
-    final sealErr = OutboundBaggingValidation.validateMetalSealNo(
-      metalSealController.text,
-    );
-    if (sealErr != null) {
-      Get.snackbar('Bagging', sealErr);
-      return false;
-    }
-    return true;
-  }
-
   void _stageCurrentShipment(HubScanFetchedShipment shipment) {
-    if (!_canStageScan()) return;
-
     final row = BaggingTableRow.fromFetchedShipment(
       shipment: shipment,
       scanTyped: shipmentController.text.trim(),
@@ -324,13 +285,6 @@ class OutboundBaggingController extends GetxController {
     }
     sessionScannedRows.assignAll(next);
     scrollToScannedTable.value++;
-  }
-
-  void _clearShipmentFieldOnly() {
-    shipmentController.clear();
-    fetchedShipment.value = null;
-    _lastFetchedShipmentId = null;
-    fetchStatusMessage.value = '';
   }
 
   Future<void> onShipmentFocusLost() async {
@@ -351,40 +305,18 @@ class OutboundBaggingController extends GetxController {
       bagDetail.value = null;
       return;
     }
-    final err = OutboundBaggingValidation.validateBagCode(code);
-    if (err != null) {
-      Get.snackbar('Bagging', err);
-      return;
-    }
-    if (!_validateDepotsForAction('load bag')) return;
-
     isBusy.value = true;
     try {
       final r = await _repo.fetchBagDetails(code);
       r.when(
         success: (data) {
           final detail = BagDetail.fromDynamic(data);
-          if (detail.bagCode == null || detail.bagCode!.isEmpty) {
-            Get.snackbar('Bagging', 'Bag not found');
-            return;
-          }
-          if (!_bagMatchesSelectedDepots(detail)) {
-            Get.snackbar(
-              'Bagging',
-              'Bag does not match selected origin/destination depots',
-            );
-            return;
-          }
           bagDetail.value = detail;
           _applyBagDetailToSelection(detail);
           sessionScannedRows.clear();
-          Get.snackbar('Bagging', 'Bag ${detail.bagCode} loaded');
+          _snackServerData(data);
         },
-        error: (e) {
-          if (e.message.trim().isNotEmpty) {
-            Get.snackbar('Bagging', e.message.trim());
-          }
-        },
+        error: _snackServerError,
       );
     } finally {
       isBusy.value = false;
@@ -392,13 +324,7 @@ class OutboundBaggingController extends GetxController {
   }
 
   Future<void> fetchShipment({String? shipmentOverride}) async {
-    if (!_validateDepotsForAction('scan')) return;
     final connote = (shipmentOverride ?? shipmentController.text).trim();
-    final err = OutboundBaggingValidation.validateShipmentDocket(connote);
-    if (err != null) {
-      Get.snackbar('Bagging', err);
-      return;
-    }
     if (connote == _lastFetchedShipmentId && fetchedShipment.value != null) {
       return;
     }
@@ -446,8 +372,6 @@ class OutboundBaggingController extends GetxController {
   }
 
   Future<void> confirmBagging() async {
-    if (!_validateDepotsForAction('Confirm')) return;
-
     if (fetchedShipment.value != null) {
       _stageCurrentShipment(fetchedShipment.value!);
     } else if (shipmentController.text.trim().isNotEmpty) {
@@ -461,71 +385,31 @@ class OutboundBaggingController extends GetxController {
       if (!saved) return;
     }
 
-    final bagCode = _workingBagCode;
-    final bagErr = OutboundBaggingValidation.validateBagCode(
-      bagCode,
-      required: true,
-    );
-    if (bagErr != null) {
-      shipmentFocusNode.unfocus();
-      _clearShipmentFieldOnly();
-      Get.snackbar('Bagging', bagErr);
-      return;
-    }
-
-    await refreshBagDetailsQuiet();
-    final detail = bagDetail.value;
-    if (detail != null && !_bagMatchesSelectedDepots(detail)) {
-      Get.snackbar(
-        'Bagging',
-        'Bag does not match selected '
-        '${_branchList.displayLabelForId(_originId)} → '
-        '${_branchList.displayLabelForId(_destId)}',
-      );
-      return;
-    }
+    final bagCode = _workingBagCode?.trim() ?? '';
+    if (bagCode.isEmpty) return;
 
     isBusy.value = true;
     try {
-      final r = await _repo.lockBag(bagCode!);
-      var locked = false;
-      r.when(
-        success: (data) {
-          locked = true;
-          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-          Get.snackbar(
-            'Bagging',
-            msg.isNotEmpty ? msg : 'Bag locked — ready for manifest',
-          );
+      await refreshBagDetailsQuiet();
+      scrollToScannedTable.value++;
+
+      final r = await _repo.lockBag(bagCode);
+      await r.when(
+        success: (data) async {
+          _snackServerData(data);
+          await refreshBagDetailsQuiet();
+          scrollToScannedTable.value++;
+          shipmentController.clear();
+          fetchedShipment.value = null;
+          _lastFetchedShipmentId = null;
+          fetchStatusMessage.value = '';
         },
-        error: (e) {
-          if (e.message.trim().isNotEmpty) {
-            Get.snackbar('Bagging', e.message.trim());
-          }
+        error: (e) async {
+          _snackServerError(e);
         },
       );
-      if (locked) {
-        _resetForNewBag(keepDepots: true);
-      }
     } finally {
       isBusy.value = false;
-    }
-  }
-
-  void _resetForNewBag({bool keepDepots = false}) {
-    sessionScannedRows.clear();
-    bagDetail.value = null;
-    bagCodeWorkingController.clear();
-    _loadedBagCode = null;
-    metalSealController.clear();
-    shipmentController.clear();
-    fetchedShipment.value = null;
-    _lastFetchedShipmentId = null;
-    fetchStatusMessage.value = '';
-    if (!keepDepots) {
-      selectedOriginDepotId.value = null;
-      selectedDestDepotId.value = null;
-      _depotContextKey = _buildDepotContextKey();
     }
   }
 
@@ -534,41 +418,17 @@ class OutboundBaggingController extends GetxController {
   }
 
   bool _isExistingBagSession() {
-    final code = _workingBagCode;
-    return code != null &&
-        OutboundApiParams.looksLikeBagCode(code) &&
-        OutboundBaggingValidation.validateBagCode(code) == null;
+    final code = _workingBagCode?.trim();
+    return code != null && code.isNotEmpty;
   }
 
   Future<bool> _savePendingShipments() async {
-    final depotErr = OutboundBaggingValidation.validateDepots(
-      originBranchId: _originId,
-      destinationBranchId: _destId,
-    );
-    if (depotErr != null) {
-      Get.snackbar('Bagging', depotErr);
-      return false;
-    }
-
-    final origin = _originId!;
-    final dest = _destId!;
-
-    final sealErr = OutboundBaggingValidation.validateMetalSealNo(
-      metalSealController.text,
-    );
-    if (sealErr != null) {
-      Get.snackbar('Bagging', sealErr);
-      return false;
-    }
+    final origin = _originId ?? '';
+    final dest = _destId ?? '';
     final metalSeal = metalSealController.text.trim();
 
     final pending =
         sessionScannedRows.where((r) => !r.saved).toList(growable: false);
-
-    if (pending.isEmpty && !_isExistingBagSession()) {
-      Get.snackbar('Bagging', 'Scan at least one shipment before Save');
-      return false;
-    }
 
     isBusy.value = true;
     var savedCount = 0;
@@ -583,13 +443,6 @@ class OutboundBaggingController extends GetxController {
 
         for (final row in pending) {
           final docket = row.docketForApi;
-          final docketErr = OutboundBaggingValidation.validateShipmentDocket(docket);
-          if (docketErr != null) {
-            Get.snackbar('Bagging', docketErr);
-            ok = false;
-            break;
-          }
-
           final r = await _repo.addShipmentToBag(
             bagId: bagCode,
             docketNo: docket,
@@ -600,54 +453,31 @@ class OutboundBaggingController extends GetxController {
             success: (data) {
               rowOk = true;
               savedCount++;
-              final msg = OutboundUiFeedback.serverMessageFromData(data) ?? '';
-              if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
+              _snackServerData(data);
             },
             error: (e) {
               ok = false;
-              final msg = e.message.trim();
-              if (msg.isNotEmpty) Get.snackbar('Bagging', '$docket: $msg');
+              _snackServerError(e);
             },
           );
           if (!rowOk) break;
         }
         if (savedCount > 0) {
-          sessionScannedRows.clear();
-          await refreshBagDetailsQuiet();
-          Get.snackbar(
-            'Bagging',
-            savedCount == pending.length
-                ? 'Shipment(s) added to bag.'
-                : '$savedCount of ${pending.length} added.',
-          );
+          final loaded = await refreshBagDetailsQuiet();
+          if (loaded) {
+            sessionScannedRows.clear();
+            scrollToScannedTable.value++;
+          }
         } else if (pending.isEmpty) {
-          Get.snackbar('Bagging', 'Bag loaded — scan shipments to add');
           ok = true;
         } else {
           ok = false;
         }
       } else {
         final ids = pending.map((r) => r.docketForApi).where((s) => s.isNotEmpty).toList();
-        if (ids.isEmpty) {
-          Get.snackbar('Bagging', 'Scan at least one shipment before Save');
-          return false;
-        }
-        for (final id in ids) {
-          final docketErr = OutboundBaggingValidation.validateShipmentDocket(id);
-          if (docketErr != null) {
-            Get.snackbar('Bagging', docketErr);
-            return false;
-          }
-        }
-
         final customBagCode = _workingBagCode;
         String? createBagCode;
         if (customBagCode != null && customBagCode.isNotEmpty) {
-          final codeErr = OutboundBaggingValidation.validateBagCode(customBagCode);
-          if (codeErr != null) {
-            Get.snackbar('Bagging', codeErr);
-            return false;
-          }
           createBagCode = customBagCode;
         }
 
@@ -673,19 +503,19 @@ class OutboundBaggingController extends GetxController {
             if (seal != null && seal.isNotEmpty) {
               metalSealController.text = seal;
             }
-            final msg = OutboundUiFeedback.serverMessageFromData(data) ?? '';
-            if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
+            _snackServerData(data);
           },
           error: (e) {
             ok = false;
-            if (e.message.trim().isNotEmpty) {
-              Get.snackbar('Bagging', e.message.trim());
-            }
+            _snackServerError(e);
           },
         );
         if (!created) return false;
-        sessionScannedRows.clear();
-        await refreshBagDetailsQuiet();
+        final loaded = await refreshBagDetailsQuiet();
+        if (loaded) {
+          sessionScannedRows.clear();
+          scrollToScannedTable.value++;
+        }
       }
     } finally {
       isBusy.value = false;
@@ -693,20 +523,18 @@ class OutboundBaggingController extends GetxController {
     return ok;
   }
 
-  Future<void> refreshBagDetailsQuiet() async {
+  Future<bool> refreshBagDetailsQuiet() async {
     final code = _workingBagCode;
-    if (code == null) return;
-    final err = OutboundBaggingValidation.validateBagCode(code);
-    if (err != null) return;
-
+    if (code == null) return false;
     final r = await _repo.fetchBagDetails(code);
-    r.when(
+    return r.when(
       success: (data) {
         final detail = BagDetail.fromDynamic(data);
         bagDetail.value = detail;
         _applyBagDetailToSelection(detail);
+        return true;
       },
-      error: (_) {},
+      error: (_) => false,
     );
   }
 
@@ -723,20 +551,17 @@ class OutboundBaggingController extends GetxController {
 
     final origin = _originId;
     final bagCode = _workingBagCode;
-    final bagErr = OutboundBaggingValidation.validateBagCode(bagCode, required: true);
-    if (origin == null || origin.isEmpty || bagErr != null) {
-      Get.snackbar('Bagging', bagErr ?? 'Cannot remove — origin depot missing');
-      return;
-    }
-
-    final docketErr = OutboundBaggingValidation.validateShipmentDocket(row.docketForApi);
-    if (docketErr != null) {
-      Get.snackbar('Bagging', docketErr);
+    if (origin == null || origin.isEmpty || bagCode == null || bagCode.isEmpty) {
+      _removeShipmentFromBag(
+        bagCode: bagCode ?? '',
+        docket: row.docketForApi,
+        branchId: origin ?? '',
+      );
       return;
     }
 
     _removeShipmentFromBag(
-      bagCode: bagCode!,
+      bagCode: bagCode,
       docket: row.docketForApi,
       branchId: origin,
     );
@@ -756,14 +581,9 @@ class OutboundBaggingController extends GetxController {
       );
       r.when(
         success: (_) async {
-          Get.snackbar('Bagging', 'Shipment removed from bag');
           await refreshBagDetailsQuiet();
         },
-        error: (e) {
-          if (e.message.trim().isNotEmpty) {
-            Get.snackbar('Bagging', e.message.trim());
-          }
-        },
+        error: _snackServerError,
       );
     } finally {
       isBusy.value = false;
@@ -783,32 +603,16 @@ class OutboundBaggingController extends GetxController {
   }
 
   Future<bool> loadBagList() async {
-    final branchErr = OutboundBaggingValidation.validateOriginBranchId(_originId);
-    if (branchErr != null) {
-      bagListError.value = branchErr;
-      return false;
-    }
-    final destErr = OutboundBaggingValidation.validateDestinationBranchId(_destId);
-    if (destErr != null) {
-      bagListError.value = '$destErr (set on bagging screen first)';
-      return false;
-    }
-
     isBagListLoading.value = true;
     bagListError.value = '';
     bagListAllRows.clear();
     bagListPage.value = 1;
     try {
-      final rows = await _repo.listBags(branchId: _originId!);
+      final rows = await _repo.listBags(branchId: _originId ?? '');
       bagListAllRows.assignAll(rows);
       final filtered = bagListFilteredRows;
       if (filtered.isEmpty) {
-        final destLabel = _branchList.displayLabelForId(_destId);
-        bagListError.value = rows.isEmpty
-            ? (_repo.lastMessage.trim().isNotEmpty
-                ? _repo.lastMessage
-                : 'No bags found for this origin depot.')
-            : 'No bags for destination $destLabel at this origin.';
+        bagListError.value = _repo.lastMessage.trim();
       }
       return bagListError.value.isEmpty;
     } catch (e) {
@@ -839,7 +643,6 @@ class OutboundBaggingController extends GetxController {
     sessionScannedRows.clear();
     refreshBagDetailsQuiet();
     Get.back();
-    Get.snackbar('Bagging', 'Bag loaded — scan more shipments or Confirm to lock');
   }
 
   void prefillBaggingReport() {
@@ -868,16 +671,6 @@ class OutboundBaggingController extends GetxController {
     final start = reportStartController.text.trim();
     final end = reportEndController.text.trim();
 
-    final err = OutboundBaggingValidation.validateBaggingReportRequest(
-      bagCode: code,
-      startDate: start,
-      endDate: end,
-    );
-    if (err != null) {
-      Get.snackbar('Bagging', err);
-      return;
-    }
-
     isBusy.value = true;
     try {
       final r = await _repo.baggingReport(
@@ -889,20 +682,75 @@ class OutboundBaggingController extends GetxController {
         success: (data) {
           final report = BaggingReport.fromDynamic(data);
           baggingReportData.value = report;
-          if (report.items.isEmpty &&
-              report.bagCode == null &&
-              code.isNotEmpty) {
-            Get.snackbar('Bagging', 'No report data for this bag code');
-          }
         },
-        error: (e) {
-          if (e.message.trim().isNotEmpty) {
-            Get.snackbar('Bagging', e.message.trim());
-          }
-        },
+        error: _snackServerError,
       );
     } finally {
       isBusy.value = false;
     }
+  }
+
+  /// `rebagshipment` — `new_bag_code`, `docket_no`, `user_id` (Postman).
+  Future<void> rebagShipment({
+    required String newBagCode,
+    required String docketNo,
+  }) async {
+    final docket = docketNo.trim();
+
+    isBusy.value = true;
+    try {
+      final r = await _repo.rebagShipment(
+        newBagId: newBagCode.trim(),
+        docketNo: docket,
+      );
+      r.when(
+        success: _snackServerData,
+        error: _snackServerError,
+      );
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  void showRebagDialog({String? defaultNewBagCode}) {
+    final newBagCtrl = TextEditingController(text: defaultNewBagCode?.trim() ?? '');
+    final docketCtrl = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Rebag shipment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: newBagCtrl,
+              decoration: const InputDecoration(
+                labelText: 'New bag code',
+                hintText: 'Target bag (new_bag_code)',
+              ),
+            ),
+            TextField(
+              controller: docketCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Docket / shipment ID',
+                hintText: 'docket_no',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Get.back();
+              await rebagShipment(
+                newBagCode: newBagCtrl.text,
+                docketNo: docketCtrl.text,
+              );
+            },
+            child: const Text('Rebag'),
+          ),
+        ],
+      ),
+    );
   }
 }

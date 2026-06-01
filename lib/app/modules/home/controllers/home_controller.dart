@@ -245,6 +245,16 @@ class HomeController extends GetxController {
     }
   }
 
+  Future<void> refreshHome() async {
+    await Future.wait<void>([
+      getDashborad(),
+      getCustomerDashborad(),
+      getRattingData(),
+      contractView(),
+      invoiceList(),
+    ]);
+  }
+
   void updateCode(String code) {
     scannedCode.value = code;
   }

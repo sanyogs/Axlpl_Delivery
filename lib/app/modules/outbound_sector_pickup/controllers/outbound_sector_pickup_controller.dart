@@ -5,7 +5,6 @@ import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -45,37 +44,6 @@ class OutboundSectorPickupController extends GetxController {
     );
   }
 
-  String? _pickupIdError() =>
-      OutboundValidation.validatePickupId(pickupIdController.text);
-
-  String? _docketError() => OutboundValidation.validateDocket(docketController.text);
-
-  String? _scanStatusError() {
-    final st = scanStatus.value?.trim();
-    if (st == null || st.isEmpty) return 'Select scan status';
-    return null;
-  }
-
-  /// Pickup id + docket required for scan / mark not picked / add missed.
-  bool _requirePickupAndDocket() {
-    final pickupErr = _pickupIdError();
-    if (pickupErr != null) {
-      _snack(
-        pickupRows.isEmpty
-            ? '$pickupErr — load the list and tap a row, or type pickup id'
-            : '$pickupErr — tap a pickup row or type pickup id',
-        isError: true,
-      );
-      return false;
-    }
-    final docketErr = _docketError();
-    if (docketErr != null) {
-      _snack(docketErr, isError: true);
-      return false;
-    }
-    return true;
-  }
-
   Future<String?> _branchIdOrSnack() async {
     final ctx = await OutboundAuthContext.load();
     final branchId = ctx.branchId?.trim();
@@ -86,19 +54,20 @@ class OutboundSectorPickupController extends GetxController {
     return branchId;
   }
 
-  String _messageFromResponse(dynamic data, {String fallback = 'Done'}) {
+  String _messageFromResponse(dynamic data, {String fallback = ''}) {
     final env = OutboundApiEnvelope.fromDynamic(data);
     final msg = env.message?.trim();
     if (msg != null && msg.isNotEmpty) return msg;
     return fallback;
   }
 
-  void _feedbackFromResponse(APIResponse<dynamic> response, {String okFallback = 'Done'}) {
+  void _feedbackFromResponse(APIResponse<dynamic> response) {
     response.when(
       success: (data) {
-        final msg = _messageFromResponse(data, fallback: okFallback);
+        final msg = _messageFromResponse(data);
+        if (msg.isEmpty) return;
         if (outboundIsBenignDuplicate(msg)) {
-          _snack('Already recorded — $msg');
+          _snack(msg);
         } else {
           _snack(msg);
         }
@@ -115,12 +84,15 @@ class OutboundSectorPickupController extends GetxController {
       final rows = await _repo.sectorPickupList();
       pickupRows.assignAll(rows);
       if (rows.isEmpty) {
-        final msg = _repo.lastMessage.trim().isNotEmpty
-            ? _repo.lastMessage
-            : 'No pickups found for your account';
-        _snack(msg, isError: _repo.lastMessage.isNotEmpty);
+        final msg = _repo.lastMessage.trim();
+        if (msg.isNotEmpty) _snack(msg, isError: true);
       } else {
-        _snack('Loaded ${rows.length} pickup(s)');
+        final msg = _repo.lastMessage.trim();
+        if (msg.isNotEmpty) {
+          _snack(msg);
+        } else {
+          _snack('${rows.length} pickup(s)');
+        }
       }
     } finally {
       isBusy.value = false;
@@ -128,12 +100,6 @@ class OutboundSectorPickupController extends GetxController {
   }
 
   Future<void> sectorPickupScan() async {
-    if (!_requirePickupAndDocket()) return;
-    final statusErr = _scanStatusError();
-    if (statusErr != null) {
-      _snack(statusErr, isError: true);
-      return;
-    }
     final branchId = await _branchIdOrSnack();
     if (branchId == null) return;
 
@@ -142,18 +108,17 @@ class OutboundSectorPickupController extends GetxController {
       final r = await _repo.sectorPickupScan(
         pickupId: pickupIdController.text.trim(),
         docketNo: docketController.text.trim(),
-        status: scanStatus.value!.trim(),
+        status: scanStatus.value?.trim() ?? '',
         remarks: remarksController.text.trim(),
         branchId: branchId,
       );
-      _feedbackFromResponse(r, okFallback: 'Pickup scan saved');
+      _feedbackFromResponse(r);
     } finally {
       isBusy.value = false;
     }
   }
 
   Future<void> markNotPicked() async {
-    if (!_requirePickupAndDocket()) return;
     final branchId = await _branchIdOrSnack();
     if (branchId == null) return;
 
@@ -165,14 +130,13 @@ class OutboundSectorPickupController extends GetxController {
         remarks: remarksController.text.trim(),
         branchId: branchId,
       );
-      _feedbackFromResponse(r, okFallback: 'Marked not picked');
+      _feedbackFromResponse(r);
     } finally {
       isBusy.value = false;
     }
   }
 
   Future<void> addMissedShipment() async {
-    if (!_requirePickupAndDocket()) return;
     final branchId = await _branchIdOrSnack();
     if (branchId == null) return;
 
@@ -184,7 +148,7 @@ class OutboundSectorPickupController extends GetxController {
         remarks: remarksController.text.trim(),
         branchId: branchId,
       );
-      _feedbackFromResponse(r, okFallback: 'Missed shipment added');
+      _feedbackFromResponse(r);
     } finally {
       isBusy.value = false;
     }
@@ -200,12 +164,9 @@ class OutboundSectorPickupController extends GetxController {
       r.when(
         success: (data) {
           pickupReportRows.assignAll(PickupReportRow.listFromDynamic(data));
-          if (pickupReportRows.isEmpty) {
-            _snack(_messageFromResponse(data, fallback: 'No report rows'));
-          } else {
-            _snack(
-              'Report ready — ${pickupReportRows.length} status group(s)',
-            );
+          final msg = _messageFromResponse(data);
+          if (msg.isNotEmpty) {
+            _snack(msg);
           }
         },
         error: (e) => _snack(e.message, isError: true),
@@ -216,17 +177,6 @@ class OutboundSectorPickupController extends GetxController {
   }
 
   void applyPickupIdFromRow(SectorPickupRow row) {
-    final id = row.id;
-    if (id == null || id.isEmpty) {
-      _snack('This row has no pickup id — choose another row', isError: true);
-      return;
-    }
-    pickupIdController.text = id;
-    final mawb = row.mawbNo?.trim();
-    if (mawb != null && mawb.isNotEmpty) {
-      _snack('Pickup $id · MAWB $mawb');
-    } else {
-      _snack('Pickup $id selected');
-    }
+    pickupIdController.text = row.id?.trim() ?? '';
   }
 }

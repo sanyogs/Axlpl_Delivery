@@ -85,6 +85,14 @@ class ApiHttpLogInterceptor extends Interceptor {
     return data;
   }
 
+  /// Writes to DevTools (`ApiHttp`) and `flutter run` console so every call is visible.
+  static void _emit(String message, {int level = 800}) {
+    developer.log(message, name: _logName, level: level);
+    if (kDebugMode || _logFromDefine) {
+      debugPrint('[$_logName] $message');
+    }
+  }
+
   static String _formatPayload(dynamic data, {required int maxChars}) {
     if (data == null) return 'null';
     if (data is String) {
@@ -115,7 +123,7 @@ class ApiHttpLogInterceptor extends Interceptor {
       ..writeln('headers: ${_formatPayload(_sanitizeHeaders(options.headers.map((k, v) => MapEntry(k, v?.toString() ?? ''))), maxChars: 8000)}')
       ..writeln('query: ${_formatPayload(options.queryParameters, maxChars: 8000)}')
       ..writeln('data: ${_formatPayload(_sanitizeData(options.data), maxChars: 16000)}');
-    developer.log(buf.toString(), name: _logName);
+    _emit(buf.toString());
     handler.next(options);
   }
 
@@ -128,7 +136,7 @@ class ApiHttpLogInterceptor extends Interceptor {
     final buf = StringBuffer()
       ..writeln('── RESPONSE ${response.statusCode} ${response.requestOptions.uri}')
       ..writeln(_formatPayload(response.data, maxChars: maxResponseChars));
-    developer.log(buf.toString(), name: _logName);
+    _emit(buf.toString());
     handler.next(response);
   }
 
@@ -147,7 +155,7 @@ class ApiHttpLogInterceptor extends Interceptor {
       buf.writeln('status: ${resp.statusCode}');
       buf.writeln(_formatPayload(resp.data, maxChars: maxResponseChars));
     }
-    developer.log(buf.toString(), name: _logName, level: 1000);
+    _emit(buf.toString(), level: 1000);
     handler.next(err);
   }
 }

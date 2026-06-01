@@ -60,6 +60,9 @@ class OutboundBranchListController extends GetxController {
           branchListMessage.value = _repo.lastMessage;
         }
       }
+      if (branchListMessage.value.isNotEmpty) {
+        showLoadIssueIfNeeded();
+      }
       await _applyDefaultSelection();
     } finally {
       isLoadingBranches.value = false;

@@ -136,6 +136,8 @@ class _SectorPickupTable extends StatelessWidget {
             DataColumn(label: Text('MAWB')),
             DataColumn(label: Text('Hub')),
             DataColumn(label: Text('Date')),
+            DataColumn(label: Text('Time')),
+            DataColumn(label: Text('Picked by')),
           ],
           rows: rows
               .map(
@@ -146,6 +148,8 @@ class _SectorPickupTable extends StatelessWidget {
                     DataCell(Text(e.mawbNo ?? '—')),
                     DataCell(Text(e.hubId ?? '—')),
                     DataCell(Text(e.pickupDate ?? '—')),
+                    DataCell(Text(e.pickupTime ?? '—')),
+                    DataCell(Text(e.pickedBy ?? '—')),
                   ],
                 ),
               )

@@ -1,11 +1,11 @@
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_table_row.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -30,6 +30,8 @@ class OutboundHubScanController extends GetxController {
   final hubScanListAllRows = <HubScanLog>[].obs;
   final hubScanListPage = 1.obs;
   final scrollToSessionTable = 0.obs;
+  final shipmentScanHistoryRows = <ShipmentScanEvent>[].obs;
+  final isScanHistoryLoading = false.obs;
 
   static const hubScanListPageSize = 25;
 
@@ -167,14 +169,6 @@ class OutboundHubScanController extends GetxController {
   }
 
   bool _canStageScan() {
-    if (_branchList.selectedBranchIdOrNull == null) {
-      Get.snackbar('Hub scan', 'Select branch / hub first');
-      return false;
-    }
-    if (status.value == null || status.value!.trim().isEmpty) {
-      Get.snackbar('Hub scan', 'Select scan type');
-      return false;
-    }
     return true;
   }
 
@@ -185,8 +179,8 @@ class OutboundHubScanController extends GetxController {
     final row = HubScanTableRow.fromFormSnapshot(
       shipment: shipment,
       scanDocketTyped: docketController.text.trim(),
-      scanType: status.value!.trim(),
-      branchId: _branchList.selectedBranchIdOrNull!,
+      scanType: status.value?.trim() ?? '',
+      branchId: _branchList.selectedBranchIdOrNull ?? '',
     );
     final key = row.sessionKey;
     if (key.isEmpty) return;
@@ -224,7 +218,6 @@ class OutboundHubScanController extends GetxController {
     }
     if (match == null) return;
     if (match.saved) {
-      Get.snackbar('Hub scan', 'This docket is already saved and cannot be removed.');
       return;
     }
     sessionScannedRows.assignAll(
@@ -241,11 +234,6 @@ class OutboundHubScanController extends GetxController {
 
   Future<void> fetchShipment({String? connoteOverride}) async {
     final connote = (connoteOverride ?? docketController.text).trim();
-    final err = OutboundValidation.validateDocket(connote);
-    if (err != null) {
-      Get.snackbar('Hub scan', err);
-      return;
-    }
     if (connote == _lastFetchedConnote && fetchedShipment.value != null) {
       return;
     }
@@ -346,23 +334,32 @@ class OutboundHubScanController extends GetxController {
     }
     docketFocusNode.unfocus();
     _clearDocketFieldsOnly();
-    Get.snackbar('Hub scan', 'Ready for next docket — tap Save when done');
+  }
+
+  /// `getshipmentscanhistory` — uses current docket field as `docket_no`.
+  Future<void> loadShipmentScanHistory() async {
+    final docket = docketController.text.trim();
+    isScanHistoryLoading.value = true;
+    try {
+      shipmentScanHistoryRows.clear();
+      final rows = await _repo.shipmentScanHistory(docket);
+      shipmentScanHistoryRows.assignAll(rows);
+      if (rows.isEmpty) {
+        final msg = _repo.lastMessage.trim();
+        if (msg.isNotEmpty) Get.snackbar('Hub scan', msg);
+      }
+    } finally {
+      isScanHistoryLoading.value = false;
+    }
   }
 
   /// Save — hubscan API for every pending row in Scanned Docket Details.
   Future<void> saveHubScan() async {
     final pending =
         sessionScannedRows.where((r) => !r.saved).toList(growable: false);
-    if (pending.isEmpty) {
-      Get.snackbar(
-        'Hub scan',
-        'Nothing to save — scan a docket (leave field) to add it below first',
-      );
-      return;
-    }
+    if (pending.isEmpty) return;
 
     isBusy.value = true;
-    var savedCount = 0;
     try {
       for (final row in pending) {
         final connote = row.shipmentId?.trim().isNotEmpty == true
@@ -370,16 +367,8 @@ class OutboundHubScanController extends GetxController {
             : (row.docketNo?.trim() ?? '');
         if (connote.isEmpty) continue;
 
-        final branchId = row.branchId ?? _branchList.selectedBranchIdOrNull;
-        final scanStatus = _statusForApi(row.scanType ?? status.value);
-        if (branchId == null || branchId.isEmpty) {
-          Get.snackbar('Hub scan', 'Branch missing on staged docket $connote');
-          break;
-        }
-        if (scanStatus.isEmpty) {
-          Get.snackbar('Hub scan', 'Scan type missing on staged docket $connote');
-          break;
-        }
+        final branchId = row.branchId ?? _branchList.selectedBranchIdOrNull ?? '';
+        final scanStatus = _statusForApi(row.scanType ?? status.value ?? '');
 
         final r = await _repo.hubScanSubmit(
           docketNo: connote,
@@ -391,7 +380,6 @@ class OutboundHubScanController extends GetxController {
           success: (data) {
             ok = true;
             _markSessionRowSaved(row.sessionKey);
-            savedCount++;
             final msg = OutboundUiFeedback.serverMessageFromData(data) ?? '';
             if (msg.isNotEmpty) {
               Get.snackbar('Hub scan', msg);
@@ -399,22 +387,12 @@ class OutboundHubScanController extends GetxController {
           },
           error: (e) {
             final msg = e.message.trim();
-            if (msg.isNotEmpty) {
-              Get.snackbar('Hub scan', '$connote: $msg');
-            }
+            if (msg.isNotEmpty) Get.snackbar('Hub scan', msg);
           },
         );
         if (!ok) break;
       }
 
-      if (savedCount > 0) {
-        Get.snackbar(
-          'Hub scan',
-          savedCount == pending.length
-              ? 'Hub scan successfully added.'
-              : '$savedCount of ${pending.length} saved.',
-        );
-      }
     } finally {
       isBusy.value = false;
     }

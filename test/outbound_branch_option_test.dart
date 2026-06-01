@@ -22,6 +22,16 @@ void main() {
       expect(rows.single.label, 'Mumbai');
     });
 
+    test('parses numeric id from getbranches envelope', () {
+      final rows = OutboundBranchOption.listFromDynamic([
+        {'id': 71, 'branch_name': 'Agra'},
+        {'id': 72, 'branch_name': 'Agra crossing'},
+      ]);
+      expect(rows.length, 2);
+      expect(rows.first.id, '71');
+      expect(rows.first.label, 'Agra');
+    });
+
     test('fromMessenger uses name when present', () {
       final o = OutboundBranchOption.fromMessenger(
         branchId: '2',

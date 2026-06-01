@@ -109,6 +109,9 @@ class _BagListViewState extends State<BagListView> {
                   rowOffset: controller.bagListRowNumberOffset,
                   branchLabel: branchList.displayLabelForId,
                   onTap: controller.applyBagFromList,
+                  onRebag: (row) => controller.showRebagDialog(
+                    defaultNewBagCode: row.bagCode,
+                  ),
                 ),
                 if (totalPages > 1) ...[
                   SizedBox(height: 8.h),
@@ -145,12 +148,14 @@ class _BagListTable extends StatelessWidget {
     required this.rowOffset,
     required this.branchLabel,
     required this.onTap,
+    required this.onRebag,
   });
 
   final List<OutboundBagRow> rows;
   final int rowOffset;
   final String Function(String? id) branchLabel;
   final void Function(OutboundBagRow row) onTap;
+  final void Function(OutboundBagRow row) onRebag;
 
   @override
   Widget build(BuildContext context) {
@@ -204,9 +209,18 @@ class _BagListTable extends StatelessWidget {
                     ),
                   ),
                   DataCell(
-                    TextButton(
-                      onPressed: () => onTap(rows[i]),
-                      child: const Text('Open'),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () => onTap(rows[i]),
+                          child: const Text('Open'),
+                        ),
+                        TextButton(
+                          onPressed: () => onRebag(rows[i]),
+                          child: Text(OutboundLabels.btnRebag),
+                        ),
+                      ],
                     ),
                   ),
                 ],

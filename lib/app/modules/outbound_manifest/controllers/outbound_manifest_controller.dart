@@ -3,6 +3,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_report_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_manifest_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -42,16 +43,8 @@ class OutboundManifestController extends GetxController {
   }
 
   Future<void> createManifest() async {
-    final origin = selectedOriginDepotId.value?.trim();
-    final dest = selectedDestDepotId.value?.trim();
-    if (origin == null || origin.isEmpty || dest == null || dest.isEmpty) {
-      Get.snackbar('Manifest', 'Select origin and destination depot');
-      return;
-    }
-    if (bagCodesController.text.trim().isEmpty) {
-      Get.snackbar('Manifest', 'At least one bag code is required');
-      return;
-    }
+    final origin = selectedOriginDepotId.value?.trim() ?? '';
+    final dest = selectedDestDepotId.value?.trim() ?? '';
     isBusy.value = true;
     try {
       final r = await _repo.createManifest(
@@ -67,7 +60,8 @@ class OutboundManifestController extends GetxController {
           if (code != null && code.isNotEmpty) {
             manifestCodeController.text = code;
           }
-          Get.snackbar('Manifest', 'Manifest created');
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -80,24 +74,16 @@ class OutboundManifestController extends GetxController {
   }
 
   Future<void> listManifests() async {
-    final branch = selectedListDepotId.value?.trim();
-    if (branch == null || branch.isEmpty) {
-      Get.snackbar('Manifest', 'Select depot for list');
-      return;
-    }
+    final branch = selectedListDepotId.value?.trim() ?? '';
     isBusy.value = true;
     try {
       final rows = await _repo.listManifests(branchId: branch);
       manifestRows.assignAll(rows);
       lastResponseText.value = '';
-      if (rows.isEmpty && _repo.lastMessage.isNotEmpty) {
-        lastResponseText.value = _repo.lastMessage;
-        Get.snackbar('Manifest', _repo.lastMessage);
-      } else {
-        Get.snackbar(
-          'Manifest',
-          rows.isEmpty ? 'No manifests found' : '${rows.length} manifest(s)',
-        );
+      final msg = _repo.lastMessage.trim();
+      if (msg.isNotEmpty) {
+        lastResponseText.value = msg;
+        Get.snackbar('Manifest', msg);
       }
     } finally {
       isBusy.value = false;
@@ -117,10 +103,6 @@ class OutboundManifestController extends GetxController {
 
   Future<void> getManifestDetails() async {
     final code = manifestCodeController.text.trim();
-    if (code.isEmpty) {
-      Get.snackbar('Manifest', 'Enter manifest code');
-      return;
-    }
     isBusy.value = true;
     manifestDetail.value = null;
     try {
@@ -130,7 +112,8 @@ class OutboundManifestController extends GetxController {
           final detail = ManifestDetail.fromDynamic(data);
           manifestDetail.value = detail;
           lastResponseText.value = '';
-          Get.snackbar('Manifest', 'Details loaded');
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -155,7 +138,8 @@ class OutboundManifestController extends GetxController {
           final report = ManifestReport.fromDynamic(data);
           manifestReportData.value = report;
           lastResponseText.value = '';
-          Get.snackbar('Manifest', 'Report ready');
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -169,10 +153,6 @@ class OutboundManifestController extends GetxController {
 
   Future<void> printManifestData() async {
     final code = manifestCodeController.text.trim();
-    if (code.isEmpty) {
-      Get.snackbar('Manifest', 'Enter manifest code');
-      return;
-    }
     isBusy.value = true;
     try {
       final r = await _repo.printManifestData(code);
@@ -182,7 +162,8 @@ class OutboundManifestController extends GetxController {
           printManifestDetail.value = detail;
           manifestDetail.value = detail;
           lastResponseText.value = '';
-          Get.snackbar('Manifest', 'Print view ready');
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -196,10 +177,6 @@ class OutboundManifestController extends GetxController {
 
   void openManifestDetailPage() {
     final code = manifestCodeController.text.trim();
-    if (code.isEmpty) {
-      Get.snackbar('Manifest', 'Enter or scan manifest code');
-      return;
-    }
     Get.toNamed(
       Routes.OUTBOUND_REMOTE_DETAIL,
       arguments: {'kind': 'manifest', 'id': code},

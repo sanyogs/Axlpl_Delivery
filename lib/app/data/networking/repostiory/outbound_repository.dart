@@ -15,7 +15,6 @@ import 'package:axlpl_delivery/app/data/networking/api_services.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_validation.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 
 /// Outbound Services V8 — all reads/writes over [ApiServices] with auth from [OutboundAuthContext].
@@ -98,11 +97,6 @@ class OutboundRepository {
     return r;
   }
 
-  Map<String, String> _bagPostBody(String bagRef, Map<String, String> base) {
-    final refFields = OutboundApiParams.bagReferenceBody(bagRef);
-    return {...base, ...refFields};
-  }
-
   // --- Hub scan ---
 
   Future<APIResponse<dynamic>> hubScanSubmit({
@@ -110,15 +104,6 @@ class OutboundRepository {
     required String branchId,
     required String status,
   }) async {
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      lastMessage = docketErr;
-      return APIResponse.error(AppException.errorWithMessage(docketErr));
-    }
-    if (branchId.trim().isEmpty) {
-      lastMessage = 'Branch id is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     return _requireTokenUser(
       (token, userId) => _api.hubScan(
         token: token,
@@ -133,11 +118,6 @@ class OutboundRepository {
   /// POST `hubScanFetchShipment` — populate docket details before save (`connote`).
   Future<APIResponse<HubScanFetchResult>> hubScanFetchShipment(String connote) async {
     final trimmed = connote.trim();
-    if (trimmed.isEmpty) {
-      return APIResponse.error(
-        AppException.errorWithMessage('Connote is required'),
-      );
-    }
     final r = await _requireToken(
       (token) async {
         final api = await _api.hubScanFetchShipment(
@@ -339,11 +319,6 @@ class OutboundRepository {
 
   Future<List<ShipmentScanEvent>> shipmentScanHistory(String docketNo) async {
     _clear();
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      lastMessage = docketErr;
-      return [];
-    }
     final token = (await _auth()).token;
     if (token == null || token.isEmpty) {
       lastMessage = 'Not logged in';
@@ -415,11 +390,6 @@ class OutboundRepository {
     );
     return r.when(
       success: (data) {
-        final err = OutboundValidation.validateCreateBagPayload(data);
-        if (err != null) {
-          lastMessage = err;
-          return APIResponse.error(AppException.errorWithMessage(err));
-        }
         final created = OutboundMutationResult.fromDynamic(data);
         return APIResponse.success(created.asMap ?? data);
       },
@@ -432,20 +402,6 @@ class OutboundRepository {
     required String docketNo,
     required String branchId,
   }) async {
-    final bagErr = OutboundValidation.validateBagId(bagId);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return APIResponse.error(AppException.errorWithMessage(bagErr));
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      lastMessage = docketErr;
-      return APIResponse.error(AppException.errorWithMessage(docketErr));
-    }
-    if (branchId.trim().isEmpty) {
-      lastMessage = 'Branch id is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     return _requireTokenUser(
       (token, userId) => _api.addShipmentToBag(
         token: token,
@@ -458,11 +414,6 @@ class OutboundRepository {
   }
 
   Future<BagDetail?> bagDetails(String bagId) async {
-    final bagErr = OutboundValidation.validateBagId(bagId);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return null;
-    }
     _clear();
     final token = (await _auth()).token;
     if (token == null || token.isEmpty) {
@@ -480,11 +431,6 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> _fetchBagDetailsRaw(String bagRef) async {
-    final bagErr = OutboundValidation.validateBagId(bagRef);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return APIResponse.error(AppException.errorWithMessage(bagErr));
-    }
     final ref = bagRef.trim();
     return _requireToken(
       (token) => _api.getBagDetails(token: token, bagCode: ref),
@@ -516,20 +462,6 @@ class OutboundRepository {
     required String docketNo,
     required String branchId,
   }) async {
-    final bagErr = OutboundValidation.validateBagId(bagId);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return APIResponse.error(AppException.errorWithMessage(bagErr));
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      lastMessage = docketErr;
-      return APIResponse.error(AppException.errorWithMessage(docketErr));
-    }
-    if (branchId.trim().isEmpty) {
-      lastMessage = 'Branch id is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     return _requireTokenUser(
       (token, userId) => _api.removeShipmentFromBag(
         token: token,
@@ -542,11 +474,6 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> lockBag(String bagId) async {
-    final bagErr = OutboundValidation.validateBagId(bagId);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return APIResponse.error(AppException.errorWithMessage(bagErr));
-    }
     return _requireToken(
       (token) => _api.lockBag(token: token, bagCode: bagId.trim()),
     );
@@ -556,16 +483,6 @@ class OutboundRepository {
     required String newBagId,
     required String docketNo,
   }) async {
-    final bagErr = OutboundValidation.validateBagId(newBagId);
-    if (bagErr != null) {
-      lastMessage = bagErr;
-      return APIResponse.error(AppException.errorWithMessage(bagErr));
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      lastMessage = docketErr;
-      return APIResponse.error(AppException.errorWithMessage(docketErr));
-    }
     return _requireTokenUser(
       (token, userId) => _api.rebagShipment(
         token: token,
@@ -597,17 +514,6 @@ class OutboundRepository {
     required String originBranchId,
     required String destinationBranchId,
   }) async {
-    if (bagIdsCommaSeparated.trim().isEmpty) {
-      lastMessage = 'At least one bag id is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
-    for (final part in bagIdsCommaSeparated.split(',')) {
-      final bagErr = OutboundValidation.validateBagId(part);
-      if (bagErr != null) {
-        lastMessage = bagErr;
-        return APIResponse.error(AppException.errorWithMessage(bagErr));
-      }
-    }
     return _requireTokenUser(
       (token, userId) => _api.createManifest(
         token: token,
@@ -620,11 +526,6 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> _fetchManifestDetailsRaw(String manifestRef) async {
-    final err = OutboundValidation.validateManifestId(manifestRef);
-    if (err != null) {
-      lastMessage = err;
-      return APIResponse.error(AppException.errorWithMessage(err));
-    }
     final ref = manifestRef.trim();
     return _requireToken((token) {
       final variants = OutboundApiParams.manifestDetailQueries(ref);
@@ -686,11 +587,6 @@ class OutboundRepository {
       );
 
   Future<APIResponse<dynamic>> printManifestData(String manifestId) async {
-    final err = OutboundValidation.validateManifestId(manifestId);
-    if (err != null) {
-      lastMessage = err;
-      return APIResponse.error(AppException.errorWithMessage(err));
-    }
     final ref = manifestId.trim();
     return _requireToken((token) {
       final variants = OutboundApiParams.manifestDetailQueries(ref);
@@ -711,14 +607,6 @@ class OutboundRepository {
     required String vehicleNo,
     required String driverName,
   }) async {
-    if (manifestIdsCommaSeparated.trim().isEmpty) {
-      lastMessage = 'Manifest id(s) required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
-    if (vehicleNo.trim().isEmpty || driverName.trim().isEmpty) {
-      lastMessage = 'Vehicle and driver name are required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     return _requireTokenUser(
       (token, userId) => _api.assignLinehaul(
         token: token,
@@ -750,11 +638,6 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> _fetchLinehaulDetailsRaw(String linehaulRef) async {
-    final err = OutboundValidation.validateLinehaulId(linehaulRef);
-    if (err != null) {
-      lastMessage = err;
-      return APIResponse.error(AppException.errorWithMessage(err));
-    }
     final ref = linehaulRef.trim();
     return _requireToken((token) {
       final variants = OutboundApiParams.linehaulDetailQueries(ref);
@@ -787,15 +670,6 @@ class OutboundRepository {
     required String status,
     required String branchId,
   }) async {
-    final lhErr = OutboundValidation.validateLinehaulId(linehaulId);
-    if (lhErr != null) {
-      lastMessage = lhErr;
-      return APIResponse.error(AppException.errorWithMessage(lhErr));
-    }
-    if (status.trim().isEmpty) {
-      lastMessage = 'Linehaul status is required';
-      return APIResponse.error(AppException.errorWithMessage(lastMessage));
-    }
     return _requireTokenUser(
       (token, userId) => _api.updateLinehaulStatus(
         token: token,
@@ -864,18 +738,6 @@ class OutboundRepository {
     required String remarks,
     required String branchId,
   }) {
-    final pickupErr = _validatePickupId(pickupId);
-    if (pickupErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(pickupErr)),
-      );
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(docketErr)),
-      );
-    }
     return _treatBenignPickupDuplicate(
       () => _requireTokenUser(
         (token, userId) => _api.sectorPickupScan(
@@ -897,18 +759,6 @@ class OutboundRepository {
     required String remarks,
     required String branchId,
   }) {
-    final pickupErr = _validatePickupId(pickupId);
-    if (pickupErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(pickupErr)),
-      );
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(docketErr)),
-      );
-    }
     return _treatBenignPickupDuplicate(
       () => _requireTokenUser(
         (token, userId) => _api.markNotPicked(
@@ -929,18 +779,6 @@ class OutboundRepository {
     required String remarks,
     required String branchId,
   }) {
-    final pickupErr = _validatePickupId(pickupId);
-    if (pickupErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(pickupErr)),
-      );
-    }
-    final docketErr = OutboundValidation.validateDocket(docketNo);
-    if (docketErr != null) {
-      return Future.value(
-        APIResponse.error(AppException.errorWithMessage(docketErr)),
-      );
-    }
     return _requireTokenUser(
       (token, userId) => _api.addMissedShipment(
         token: token,
@@ -952,9 +790,6 @@ class OutboundRepository {
       ),
     );
   }
-
-  String? _validatePickupId(String? pickupId) =>
-      OutboundValidation.validatePickupId(pickupId);
 
   Future<APIResponse<dynamic>> pickupReport({
     required String startDate,

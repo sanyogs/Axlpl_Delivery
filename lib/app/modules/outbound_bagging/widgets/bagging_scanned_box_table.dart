@@ -47,7 +47,7 @@ class BaggingScannedBoxTable extends StatelessWidget {
             DataColumn(label: Text(OutboundLabels.colBoxNumber)),
             DataColumn(label: Text(OutboundLabels.colShipmentId)),
             DataColumn(label: Text(OutboundLabels.colDestination)),
-            DataColumn(label: Text(OutboundLabels.colShipmentStatus)),
+            DataColumn(label: Text(OutboundLabels.colMode)),
             DataColumn(label: Text(OutboundLabels.colActions)),
           ],
           rows: [
@@ -81,14 +81,7 @@ class BaggingScannedBoxTable extends StatelessWidget {
           ),
         ),
         DataCell(Text(cell(row.destination), style: themes.fontSize14_400)),
-        DataCell(
-          Text(
-            row.saved ? cell(row.mode) : OutboundLabels.labelStagingRow,
-            style: themes.fontSize14_400.copyWith(
-              color: row.saved ? null : themes.grayColor,
-            ),
-          ),
-        ),
+        DataCell(Text(cell(row.mode), style: themes.fontSize14_400)),
         DataCell(
           onRemove == null
               ? const SizedBox.shrink()

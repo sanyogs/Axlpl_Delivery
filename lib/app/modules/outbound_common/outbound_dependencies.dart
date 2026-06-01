@@ -14,9 +14,9 @@ class OutboundDependencies {
       );
     }
     if (!Get.isRegistered<OutboundBranchListController>()) {
-      Get.lazyPut<OutboundBranchListController>(
-        () => OutboundBranchListController(),
-        fenix: true,
+      Get.put<OutboundBranchListController>(
+        OutboundBranchListController(),
+        permanent: true,
       );
     }
   }

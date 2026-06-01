@@ -6,6 +6,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -270,42 +271,115 @@ class OutboundManifestDetailBody extends StatelessWidget {
   }
 }
 
-/// Linehaul trip detail.
+/// Linehaul trip detail (`getlinehauldetails` response).
 class OutboundLinehaulDetailBody extends StatelessWidget {
   const OutboundLinehaulDetailBody({super.key, required this.detail});
 
   final LinehaulDetail detail;
 
+  String _v(String? s) {
+    final t = s?.trim();
+    if (t == null || t.isEmpty) return '—';
+    return t;
+  }
+
   @override
   Widget build(BuildContext context) {
     return OutboundSection(
       title: 'Linehaul summary',
-      subtitle: detail.tripNo ?? detail.linehaulId ?? '',
+      subtitle: detail.tripNo ?? detail.airwayBillNo ?? detail.linehaulId ?? '',
       children: [
         OutboundDetailField(
           label: OutboundLabels.tripNo,
-          value: detail.tripNo ?? '—',
+          value: _v(detail.tripNo ?? detail.airwayBillNo ?? detail.mawbNo),
         ),
         OutboundDetailField(
           label: OutboundLabels.linehaulId,
-          value: detail.linehaulId ?? '—',
+          value: _v(detail.linehaulId),
         ),
         OutboundDetailField(
+          label: OutboundLabels.originDepot,
+          value: _v(detail.origin),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.destinationDepot,
+          value: _v(detail.destination),
+        ),
+        OutboundDetailField(
+          label: 'Transport',
+          value: _v(detail.transportType),
+        ),
+        OutboundDetailField(label: 'Airline', value: _v(detail.airline)),
+        OutboundDetailField(label: 'Flight', value: _v(detail.flightNo)),
+        OutboundDetailField(
           label: OutboundLabels.vehicleNo,
-          value: detail.vehicleNo ?? '—',
+          value: _v(detail.vehicleNo),
         ),
         OutboundDetailField(
           label: OutboundLabels.driverName,
-          value: detail.driverName ?? '—',
+          value: _v(detail.driverName),
         ),
         OutboundDetailField(
           label: OutboundLabels.status,
-          value: detail.status ?? '—',
+          value: _v(detail.status),
         ),
         OutboundDetailField(
-          label: OutboundLabels.manifestNumbers,
-          value: detail.manifestCodes ?? detail.manifestIds ?? '—',
+          label: 'No. of bags',
+          value: _v(detail.noOfBags ?? detail.noOfBoxes),
         ),
+        OutboundDetailField(
+          label: 'Total weight',
+          value: _v(detail.totalWeight),
+        ),
+        OutboundDetailField(
+          label: 'Billing weight',
+          value: _v(detail.totalBillingWeight),
+        ),
+        OutboundDetailField(
+          label: 'Departure',
+          value: _v(detail.departureTime),
+        ),
+        OutboundDetailField(
+          label: 'Arrival',
+          value: _v(detail.arrivalTime),
+        ),
+        if (detail.manifests.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            OutboundLabels.manifestNumbers,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          OutboundBoundedTableBox(
+            maxHeight: 200,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: const [
+                  DataColumn(label: Text('Manifest')),
+                  DataColumn(label: Text('Origin')),
+                  DataColumn(label: Text('Destination')),
+                  DataColumn(label: Text('Created')),
+                ],
+                rows: detail.manifests
+                    .map(
+                      (m) => DataRow(
+                        cells: [
+                          DataCell(Text(_v(m.manifestNo))),
+                          DataCell(Text(_v(m.originBranch))),
+                          DataCell(Text(_v(m.destinationBranch))),
+                          DataCell(Text(_v(m.createdAt))),
+                        ],
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ),
+        ] else
+          OutboundDetailField(
+            label: OutboundLabels.manifestNumbers,
+            value: _v(detail.manifestCodes ?? detail.manifestIds),
+          ),
       ],
     );
   }

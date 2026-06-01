@@ -1,117 +1,80 @@
+import 'dart:async';
 import 'dart:developer';
 
+import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/networking/api_client.dart';
 import 'package:axlpl_delivery/app/data/networking/api_endpoint.dart';
-import 'package:axlpl_delivery/common_widget/force_update_dialog.dart';
-import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/local_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 
 class SplashController extends GetxController {
-  //TODO: Implement SplashController
   final ApiClient _apiClient = ApiClient();
+  bool _navigated = false;
 
   @override
   void onInit() {
-    // TODO: implement onInit
     super.onInit();
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       log('🔔 Received a foreground message!');
       log('Title: ${message.notification?.title}');
       log('Body: ${message.notification?.body}');
       log('Data: ${message.data}');
-
-      // Optional: show a local notification
       NotificationService.showNotification(message);
     });
-    _checkAppVersion();
+    unawaited(_bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
+    await Future.wait([
+      _checkAppVersion(),
+      Future.delayed(const Duration(seconds: 3)),
+    ]);
+    await _navigateFromStorage();
   }
 
   Future<void> _checkAppVersion() async {
     try {
-      final response = await _apiClient.getRaw(getPaymentModePoint);
-      final responseData = response?.data;
-
-      if (_isForceUpdatePayload(responseData)) {
-        final payload = _extractForceUpdatePayload(responseData);
-        showForceUpdateDialog(
-          message: payload['message']?.toString(),
-          updateUrl: payload['update_url']?.toString(),
-        );
-        return;
-      }
-    } catch (e) {
-      log('Version check failed: $e');
+      // Force-update dialog is handled inside ApiClient.getRaw when applicable.
+      await _apiClient.getRaw(getPaymentModePoint).timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              log('Version check timed out — continuing to app');
+              return null;
+            },
+          );
+    } catch (e, st) {
+      log('Version check failed: $e', stackTrace: st);
     }
-
-    keepLogin();
   }
 
-  bool _isTruthy(dynamic value) {
-    if (value is bool) return value;
-    if (value is num) return value != 0;
-    if (value is String) {
-      final normalized = value.trim().toLowerCase();
-      return normalized == '1' ||
-          normalized == 'true' ||
-          normalized == 'yes' ||
-          normalized == 'y';
-    }
-    return false;
-  }
+  Future<void> _navigateFromStorage() async {
+    if (_navigated) return;
+    _navigated = true;
 
-  bool _isForceUpdatePayload(dynamic raw) {
-    if (raw is! Map) return false;
-    final payload = _extractForceUpdatePayload(raw);
-    final status = payload['status']?.toString().trim().toLowerCase();
-    final forceUpdate = _isTruthy(payload['force_update']);
-    return status == 'fail' && forceUpdate;
-  }
-
-  Map<String, dynamic> _extractForceUpdatePayload(Map source) {
-    final topLevel = <String, dynamic>{};
-    source.forEach((key, value) {
-      topLevel[key.toString()] = value;
-    });
-
-    final nestedDataRaw = topLevel['data'];
-    if (nestedDataRaw is Map) {
-      final nested = <String, dynamic>{};
-      nestedDataRaw.forEach((key, value) {
-        nested[key.toString()] = value;
-      });
-      return {
-        ...nested,
-        ...topLevel,
-      };
-    }
-
-    return topLevel;
-  }
-
-  void keepLogin() {
-    Future.delayed(const Duration(seconds: 3), () async {
+    try {
       final userData = await LocalStorage().getUserLocalData();
       final role = await storage.read(key: LocalStorage().userRole);
 
-      if (userData == null || role == null) {
+      if (userData == null || role == null || role.trim().isEmpty) {
         Get.offAllNamed(Routes.AUTH);
         return;
       }
 
-      if (role == "messanger") {
-        // Get.offAllNamed(Routes.BOTTOMBAR, arguments: userData);
+      final normalizedRole = role.trim().toLowerCase();
+      if (normalizedRole == 'messanger' || normalizedRole == 'messenger') {
         Get.offAllNamed(Routes.HOME);
-        log('🤩 Messenger Login success 🤩');
-      } else if (role == "customer") {
-        // Get.offAllNamed(Routes.BOTTOMBAR, arguments: userData);
+        log('🤩 Messenger login restored');
+      } else if (normalizedRole == 'customer') {
         Get.offAllNamed(Routes.HOME);
-        log('🤩 Customer Login success 🤩');
+        log('🤩 Customer login restored');
       } else {
         Get.offAllNamed(Routes.AUTH);
       }
-    });
+    } catch (e, st) {
+      log('Splash navigation failed: $e', stackTrace: st);
+      Get.offAllNamed(Routes.AUTH);
+    }
   }
 }

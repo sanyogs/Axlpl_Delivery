@@ -155,83 +155,58 @@ class HomeView extends GetView<HomeController> {
                 ))
           ],
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-            child: Column(
-              // mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 0,
-              children: [
-                ContainerTextfiled(
-                  textInputAction: TextInputAction.search,
-                  onSubmit: (val) {
-                    runningPickupDetailsController.fetchTrackingData(
-                        val ?? homeController.searchController.text.trim());
-                    Get.back(); // Close the dialog
-                    Get.toNamed(
-                      Routes.RUNNING_DELIVERY_DETAILS,
-                      arguments: {
-                        'shipmentID':
-                            val ?? homeController.searchController.text.trim(),
-                        // 'status': data.status.toString(),
-                        // 'invoicePath': data.invoicePath,
-                        // 'invoicePhoto': data.invoiceFile,
-                        // 'paymentMode': data.paymentMode,
-                        // 'date': data.date,
-                        // 'cashAmt': data.totalCharges
-                      },
-                    );
-                    return null;
-                  },
-                  suffixIcon: IconButton(
-                      onPressed: () async {
-                        await runningPickupDetailsController.fetchTrackingData(
-                            homeController.searchController.text.trim());
-                        Get.back(); // Close the dialog
-                        Get.toNamed(
-                          Routes.RUNNING_DELIVERY_DETAILS,
-                          arguments: {
-                            'shipmentID':
-                                homeController.searchController.text.trim(),
-                            // 'status': data.status.toString(),
-                            // 'invoicePath': data.invoicePath,
-                            // 'invoicePhoto': data.invoiceFile,
-                            // 'paymentMode': data.paymentMode,
-                            // 'date': data.date,
-                            // 'cashAmt': data.totalCharges
-                          },
-                        );
-                      },
-                      icon: Icon(
-                        CupertinoIcons.search,
-                        color: themes.grayColor,
-                      )),
-                  onChanged: (val) {
-                    return null;
-                  },
-                  prefixIcon: InkWell(
-                      onTap: () async {
-                        var scannedValue =
-                            await Utils().scanAndPlaySound(context);
-                        if (scannedValue != null && scannedValue != '-1') {
-                          homeController.searchController.text = scannedValue;
-
-                          Get.dialog(
-                            const Center(
-                                child: CircularProgressIndicator.adaptive()),
-                            barrierDismissible: false,
-                          );
-
-                          // await shipmentRecordController
-                          //     .getShipmentRecord(scannedValue);
+        body: RefreshIndicator.adaptive(
+          onRefresh: () async {
+            await Future.wait<void>([
+              homeController.refreshHome(),
+              shipnowController.fetchShipmentData(
+                '0',
+                isRefresh: true,
+                shipmentStatus: shipnowController.selectedStatusFilter.value,
+              ),
+            ]);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+              child: Column(
+                // mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 0,
+                children: [
+                  ContainerTextfiled(
+                    textInputAction: TextInputAction.search,
+                    onSubmit: (val) {
+                      runningPickupDetailsController.fetchTrackingData(
+                          val ?? homeController.searchController.text.trim());
+                      Get.back(); // Close the dialog
+                      Get.toNamed(
+                        Routes.RUNNING_DELIVERY_DETAILS,
+                        arguments: {
+                          'shipmentID': val ??
+                              homeController.searchController.text.trim(),
+                          // 'status': data.status.toString(),
+                          // 'invoicePath': data.invoicePath,
+                          // 'invoicePhoto': data.invoiceFile,
+                          // 'paymentMode': data.paymentMode,
+                          // 'date': data.date,
+                          // 'cashAmt': data.totalCharges
+                        },
+                      );
+                      return null;
+                    },
+                    suffixIcon: IconButton(
+                        onPressed: () async {
                           await runningPickupDetailsController
-                              .fetchTrackingData(scannedValue);
+                              .fetchTrackingData(
+                                  homeController.searchController.text.trim());
                           Get.back(); // Close the dialog
                           Get.toNamed(
                             Routes.RUNNING_DELIVERY_DETAILS,
                             arguments: {
-                              'shipmentID': scannedValue,
+                              'shipmentID':
+                                  homeController.searchController.text.trim(),
                               // 'status': data.status.toString(),
                               // 'invoicePath': data.invoicePath,
                               // 'invoicePhoto': data.invoiceFile,
@@ -240,691 +215,745 @@ class HomeView extends GetView<HomeController> {
                               // 'cashAmt': data.totalCharges
                             },
                           );
-                        }
-                      },
-                      child: Icon(CupertinoIcons.qrcode_viewfinder)),
-                  hintText: 'Enter Your Package Number',
-                  controller: homeController.searchController,
-                ),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(() {
-                  return bottomController.userData.value?.role != 'messanger'
-                      ? SizedBox(
-                          height: 145.h,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: AlwaysScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            padding: EdgeInsets.only(left: 0, right: 0),
-                            separatorBuilder: (context, index) =>
-                                SizedBox(width: 15.w),
-                            itemCount: homeController.customerDashboardDataModel
-                                    .value?.contracts?.length ??
-                                0,
-                            itemBuilder: (context, index) {
-                              final contracts = homeController
-                                  .customerDashboardDataModel.value?.contracts;
-                              final item = (contracts != null &&
-                                      contracts.length > index)
-                                  ? contracts[index]
-                                  : null;
+                        },
+                        icon: Icon(
+                          CupertinoIcons.search,
+                          color: themes.grayColor,
+                        )),
+                    onChanged: (val) {
+                      return null;
+                    },
+                    prefixIcon: InkWell(
+                        onTap: () async {
+                          var scannedValue =
+                              await Utils().scanAndPlaySound(context);
+                          if (scannedValue != null && scannedValue != '-1') {
+                            homeController.searchController.text = scannedValue;
 
-                              return LayoutBuilder(
-                                builder: (context, constraints) {
-                                  // Use up to 300.w but adapt to available width on small screens
-                                  final maxCard = 330.w;
-                                  final calculated = constraints.maxWidth * 0.8;
-                                  final cardWidth = calculated < maxCard
-                                      ? calculated
-                                      : maxCard;
+                            Get.dialog(
+                              const Center(
+                                  child: CircularProgressIndicator.adaptive()),
+                              barrierDismissible: false,
+                            );
 
-                                  return SizedBox(
-                                    width: cardWidth,
-                                    child: ContractCard(
-                                      onTap: () {
-                                        // use the selected contract's id if available
-                                        homeController
-                                            .usedContract(item?.id)
-                                            .then((value) => Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        UsedContractShipment(
-                                                      totalValue: item
-                                                          ?.assignedValue
-                                                          .toString(),
-                                                      usedValue: item?.usedValue
-                                                          .toString(),
-                                                      details: item,
-                                                      usedWeight: item
-                                                          ?.usedWeight
-                                                          .toString(),
+                            // await shipmentRecordController
+                            //     .getShipmentRecord(scannedValue);
+                            await runningPickupDetailsController
+                                .fetchTrackingData(scannedValue);
+                            Get.back(); // Close the dialog
+                            Get.toNamed(
+                              Routes.RUNNING_DELIVERY_DETAILS,
+                              arguments: {
+                                'shipmentID': scannedValue,
+                                // 'status': data.status.toString(),
+                                // 'invoicePath': data.invoicePath,
+                                // 'invoicePhoto': data.invoiceFile,
+                                // 'paymentMode': data.paymentMode,
+                                // 'date': data.date,
+                                // 'cashAmt': data.totalCharges
+                              },
+                            );
+                          }
+                        },
+                        child: Icon(CupertinoIcons.qrcode_viewfinder)),
+                    hintText: 'Enter Your Package Number',
+                    controller: homeController.searchController,
+                  ),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(() {
+                    return bottomController.userData.value?.role != 'messanger'
+                        ? SizedBox(
+                            height: 145.h,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: AlwaysScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              padding: EdgeInsets.only(left: 0, right: 0),
+                              separatorBuilder: (context, index) =>
+                                  SizedBox(width: 15.w),
+                              itemCount: homeController
+                                      .customerDashboardDataModel
+                                      .value
+                                      ?.contracts
+                                      ?.length ??
+                                  0,
+                              itemBuilder: (context, index) {
+                                final contracts = homeController
+                                    .customerDashboardDataModel
+                                    .value
+                                    ?.contracts;
+                                final item = (contracts != null &&
+                                        contracts.length > index)
+                                    ? contracts[index]
+                                    : null;
+
+                                return LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // Use up to 300.w but adapt to available width on small screens
+                                    final maxCard = 330.w;
+                                    final calculated =
+                                        constraints.maxWidth * 0.8;
+                                    final cardWidth = calculated < maxCard
+                                        ? calculated
+                                        : maxCard;
+
+                                    return SizedBox(
+                                      width: cardWidth,
+                                      child: ContractCard(
+                                        onTap: () {
+                                          // use the selected contract's id if available
+                                          homeController
+                                              .usedContract(item?.id)
+                                              .then((value) => Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          UsedContractShipment(
+                                                        totalValue: item
+                                                            ?.assignedValue
+                                                            .toString(),
+                                                        usedValue: item
+                                                            ?.usedValue
+                                                            .toString(),
+                                                        details: item,
+                                                        usedWeight: item
+                                                            ?.usedWeight
+                                                            .toString(),
+                                                      ),
                                                     ),
-                                                  ),
-                                                ));
+                                                  ));
+                                        },
+                                        title: item?.categoryName ?? 'N/A',
+                                        used: double.tryParse(
+                                                item?.usedValue ?? '0') ??
+                                            0,
+                                        total: double.tryParse(
+                                                item?.assignedValue ?? '0') ??
+                                            0,
+                                        endDate: item?.endDate,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          )
+                        : SizedBox();
+                  }),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(
+                    () {
+                      if (bottomController.userData.value?.role ==
+                          'messanger') {
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Obx(() {
+                                return HomeContainer(
+                                  onTap: () {
+                                    deliveryController.getDeliveryData();
+                                    deliveryController.fetchPaymentModes();
+                                    historyController.getDeliveryHistory();
+                                    Get.toNamed(Routes.DELIVERY);
+                                  },
+                                  color: themes.blueGray,
+                                  title: runningDeliveryTxt,
+                                  subTitle: homeController.isLoading.value
+                                      ? '...'
+                                      : homeController.dashboardDataModel.value
+                                              ?.totalDelivery
+                                              ?.toString() ??
+                                          '0',
+                                );
+                              }),
+                            ),
+                            SizedBox(
+                              width: 10.w,
+                            ),
+                            Expanded(
+                              child: Obx(() {
+                                return HomeContainer(
+                                  onTap: () {
+                                    pickupController.getPickupData();
+                                    historyController.getPickupHistory();
+                                    pickupController.fetchPaymentModes();
+                                    Get.toNamed(Routes.PICKUP);
+                                  },
+                                  color: themes.lightCream,
+                                  title: runningPickupTxt,
+                                  subTitle: homeController.isLoading.value
+                                      ? '...'
+                                      : homeController.dashboardDataModel.value
+                                              ?.totalPickup
+                                              ?.toString() ??
+                                          '0',
+                                );
+                              }),
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Column(
+                          spacing: 10,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Obx(() {
+                                    return HomeContainer(
+                                      onTap: () {
+                                        shipnowController.setStatusFilter(
+                                            'Out for delivery');
+                                        Get.toNamed(Routes.SHIPMENT_RECORD);
                                       },
-                                      title: item?.categoryName ?? 'N/A',
-                                      used: double.tryParse(
-                                              item?.usedValue ?? '0') ??
-                                          0,
-                                      total: double.tryParse(
-                                              item?.assignedValue ?? '0') ??
-                                          0,
-                                      endDate: item?.endDate,
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        )
-                      : SizedBox();
-                }),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(
-                  () {
+                                      color: themes.blueGray,
+                                      title: 'Out for Delivery',
+                                      subTitle: homeController
+                                                  .isCustomerDashboard.value ==
+                                              Status.loading
+                                          ? '...'
+                                          : homeController
+                                                  .customerDashboardDataModel
+                                                  .value
+                                                  ?.outForDeliveryCount
+                                                  ?.toString() ??
+                                              '0',
+                                    );
+                                  }),
+                                ),
+                                SizedBox(
+                                  width: 10.w,
+                                ),
+                                Expanded(
+                                  child: Obx(() {
+                                    return HomeContainer(
+                                        onTap: () {
+                                          shipnowController
+                                              .setStatusFilter('Picked up');
+                                          Get.toNamed(Routes.SHIPMENT_RECORD);
+                                        },
+                                        color: themes.blueGray,
+                                        title: 'Picked up',
+                                        subTitle: homeController
+                                                    .isCustomerDashboard
+                                                    .value ==
+                                                Status.loading
+                                            ? '...' // This part works
+                                            : homeController
+                                                    .customerDashboardDataModel
+                                                    .value
+                                                    ?.pickedupCount
+                                                    ?.toString() ??
+                                                '0' // This results in ',
+                                        );
+                                  }),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Obx(() {
+                                    return HomeContainer(
+                                      onTap: () {
+                                        shipnowController.setStatusFilter(
+                                            'Waiting for pickup');
+                                        Get.toNamed(Routes.SHIPMENT_RECORD);
+                                      },
+                                      color: themes.blueGray,
+                                      title: 'Wating for pickup',
+                                      subTitle: homeController
+                                                  .isCustomerDashboard.value ==
+                                              Status.loading
+                                          ? '...'
+                                          : homeController
+                                                  .customerDashboardDataModel
+                                                  .value
+                                                  ?.waitingForPickupCount
+                                                  ?.toString() ??
+                                              '0',
+                                    );
+                                  }),
+                                ),
+                                SizedBox(
+                                  width: 10.w,
+                                ),
+                                Expanded(
+                                  child: Obx(() {
+                                    return HomeContainer(
+                                      onTap: () {
+                                        // Clear any previous status filter before opening
+                                        shipnowController
+                                            .setStatusFilter('delivered');
+                                        Get.toNamed(Routes.SHIPMENT_RECORD);
+                                      },
+                                      color: themes.blueGray,
+                                      title: 'delivered',
+                                      subTitle: homeController
+                                                  .isCustomerDashboard.value ==
+                                              Status.loading
+                                          ? '...'
+                                          : homeController
+                                                  .customerDashboardDataModel
+                                                  .value
+                                                  ?.shippedCount
+                                                  ?.toString() ??
+                                              '0',
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(() {
+                    if (bottomController.isLoading.value) {
+                      return Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      );
+                    }
                     if (bottomController.userData.value?.role == 'messanger') {
-                      return Row(
+                      return Column(
                         children: [
-                          Expanded(
-                            child: Obx(() {
-                              return HomeContainer(
-                                onTap: () {
-                                  deliveryController.getDeliveryData();
-                                  deliveryController.fetchPaymentModes();
-                                  historyController.getDeliveryHistory();
-                                  Get.toNamed(Routes.DELIVERY);
-                                },
-                                color: themes.blueGray,
-                                title: runningDeliveryTxt,
-                                subTitle: homeController.isLoading.value
-                                    ? '...'
-                                    : homeController.dashboardDataModel.value
-                                            ?.totalDelivery
-                                            ?.toString() ??
-                                        '0',
-                              );
-                            }),
-                          ),
-                          SizedBox(
-                            width: 10.w,
-                          ),
-                          Expanded(
-                            child: Obx(() {
-                              return HomeContainer(
-                                onTap: () {
-                                  pickupController.getPickupData();
-                                  historyController.getPickupHistory();
-                                  pickupController.fetchPaymentModes();
-                                  Get.toNamed(Routes.PICKUP);
-                                },
-                                color: themes.lightCream,
-                                title: runningPickupTxt,
-                                subTitle: homeController.isLoading.value
-                                    ? '...'
-                                    : homeController.dashboardDataModel.value
-                                            ?.totalPickup
-                                            ?.toString() ??
-                                        '0',
-                              );
-                            }),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: HomeIconContainer(
+                                      title: 'Pickups',
+                                      Img: truckIcon,
+                                      OnTap: () {
+                                        pickupController.getPickupData();
+                                        pickupController.fetchPaymentModes();
+                                        pickupController.getMessangerData(user
+                                                ?.messangerdetail?.routeId
+                                                .toString() ??
+                                            '0');
+                                        Get.toNamed(Routes.PICKUP);
+                                      })),
+                              SizedBox(
+                                width: 10.w,
+                              ),
+                              Expanded(
+                                  child: HomeIconContainer(
+                                      title: 'Delivery',
+                                      Img: deliveryIcon,
+                                      OnTap: () {
+                                        deliveryController.getDeliveryData();
+                                        deliveryController.fetchPaymentModes();
+                                        historyController.getDeliveryHistory();
+                                        Get.toNamed(Routes.DELIVERY,
+                                            arguments: '');
+                                      })),
+                              SizedBox(
+                                width: 10.w,
+                              ),
+                              Expanded(
+                                  child: HomeIconContainer(
+                                title: 'POD',
+                                Img: folderIcon,
+                                OnTap: () => Get.toNamed(Routes.POD),
+                              )),
+                            ],
                           ),
                         ],
                       );
                     } else {
-                      return Column(
-                        spacing: 10,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Obx(() {
-                                  return HomeContainer(
-                                    onTap: () {
-                                      shipnowController
-                                          .setStatusFilter('Out for delivery');
-                                      Get.toNamed(Routes.SHIPMENT_RECORD);
-                                    },
-                                    color: themes.blueGray,
-                                    title: 'Out for Delivery',
-                                    subTitle: homeController
-                                                .isCustomerDashboard.value ==
-                                            Status.loading
-                                        ? '...'
-                                        : homeController
-                                                .customerDashboardDataModel
-                                                .value
-                                                ?.outForDeliveryCount
-                                                ?.toString() ??
-                                            '0',
-                                  );
-                                }),
-                              ),
-                              SizedBox(
-                                width: 10.w,
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return HomeContainer(
-                                      onTap: () {
-                                        shipnowController
-                                            .setStatusFilter('Picked up');
-                                        Get.toNamed(Routes.SHIPMENT_RECORD);
-                                      },
-                                      color: themes.blueGray,
-                                      title: 'Picked up',
-                                      subTitle: homeController
-                                                  .isCustomerDashboard.value ==
-                                              Status.loading
-                                          ? '...' // This part works
-                                          : homeController
-                                                  .customerDashboardDataModel
-                                                  .value
-                                                  ?.pickedupCount
-                                                  ?.toString() ??
-                                              '0' // This results in ',
-                                      );
-                                }),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Obx(() {
-                                  return HomeContainer(
-                                    onTap: () {
-                                      shipnowController.setStatusFilter(
-                                          'Waiting for pickup');
-                                      Get.toNamed(Routes.SHIPMENT_RECORD);
-                                    },
-                                    color: themes.blueGray,
-                                    title: 'Wating for pickup',
-                                    subTitle: homeController
-                                                .isCustomerDashboard.value ==
-                                            Status.loading
-                                        ? '...'
-                                        : homeController
-                                                .customerDashboardDataModel
-                                                .value
-                                                ?.waitingForPickupCount
-                                                ?.toString() ??
-                                            '0',
-                                  );
-                                }),
-                              ),
-                              SizedBox(
-                                width: 10.w,
-                              ),
-                              Expanded(
-                                child: Obx(() {
-                                  return HomeContainer(
-                                    onTap: () {
-                                      // Clear any previous status filter before opening
-                                      shipnowController
-                                          .setStatusFilter('delivered');
-                                      Get.toNamed(Routes.SHIPMENT_RECORD);
-                                    },
-                                    color: themes.blueGray,
-                                    title: 'delivered',
-                                    subTitle: homeController
-                                                .isCustomerDashboard.value ==
-                                            Status.loading
-                                        ? '...'
-                                        : homeController
-                                                .customerDashboardDataModel
-                                                .value
-                                                ?.shippedCount
-                                                ?.toString() ??
-                                            '0',
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
+                      return const SizedBox.shrink();
                     }
-                  },
-                ),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(() {
-                  if (bottomController.isLoading.value) {
-                    return Center(
-                      child: CircularProgressIndicator.adaptive(),
-                    );
-                  }
-                  if (bottomController.userData.value?.role == 'messanger') {
-                    return Column(
+                  }),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(() {
+                    if (bottomController.isLoading.value) {
+                      return const SizedBox.shrink();
+                    }
+                    if (bottomController.userData.value == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                                child: HomeIconContainer(
-                                    title: 'Pickups',
-                                    Img: truckIcon,
-                                    OnTap: () {
-                                      pickupController.getPickupData();
-                                      pickupController.fetchPaymentModes();
-                                      pickupController.getMessangerData(user
-                                              ?.messangerdetail?.routeId
-                                              .toString() ??
-                                          '0');
-                                      Get.toNamed(Routes.PICKUP);
-                                    })),
-                            SizedBox(
-                              width: 10.w,
-                            ),
-                            Expanded(
-                                child: HomeIconContainer(
-                                    title: 'Delivery',
-                                    Img: deliveryIcon,
-                                    OnTap: () {
-                                      deliveryController.getDeliveryData();
-                                      deliveryController.fetchPaymentModes();
-                                      historyController.getDeliveryHistory();
-                                      Get.toNamed(Routes.DELIVERY,
-                                          arguments: '');
-                                    })),
-                            SizedBox(
-                              width: 10.w,
-                            ),
-                            Expanded(
-                                child: HomeIconContainer(
-                              title: 'POD',
-                              Img: folderIcon,
-                              OnTap: () => Get.toNamed(Routes.POD),
-                            )),
-                          ],
+                        Expanded(
+                          child: HomeIconContainer(
+                            title: 'Outbound',
+                            Img: barcodeIcon,
+                            OnTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
+                          ),
                         ),
                       ],
                     );
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                }),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(() {
-                  if (bottomController.isLoading.value) {
-                    return const SizedBox.shrink();
-                  }
-                  if (bottomController.userData.value == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: HomeIconContainer(
-                          title: 'Outbound',
-                          Img: barcodeIcon,
-                          OnTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
+                  }),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(() {
+                    if (bottomController.isLoading.value) {
+                      return Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(
+                            child: HomeIconContainer(
+                          OnTap: () => Get.to(PageviewView()),
+                          title: 'Add Shipment',
+                          Img: trackingIcon,
+                        )),
+                        SizedBox(
+                          width: 10.w,
                         ),
-                      ),
-                    ],
-                  );
-                }),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(() {
-                  if (bottomController.isLoading.value) {
-                    return Center(
-                      child: CircularProgressIndicator.adaptive(),
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(
-                          child: HomeIconContainer(
-                        OnTap: () => Get.to(PageviewView()),
-                        title: 'Add Shipment',
-                        Img: trackingIcon,
-                      )),
-                      SizedBox(
-                        width: 10.w,
-                      ),
-                      bottomController.userData.value?.role == 'messanger'
-                          ? Expanded(
-                              child: HomeIconContainer(
-                              title: 'Consigment',
-                              Img: containerIcon,
-                              OnTap: () => Get.toNamed(Routes.CONSIGNMENT),
-                            ))
-                          : Expanded(
-                              child: HomeIconContainer(
-                              title: 'My Shipment',
-                              Img: containerIcon,
-                              OnTap: () {
-                                shipnowController.setStatusFilter('');
-                                Get.toNamed(Routes.SHIPMENT_RECORD);
-                              },
-                            )),
-                      SizedBox(
-                        width: 10.w,
-                      ),
-                      Obx(
-                        () {
-                          return bottomController.userData.value?.role ==
-                                  'messanger'
-                              ? SizedBox(
-                                  width: 100.w,
-                                  child: HomeIconContainer(
-                                    title: 'My Shipment',
-                                    Img: containerIcon,
-                                    OnTap: () {
-                                      shipnowController.setStatusFilter('');
-                                      Get.toNamed(Routes.SHIPMENT_RECORD);
-                                    },
-                                  ),
-                                )
-                              : SizedBox.shrink();
-                        },
-                      ),
-                      Obx(
-                        () =>
-                            bottomController.userData.value?.role == 'messanger'
-                                ? SizedBox.shrink()
-                                : SizedBox(
+                        bottomController.userData.value?.role == 'messanger'
+                            ? Expanded(
+                                child: HomeIconContainer(
+                                title: 'Consigment',
+                                Img: containerIcon,
+                                OnTap: () => Get.toNamed(Routes.CONSIGNMENT),
+                              ))
+                            : Expanded(
+                                child: HomeIconContainer(
+                                title: 'My Shipment',
+                                Img: containerIcon,
+                                OnTap: () {
+                                  shipnowController.setStatusFilter('');
+                                  Get.toNamed(Routes.SHIPMENT_RECORD);
+                                },
+                              )),
+                        SizedBox(
+                          width: 10.w,
+                        ),
+                        Obx(
+                          () {
+                            return bottomController.userData.value?.role ==
+                                    'messanger'
+                                ? SizedBox(
                                     width: 100.w,
                                     child: HomeIconContainer(
-                                      title: 'My Contracts',
-                                      Img: contractLogo,
+                                      title: 'My Shipment',
+                                      Img: containerIcon,
                                       OnTap: () {
-                                        // homeController.contractView();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ContractListWidget()
-                                              // PdfViewerPage(
-                                              //   pdfUrl: homeController
-                                              //           .contractDataModel
-                                              //           .value
-                                              //           ?.contracts?[0]
-                                              //           .viewLink ??
-                                              //       '',
-                                              // ),
-                                              ),
-                                        );
+                                        shipnowController.setStatusFilter('');
+                                        Get.toNamed(Routes.SHIPMENT_RECORD);
                                       },
                                     ),
-                                  ),
-                      ),
-                    ],
-                  );
-                }),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(
-                  () {
-                    if (bottomController.userData.value?.role == 'messanger') {
-                      return SizedBox(
-                        width: 100.w,
-                        child: HomeIconContainer(
-                          OnTap: () {
-                            historyController.getCashCollectionHistory();
-                            Get.toNamed(Routes.HISTORY);
+                                  )
+                                : SizedBox.shrink();
                           },
-                          title: 'Cash Collection',
-                          Img: history,
+                        ),
+                        Obx(
+                          () => bottomController.userData.value?.role ==
+                                  'messanger'
+                              ? SizedBox.shrink()
+                              : SizedBox(
+                                  width: 100.w,
+                                  child: HomeIconContainer(
+                                    title: 'My Contracts',
+                                    Img: contractLogo,
+                                    OnTap: () {
+                                      // homeController.contractView();
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ContractListWidget()
+                                            // PdfViewerPage(
+                                            //   pdfUrl: homeController
+                                            //           .contractDataModel
+                                            //           .value
+                                            //           ?.contracts?[0]
+                                            //           .viewLink ??
+                                            //       '',
+                                            // ),
+                                            ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                        ),
+                      ],
+                    );
+                  }),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(
+                    () {
+                      if (bottomController.userData.value?.role ==
+                          'messanger') {
+                        return SizedBox(
+                          width: 100.w,
+                          child: HomeIconContainer(
+                            OnTap: () {
+                              historyController.getCashCollectionHistory();
+                              Get.toNamed(Routes.HISTORY);
+                            },
+                            title: 'Cash Collection',
+                            Img: history,
+                          ),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    },
+                  ),
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  Obx(
+                    () => bottomController.userData.value?.role == 'messanger'
+                        ? SizedBox.shrink()
+                        : SizedBox.shrink(),
+                  ),
+                  Obx(() {
+                    final imageUrl = () {
+                      final messangerPath = profileController
+                          .messangerDetail.value?.messangerdetail?.path;
+                      final messangerPhoto = profileController
+                          .messangerDetail.value?.messangerdetail?.photo;
+
+                      if (messangerPath != null &&
+                          messangerPhoto != null &&
+                          messangerPath.trim().isNotEmpty &&
+                          messangerPhoto.trim().isNotEmpty) {
+                        return "$messangerPath$messangerPhoto";
+                      }
+                      return null;
+                    }();
+
+                    if (bottomController.isLoading.value) {
+                      return Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      );
+                    }
+                    if (bottomController.userData.value?.role == 'messanger') {
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: themes.whiteColor,
+                          borderRadius: BorderRadius.circular(5.r),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 30,
+                                    backgroundColor: themes.grayColor,
+                                    backgroundImage:
+                                        imageUrl != null && imageUrl.isNotEmpty
+                                            ? NetworkImage(imageUrl)
+                                            : null,
+                                    child: imageUrl == null || imageUrl.isEmpty
+                                        ? Icon(
+                                            Icons.person,
+                                            size: 30,
+                                            color: themes.darkCyanBlue,
+                                          )
+                                        : null,
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Obx(() {
+                                    final user =
+                                        bottomController.userData.value;
+                                    if (user == null) return Text('N/A');
+
+                                    final name = user.messangerdetail?.name ??
+                                        user.customerdetail?.fullName ??
+                                        'N/A';
+
+                                    return SizedBox(
+                                      width: 80.w,
+                                      child: Text(
+                                        name,
+                                        style: themes.fontSize14_500,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                              SizedBox(width: 20.w),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: themes.blueGray,
+                                    borderRadius: BorderRadius.circular(5.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 12.h, horizontal: 16.w),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Rating',
+                                            style: themes.fontSize14_500,
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          homeController.isRattingData.value ==
+                                                  Status.loading
+                                              ? Center(
+                                                  child: Text(
+                                                  '0.0',
+                                                  style: themes.fontSize18_600
+                                                      .copyWith(
+                                                    fontSize: 40.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ))
+                                              : Text(
+                                                  homeController
+                                                          .rattingDataModel
+                                                          .value
+                                                          ?.averageRating
+                                                          ?.toStringAsFixed(
+                                                              1) ??
+                                                      '0.0',
+                                                  style: themes.fontSize18_600
+                                                      .copyWith(
+                                                    fontSize: 40.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                )
+                                        ],
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '''Delivery's''',
+                                            style: themes.fontSize14_500,
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            homeController.rattingDataModel
+                                                    .value?.deliveredCount
+                                                    .toString() ??
+                                                '0',
+                                            style:
+                                                themes.fontSize18_600.copyWith(
+                                              fontSize: 40.sp,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     } else {
                       return SizedBox.shrink();
                     }
-                  },
-                ),
-                SizedBox(
-                  height: 15.h,
-                ),
-                Obx(
-                  () => bottomController.userData.value?.role == 'messanger'
-                      ? SizedBox.shrink()
-                      : SizedBox.shrink(),
-                ),
-                Obx(() {
-                  final imageUrl = () {
-                    final messangerPath = profileController
-                        .messangerDetail.value?.messangerdetail?.path;
-                    final messangerPhoto = profileController
-                        .messangerDetail.value?.messangerdetail?.photo;
-
-                    if (messangerPath != null &&
-                        messangerPhoto != null &&
-                        messangerPath.trim().isNotEmpty &&
-                        messangerPhoto.trim().isNotEmpty) {
-                      return "$messangerPath$messangerPhoto";
+                  }),
+                  SizedBox(
+                    height: 20.h,
+                  ),
+                  Obx(() {
+                    if (bottomController.userData.value?.role == 'messanger') {
+                      return SizedBox.shrink();
                     }
-                    return null;
-                  }();
+                    if (shipnowController.isLoadingShipNow.value) {
+                      return const Center(
+                          child: CircularProgressIndicator.adaptive());
+                    }
 
-                  if (bottomController.isLoading.value) {
-                    return Center(
-                      child: CircularProgressIndicator.adaptive(),
-                    );
-                  }
-                  if (bottomController.userData.value?.role == 'messanger') {
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: themes.whiteColor,
-                        borderRadius: BorderRadius.circular(5.r),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: themes.grayColor,
-                                  backgroundImage:
-                                      imageUrl != null && imageUrl.isNotEmpty
-                                          ? NetworkImage(imageUrl)
-                                          : null,
-                                  child: imageUrl == null || imageUrl.isEmpty
-                                      ? Icon(
-                                          Icons.person,
-                                          size: 30,
-                                          color: themes.darkCyanBlue,
-                                        )
-                                      : null,
-                                ),
-                                SizedBox(height: 8.h),
-                                Obx(() {
-                                  final user = bottomController.userData.value;
-                                  if (user == null) return Text('N/A');
+                    final activeShipments = shipnowController.allShipmentData;
 
-                                  final name = user.messangerdetail?.name ??
-                                      user.customerdetail?.fullName ??
-                                      'N/A';
-
-                                  return SizedBox(
-                                    width: 80.w,
-                                    child: Text(
-                                      name,
-                                      style: themes.fontSize14_500,
-                                    ),
-                                  );
-                                }),
+                    if (activeShipments.isNotEmpty) {
+                      return ListView.separated(
+                        physics: const ScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: activeShipments.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: 15.h),
+                        itemBuilder: (context, index) {
+                          final shipment = activeShipments[index];
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: themes.whiteColor,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                )
                               ],
                             ),
-                            SizedBox(width: 20.w),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: themes.blueGray,
-                                  borderRadius: BorderRadius.circular(5.r),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 12.h, horizontal: 16.w),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Rating',
-                                          style: themes.fontSize14_500,
-                                        ),
-                                        SizedBox(height: 4.h),
-                                        homeController.isRattingData.value ==
-                                                Status.loading
-                                            ? Center(
-                                                child: Text(
-                                                '0.0',
-                                                style: themes.fontSize18_600
-                                                    .copyWith(
-                                                  fontSize: 40.sp,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ))
-                                            : Text(
-                                                homeController.rattingDataModel
-                                                        .value?.averageRating
-                                                        ?.toStringAsFixed(1) ??
-                                                    '0.0',
-                                                style: themes.fontSize18_600
-                                                    .copyWith(
-                                                  fontSize: 40.sp,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              )
-                                      ],
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '''Delivery's''',
-                                          style: themes.fontSize14_500,
-                                        ),
-                                        SizedBox(height: 4.h),
-                                        Text(
-                                          homeController.rattingDataModel.value
-                                                  ?.deliveredCount
-                                                  .toString() ??
-                                              '0',
-                                          style: themes.fontSize18_600.copyWith(
-                                            fontSize: 40.sp,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  } else {
-                    return SizedBox.shrink();
-                  }
-                }),
-                SizedBox(
-                  height: 20.h,
-                ),
-                Obx(() {
-                  if (bottomController.userData.value?.role == 'messanger') {
-                    return SizedBox.shrink();
-                  }
-                  if (shipnowController.isLoadingShipNow.value) {
-                    return const Center(
-                        child: CircularProgressIndicator.adaptive());
-                  }
-
-                  final activeShipments = shipnowController.allShipmentData;
-
-                  if (activeShipments.isNotEmpty) {
-                    return ListView.separated(
-                      physics: const ScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: activeShipments.length,
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: 15.h),
-                      itemBuilder: (context, index) {
-                        final shipment = activeShipments[index];
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: themes.whiteColor,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${shipment.shipmentId}',
-                                style: themes.fontSize14_500.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.sp,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  Clipboard.setData(
-                                    ClipboardData(
-                                        text: shipment.shipmentId.toString()),
-                                  );
-                                },
-                                icon: const Icon(Icons.copy, size: 18),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: themes.blueGray,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Text(
-                                  shipment.shipmentStatus.toString(),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${shipment.shipmentId}',
                                   style: themes.fontSize14_500.copyWith(
-                                    color: themes.darkCyanBlue,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.sp,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                      ClipboardData(
+                                          text: shipment.shipmentId.toString()),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.copy, size: 18),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: themes.blueGray,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Text(
+                                    shipment.shipmentStatus.toString(),
+                                    style: themes.fontSize14_500.copyWith(
+                                      color: themes.darkCyanBlue,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
 
-                  return Center(
-                      child: Text(
-                    "No active shipments found",
-                    style: themes.fontSize14_500,
-                  ));
-                }),
-              ],
+                    return Center(
+                        child: Text(
+                      "No active shipments found",
+                      style: themes.fontSize14_500,
+                    ));
+                  }),
+                ],
+              ),
             ),
           ),
         ));
