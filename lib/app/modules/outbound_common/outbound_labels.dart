@@ -25,6 +25,7 @@ class OutboundLabels {
   static const sectionScannedBoxes = 'Scanned Box Details';
   static const btnViewReport = 'View Report';
   static const bagListTitle = 'Bag List';
+  static const bagListEmptyMessage = 'No bags match the selected depots.';
   static const baggingReportTitle = 'Bagging Report';
   static const colBoxNumber = 'BOX NUMBER';
   static const colShipmentId = 'SHIPMENT ID';
@@ -120,6 +121,12 @@ class OutboundLabels {
   static const btnLinehaulReport = 'Report';
   static const btnPickupReport = 'Report';
   static const btnRemoveShipment = 'Remove';
+  static const btnCancel = 'Cancel';
+  static const btnDelete = 'Delete';
+  static const deleteDocketTitle = 'Remove docket?';
+  static String deleteDocketConfirmMessage(String docketNo) =>
+      'Remove docket $docketNo from this scan session? '
+      'It will not be saved until you tap Save.';
   static const btnBagDetails = 'Details';
   static const btnFullBagDetail = 'Full detail';
   static const btnLinehaulDetails = 'Details';

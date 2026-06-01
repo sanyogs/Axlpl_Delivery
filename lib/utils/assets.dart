@@ -29,3 +29,11 @@ final hold = 'assets/hold.png';
 final cancle = 'assets/cancelled.png';
 final contractLogo = 'assets/contracticon.png';
 final invoiceLogo = 'assets/invoicelogo.png';
+
+/// Outbound process navigation (home + outbound menu grid).
+const outboundHomeIcon = 'assets/outbound_home_icon.png';
+const outboundHubScanIcon = 'assets/outbound_hub_scan_icon.png';
+const outboundBaggingIcon = 'assets/outbound_bagging_icon.png';
+const outboundManifestIcon = 'assets/outbound_manifest_icon.png';
+const outboundLinehaulIcon = 'assets/outbound_linehaul_icon.png';
+const outboundSectorPickupIcon = 'assets/outbound_sector_pickup_icon.png';

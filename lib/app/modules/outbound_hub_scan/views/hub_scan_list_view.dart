@@ -138,8 +138,7 @@ String _branchDisplayName({
   if (name.isNotEmpty) return name;
   final label = branchLabel(branchId).trim();
   if (label.isNotEmpty && label != '—') return label;
-  final id = branchId?.trim();
-  return id == null || id.isEmpty ? 'Branch' : 'Branch $id';
+  return 'Branch';
 }
 
 class _HubScanListBranchLabel extends StatelessWidget {

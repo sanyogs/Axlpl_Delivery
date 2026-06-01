@@ -53,7 +53,6 @@ class HubScanHistoryTable extends StatelessWidget {
             DataColumn(label: Text(OutboundLabels.colSlNo)),
             DataColumn(label: Text(OutboundLabels.colShipmentDocket)),
             DataColumn(label: Text(OutboundLabels.colScanType)),
-            DataColumn(label: Text(OutboundLabels.colBranchHub)),
             DataColumn(label: Text(OutboundLabels.colScannedAt)),
             DataColumn(label: Text(OutboundLabels.colActions)),
           ],
@@ -78,7 +77,6 @@ class HubScanHistoryTable extends StatelessWidget {
     final stripe = index.isEven
         ? themes.lightGrayColor.withValues(alpha: 0.35)
         : themes.whiteColor;
-    final branch = HubScanLog.branchDisplay(row.branchId, branchLabel);
     final scanType = row.scanTypeDisplay(null);
 
     return DataRow(
@@ -103,12 +101,6 @@ class HubScanHistoryTable extends StatelessWidget {
           ),
         ),
         DataCell(Text(scanType, style: themes.fontSize14_400)),
-        DataCell(
-          Text(
-            branch,
-            style: themes.fontSize14_400.copyWith(color: themes.darkCyanBlue),
-          ),
-        ),
         DataCell(
           Text(
             row.scannedAtDisplay,

@@ -93,12 +93,12 @@ class _BagListViewState extends State<BagListView> {
                   ),
                 )
               else if (err.isNotEmpty)
-                _ListMessage(text: err, onRetry: controller.loadBagList)
-              else if (rows.isEmpty)
                 _ListMessage(
-                  text: 'No bags match the selected depots.',
+                  text: err,
                   onRetry: controller.loadBagList,
                 )
+              else if (rows.isEmpty)
+                const _ListMessage(text: OutboundLabels.bagListEmptyMessage)
               else ...[
                 Text(
                   rangeLabel,
@@ -233,10 +233,10 @@ class _BagListTable extends StatelessWidget {
 }
 
 class _ListMessage extends StatelessWidget {
-  const _ListMessage({required this.text, required this.onRetry});
+  const _ListMessage({required this.text, this.onRetry});
 
   final String text;
-  final Future<bool> Function() onRetry;
+  final Future<bool> Function()? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -247,11 +247,13 @@ class _ListMessage extends StatelessWidget {
           textAlign: TextAlign.center,
           style: themes.fontSize14_400.copyWith(color: themes.grayColor),
         ),
-        SizedBox(height: 12.h),
-        OutboundSecondaryButton(
-          label: 'Retry',
-          onPressed: () => onRetry(),
-        ),
+        if (onRetry != null) ...[
+          SizedBox(height: 12.h),
+          OutboundSecondaryButton(
+            label: 'Retry',
+            onPressed: () => onRetry!(),
+          ),
+        ],
       ],
     );
   }

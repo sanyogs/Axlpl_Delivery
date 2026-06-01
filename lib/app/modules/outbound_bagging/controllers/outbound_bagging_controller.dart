@@ -605,11 +605,13 @@ class OutboundBaggingController extends GetxController {
     try {
       final rows = await _repo.listBags(branchId: _originId ?? '');
       bagListAllRows.assignAll(rows);
-      final filtered = bagListFilteredRows;
-      if (filtered.isEmpty) {
-        bagListError.value = _repo.lastMessage.trim();
+      final msg = _repo.lastMessage.trim();
+      if (msg.isNotEmpty) {
+        // Auth / network / API error — not an empty list.
+        bagListError.value = msg;
+        return false;
       }
-      return bagListError.value.isEmpty;
+      return true;
     } catch (e) {
       bagListError.value = e.toString();
       return false;

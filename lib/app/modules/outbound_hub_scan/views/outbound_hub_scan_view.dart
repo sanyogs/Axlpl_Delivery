@@ -184,7 +184,7 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
                 _ScannedDocketDetailsList(
                   rows: controller.sessionScannedRows.toList(growable: false),
                   branchLabel: branchList.displayLabelForId,
-                  onRemove: controller.removeSessionRow,
+                  onRemove: controller.confirmRemoveSessionRow,
                 ),
               ],
             ),

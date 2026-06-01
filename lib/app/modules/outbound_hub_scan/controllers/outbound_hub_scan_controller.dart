@@ -6,7 +6,10 @@ import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
+import 'package:axlpl_delivery/common_widget/common_tow_btn_dialog.dart';
+import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -208,8 +211,8 @@ class OutboundHubScanController extends GetxController {
     sessionScannedRows.assignAll(next);
   }
 
-  /// Remove a staged docket before Save (not allowed after server save).
-  void removeSessionRow(String sessionKey) {
+  /// Shows confirmation, then removes a staged docket (not allowed after save).
+  void confirmRemoveSessionRow(String sessionKey) {
     final key = sessionKey.trim();
     if (key.isEmpty) return;
     HubScanTableRow? match;
@@ -219,10 +222,33 @@ class OutboundHubScanController extends GetxController {
         break;
       }
     }
-    if (match == null) return;
-    if (match.saved) {
-      return;
+    if (match == null || match.saved) return;
+
+    final docket = match.docketNo?.trim();
+    final display = (docket != null && docket.isNotEmpty) ? docket : key;
+
+    commonDialog(
+      OutboundLabels.deleteDocketTitle,
+      OutboundLabels.deleteDocketConfirmMessage(display),
+      OutboundLabels.btnDelete,
+      OutboundLabels.btnCancel,
+      () => _removeSessionRow(key),
+      icon: Icons.delete_outline,
+      iconColor: themes.redColor,
+    );
+  }
+
+  void _removeSessionRow(String sessionKey) {
+    final key = sessionKey.trim();
+    if (key.isEmpty) return;
+    HubScanTableRow? match;
+    for (final r in sessionScannedRows) {
+      if (r.sessionKey == key) {
+        match = r;
+        break;
+      }
     }
+    if (match == null || match.saved) return;
     sessionScannedRows.assignAll(
       sessionScannedRows
           .where((r) => r.sessionKey != key)

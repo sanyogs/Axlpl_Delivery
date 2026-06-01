@@ -20,6 +20,7 @@ import 'package:axlpl_delivery/common_widget/home_container.dart';
 import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
 import 'package:axlpl_delivery/common_widget/used_contract_shipment.dart';
 import 'package:axlpl_delivery/const/const.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
 import 'package:axlpl_delivery/utils/assets.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -586,7 +587,7 @@ class HomeView extends GetView<HomeController> {
                         Expanded(
                           child: HomeIconContainer(
                             title: 'Outbound',
-                            Img: barcodeIcon,
+                            Img: OutboundMenuIcons.home,
                             OnTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
                           ),
                         ),

@@ -2,7 +2,7 @@ import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
 import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
-import 'package:axlpl_delivery/utils/assets.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -39,27 +39,27 @@ class OutboundMenuView extends StatelessWidget {
                 children: [
                   HomeIconContainer(
                     title: 'Hub scan',
-                    Img: barcodeIcon,
+                    Img: OutboundMenuIcons.hubScan,
                     OnTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
                   ),
                   HomeIconContainer(
                     title: 'Bagging',
-                    Img: barcodeIcon,
+                    Img: OutboundMenuIcons.bagging,
                     OnTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
                   ),
                   HomeIconContainer(
                     title: 'Manifest',
-                    Img: barcodeIcon,
+                    Img: OutboundMenuIcons.manifest,
                     OnTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
                   ),
                   HomeIconContainer(
                     title: 'Linehaul',
-                    Img: barcodeIcon,
+                    Img: OutboundMenuIcons.linehaul,
                     OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
                   ),
                   HomeIconContainer(
                     title: 'Sector pickup',
-                    Img: barcodeIcon,
+                    Img: OutboundMenuIcons.sectorPickup,
                     OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
                   ),
                 ],
