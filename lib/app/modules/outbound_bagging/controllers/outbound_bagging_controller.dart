@@ -11,7 +11,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 /// Bagging — each visible field maps to a Postman / QA parameter (see module validation).
 class OutboundBaggingController extends GetxController {
@@ -45,8 +44,6 @@ class OutboundBaggingController extends GetxController {
   final bagCodeWorkingController = TextEditingController();
   final shipmentController = TextEditingController();
   final reportBagCodeController = TextEditingController();
-  final reportStartController = TextEditingController();
-  final reportEndController = TextEditingController();
 
   final selectedOriginDepotId = RxnString();
   final selectedDestDepotId = RxnString();
@@ -175,8 +172,6 @@ class OutboundBaggingController extends GetxController {
     bagCodeWorkingController.dispose();
     shipmentController.dispose();
     reportBagCodeController.dispose();
-    reportStartController.dispose();
-    reportEndController.dispose();
     super.onClose();
   }
 
@@ -657,26 +652,19 @@ class OutboundBaggingController extends GetxController {
         }
       }
     }
-    if (reportStartController.text.trim().isEmpty) {
-      final end = DateTime.now();
-      final start = end.subtract(const Duration(days: 30));
-      final fmt = DateFormat('yyyy-MM-dd');
-      reportStartController.text = fmt.format(start);
-      reportEndController.text = fmt.format(end);
-    }
   }
 
   Future<void> baggingReport() async {
     final code = reportBagCodeController.text.trim();
-    final start = reportStartController.text.trim();
-    final end = reportEndController.text.trim();
+    if (code.isEmpty) {
+      Get.snackbar('Bagging', 'Bag id is required');
+      return;
+    }
 
     isBusy.value = true;
     try {
       final r = await _repo.baggingReport(
-        bagCode: code.isNotEmpty ? code : null,
-        startDate: code.isEmpty ? start : (start.isNotEmpty ? start : null),
-        endDate: code.isEmpty ? end : (end.isNotEmpty ? end : null),
+        bagCode: code,
       );
       r.when(
         success: (data) {

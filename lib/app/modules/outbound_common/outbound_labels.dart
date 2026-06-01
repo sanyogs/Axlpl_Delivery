@@ -41,6 +41,7 @@ class OutboundLabels {
   static const btnNewBagging = 'New Bagging';
   static const btnPerformBagging = 'Perform Bagging';
   static const branchHub = 'Branch / hub';
+  static const bagId = 'Bag id';
   static const bagCode = 'Bag code';
   static const workingBagCode = 'Bag code';
   static const bagCodesCsv = 'Bag codes (comma separated)';

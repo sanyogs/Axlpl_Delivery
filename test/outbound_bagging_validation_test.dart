@@ -23,8 +23,6 @@ void main() {
     expect(
       OutboundBaggingValidation.validateBaggingReportRequest(
         bagCode: '',
-        startDate: '',
-        endDate: '',
       ),
       isNull,
     );

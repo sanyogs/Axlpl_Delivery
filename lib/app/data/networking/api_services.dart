@@ -1284,20 +1284,13 @@ class ApiServices {
 
   Future<APIResponse> baggingReport({
     required String token,
-    String? bagCode,
-    String? startDate,
-    String? endDate,
+    required String bagCode,
   }) async {
     return _api.getOutbound(
       baggingReportPoint,
       token: token,
       query: {
-        if (bagCode != null && bagCode.trim().isNotEmpty)
-          'bag_code': bagCode.trim(),
-        if (startDate != null && startDate.trim().isNotEmpty)
-          'start_date': startDate.trim(),
-        if (endDate != null && endDate.trim().isNotEmpty)
-          'end_date': endDate.trim(),
+        'bag_code': bagCode.trim(),
       },
       appendPlatform: false,
     );

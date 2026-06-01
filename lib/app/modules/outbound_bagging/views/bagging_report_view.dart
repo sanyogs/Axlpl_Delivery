@@ -4,7 +4,6 @@ import 'package:axlpl_delivery/app/modules/outbound_bagging/controllers/outbound
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
@@ -59,24 +58,10 @@ class _BaggingReportViewState extends State<BaggingReportView> {
                 style: themes.fontSize14_400.copyWith(color: themes.grayColor),
               ),
               OutboundLabeledFieldRow(
-                label: OutboundLabels.reportStart,
-                child: OutboundDateField(
-                  controller: controller.reportStartController,
-                  hintText: OutboundLabels.reportStart,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.reportEnd,
-                child: OutboundDateField(
-                  controller: controller.reportEndController,
-                  hintText: OutboundLabels.reportEnd,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.bagCode,
+                label: OutboundLabels.bagId,
                 child: OutboundScanField(
                   controller: controller.reportBagCodeController,
-                  hintText: OutboundLabels.bagCode,
+                  hintText: OutboundLabels.bagId,
                   prefixIcon: const Icon(CupertinoIcons.cube_box),
                   onSubmitted: (_) => controller.baggingReport(),
                 ),
@@ -156,7 +141,7 @@ class _BaggingReportItemsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) {
       return Text(
-        'Run report with dates or a bag code to load shipments.',
+        'Enter a bag id to load shipments.',
         style: themes.fontSize14_400.copyWith(color: themes.grayColor),
       );
     }

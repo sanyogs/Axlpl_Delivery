@@ -29,10 +29,8 @@ class OutboundBaggingValidation {
     return null;
   }
 
-  /// `baggingreport`: Postman needs dates; QA detail needs `bag_code`.
+  /// `baggingreport`: Bagging Report searches by bag id only (`bag_code`).
   static String? validateBaggingReportRequest({
     required String? bagCode,
-    required String? startDate,
-    required String? endDate,
   }) => null;
 }
