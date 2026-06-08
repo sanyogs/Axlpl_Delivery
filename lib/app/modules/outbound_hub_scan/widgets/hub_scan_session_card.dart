@@ -50,15 +50,15 @@ class HubScanSessionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 36.w,
-                  height: 36.w,
+                  width: 32.w,
+                  height: 32.w,
                   decoration: BoxDecoration(
                     color: themes.darkCyanBlue.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(5.r),
                   ),
                   child: Icon(
                     Icons.inventory_2_outlined,
-                    size: 20.sp,
+                    size: 18.sp,
                     color: themes.darkCyanBlue,
                   ),
                 ),
@@ -71,7 +71,7 @@ class HubScanSessionCard extends StatelessWidget {
                         'Docket',
                         style: themes.fontSize14_400.copyWith(
                           color: themes.grayColor,
-                          fontSize: 11.sp,
+                          fontSize: 10.5.sp,
                         ),
                       ),
                       SizedBox(height: 2.h),
@@ -81,7 +81,7 @@ class HubScanSessionCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: themes.fontSize18_600.copyWith(
                           color: themes.darkCyanBlue,
-                          fontSize: 17.sp,
+                          fontSize: 14.5.sp,
                         ),
                       ),
                     ],
@@ -103,7 +103,7 @@ class HubScanSessionCard extends StatelessWidget {
                 color: themes.lightGrayColor.withValues(alpha: 0.28),
                 borderRadius: BorderRadius.circular(5.r),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
               child: Column(
                 children: [
                   _line(OutboundLabels.scanType, _v(row.scanType)),
@@ -132,19 +132,19 @@ class HubScanSessionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 112.w,
+            width: 106.w,
             child: Text(
               '$label :',
               style: themes.fontSize14_400.copyWith(
                 color: themes.grayColor,
-                fontSize: 12.sp,
+                fontSize: 10.8.sp,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: themes.fontSize14_500.copyWith(fontSize: 12.5.sp),
+              style: themes.fontSize14_500.copyWith(fontSize: 11.5.sp),
             ),
           ),
         ],
@@ -187,7 +187,7 @@ class _StatusPill extends StatelessWidget {
             label,
             style: themes.fontSize14_500.copyWith(
               color: color,
-              fontSize: 11.sp,
+              fontSize: 10.5.sp,
             ),
           ),
         ],
@@ -204,20 +204,20 @@ class _RemoveScanButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 34.w,
-      height: 34.w,
+      width: 30.w,
+      height: 30.w,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
-          minimumSize: Size(34.w, 34.w),
+          minimumSize: Size(30.w, 30.w),
           foregroundColor: themes.redColor,
           side: BorderSide(color: themes.redColor.withValues(alpha: 0.35)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.r)),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        child: Icon(Icons.delete_outline, size: 18.sp),
+        child: Icon(Icons.delete_outline, size: 16.sp),
       ),
     );
   }

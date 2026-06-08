@@ -28,7 +28,7 @@ class OutboundAdminSection extends StatelessWidget {
         children: [
           Container(
             color: themes.darkCyanBlue,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             child: Row(
               children: [
                 Expanded(
@@ -36,7 +36,7 @@ class OutboundAdminSection extends StatelessWidget {
                     title,
                     style: themes.fontSize18_600.copyWith(
                       color: themes.whiteColor,
-                      fontSize: 15.sp,
+                      fontSize: 13.sp,
                     ),
                   ),
                 ),
@@ -45,10 +45,10 @@ class OutboundAdminSection extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(12.w),
+            padding: EdgeInsets.all(10.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
+              spacing: 8,
               children: children,
             ),
           ),
@@ -73,27 +73,48 @@ class OutboundLabeledFieldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 118.w,
-          child: RichText(
-            text: TextSpan(
-              style: themes.fontSize14_400.copyWith(color: themes.blackColor),
-              children: [
-                TextSpan(text: '$label :'),
-                if (required)
-                  TextSpan(
-                    text: ' *',
-                    style: TextStyle(color: Colors.red.shade700),
-                  ),
-              ],
-            ),
-          ),
+    final labelWidget = RichText(
+      text: TextSpan(
+        style: themes.fontSize14_400.copyWith(
+          color: themes.blackColor,
+          fontSize: 11.5.sp,
+          height: 1.12,
         ),
-        Expanded(child: child),
-      ],
+        children: [
+          TextSpan(text: '$label :'),
+          if (required)
+            TextSpan(
+              text: ' *',
+              style: TextStyle(color: Colors.red.shade700),
+            ),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 300) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              labelWidget,
+              SizedBox(height: 4.h),
+              child,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 110.w,
+              child: labelWidget,
+            ),
+            Expanded(child: child),
+          ],
+        );
+      },
     );
   }
 }
@@ -121,12 +142,15 @@ class OutboundReadOnlyInput extends StatelessWidget {
         controller: controller,
         readOnly: true,
         enableInteractiveSelection: true,
-        style: themes.fontSize14_400,
+        style: themes.fontSize14_400.copyWith(fontSize: 12.5.sp),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
           hintText: hintText,
-          hintStyle: themes.fontSize14_400.copyWith(color: themes.grayColor),
+          hintStyle: themes.fontSize14_400.copyWith(
+            color: themes.grayColor,
+            fontSize: 12.5.sp,
+          ),
           border: InputBorder.none,
         ),
       ),

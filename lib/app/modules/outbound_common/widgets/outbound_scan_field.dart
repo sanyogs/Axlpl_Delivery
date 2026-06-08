@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:axlpl_delivery/common_widget/container_textfiled.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +25,10 @@ class OutboundScanField extends StatefulWidget {
   final TextInputType? keyboardType;
   final FocusNode? focusNode;
   final void Function(String)? onSubmitted;
+
   /// Called after a successful barcode scan (value already written to [controller]).
   final Future<void> Function(String)? onScanned;
+
   /// Called when the field loses focus (e.g. user tabs away after typing docket).
   final VoidCallback? onFocusLost;
 
@@ -68,22 +69,40 @@ class _OutboundScanFieldState extends State<OutboundScanField> {
     return Row(
       children: [
         Expanded(
-          child: ContainerTextfiled(
-            controller: widget.controller,
-            focusNode: widget.focusNode ?? _ownedFocusNode,
-            hintText: widget.hintText,
-            keyboardType: widget.keyboardType,
-            prefixIcon: widget.prefixIcon ??
-                Icon(
-                  CupertinoIcons.barcode,
+          child: Container(
+            decoration: BoxDecoration(
+              color: themes.lightGrayColor,
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+            child: TextFormField(
+              controller: widget.controller,
+              focusNode: widget.focusNode ?? _ownedFocusNode,
+              keyboardType: widget.keyboardType,
+              textInputAction: TextInputAction.done,
+              style: themes.fontSize14_400.copyWith(fontSize: 13),
+              onFieldSubmitted: widget.onSubmitted,
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                hintText: widget.hintText,
+                hintStyle: themes.fontSize14_400.copyWith(
                   color: themes.grayColor,
+                  fontSize: 13,
                 ),
-            onSubmit: widget.onSubmitted == null
-                ? null
-                : (v) {
-                    widget.onSubmitted!(v ?? '');
-                    return null;
-                  },
+                border: InputBorder.none,
+                prefixIcon: IconTheme(
+                  data: IconThemeData(size: 20, color: themes.grayColor),
+                  child: widget.prefixIcon ??
+                      Icon(
+                        CupertinoIcons.barcode,
+                        color: themes.grayColor,
+                      ),
+                ),
+                prefixIconConstraints:
+                    const BoxConstraints(minWidth: 38, minHeight: 38),
+              ),
+            ),
           ),
         ),
         IconButton(

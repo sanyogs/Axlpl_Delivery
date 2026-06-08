@@ -3,7 +3,6 @@ import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
 import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
-import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -20,16 +19,6 @@ class OutboundMenuView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Outbound process',
-              style: themes.fontSize18_600,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              'Hub scan → Bagging → Manifest → Linehaul → Sector pickup',
-              style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-            ),
-            SizedBox(height: 16.h),
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,

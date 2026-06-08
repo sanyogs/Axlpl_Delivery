@@ -34,6 +34,7 @@ class CommonDropdown<T> extends StatelessWidget {
   final String Function(T) itemLabel;
   final String Function(T) itemValue;
   final isSearchable;
+  final bool compact;
   CommonDropdown({
     Key? key,
     required this.hint,
@@ -45,6 +46,7 @@ class CommonDropdown<T> extends StatelessWidget {
     required this.itemValue,
     this.onTap,
     this.isSearchable,
+    this.compact = false,
   }) : super(key: key);
 
   String? _labelForSelectedValue() {
@@ -62,13 +64,20 @@ class CommonDropdown<T> extends StatelessWidget {
       return InputDecorator(
         decoration: InputDecoration(
           labelText: hint,
+          labelStyle: compact ? themes.fontSize14_400 : null,
+          isDense: compact,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: compact ? 10 : 14,
+          ),
         ),
         child: Text(
           'Loading…',
-          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+          style: themes.fontSize14_400.copyWith(
+            color: themes.grayColor,
+            fontSize: compact ? 13 : null,
+          ),
         ),
       );
     }
@@ -76,13 +85,20 @@ class CommonDropdown<T> extends StatelessWidget {
       return InputDecorator(
         decoration: InputDecoration(
           labelText: hint,
+          labelStyle: compact ? themes.fontSize14_400 : null,
+          isDense: compact,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: compact ? 10 : 14,
+          ),
         ),
         child: Text(
           'No options',
-          style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+          style: themes.fontSize14_400.copyWith(
+            color: themes.grayColor,
+            fontSize: compact ? 13 : null,
+          ),
         ),
       );
     }
@@ -90,11 +106,17 @@ class CommonDropdown<T> extends StatelessWidget {
       items: items.map(itemLabel).toList(),
       selectedItem: _labelForSelectedValue(),
       dropdownDecoratorProps: DropDownDecoratorProps(
+        baseStyle:
+            compact ? themes.fontSize14_400.copyWith(fontSize: 13) : null,
         dropdownSearchDecoration: InputDecoration(
           labelText: hint,
+          labelStyle: compact ? themes.fontSize14_400 : null,
+          isDense: compact,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: compact ? 10 : 14,
+          ),
         ),
       ),
       popupProps: PopupProps.menu(

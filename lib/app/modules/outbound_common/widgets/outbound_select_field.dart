@@ -31,7 +31,7 @@ class OutboundSelectField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        dropdownText(label),
+        if (label.trim().isNotEmpty) dropdownText(label),
         Container(
           decoration: BoxDecoration(
             color: themes.lightGrayColor,
@@ -44,13 +44,19 @@ class OutboundSelectField extends StatelessWidget {
               value: _effectiveValue,
               hint: Text(
                 hint,
-                style: themes.fontSize16_400.copyWith(color: themes.grayColor),
+                style: themes.fontSize14_400.copyWith(
+                  color: themes.grayColor,
+                  fontSize: 13,
+                ),
               ),
               items: options
                   .map(
                     (e) => DropdownMenuItem(
                       value: e,
-                      child: Text(e, style: themes.fontSize16_400),
+                      child: Text(
+                        e,
+                        style: themes.fontSize14_400.copyWith(fontSize: 13),
+                      ),
                     ),
                   )
                   .toList(),

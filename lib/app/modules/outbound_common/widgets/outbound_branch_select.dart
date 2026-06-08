@@ -13,6 +13,8 @@ class OutboundBranchSelect extends StatelessWidget {
     this.isLoading = false,
     this.isSearchable = true,
     this.dropdownHint,
+    this.showLabel = true,
+    this.compact = false,
   });
 
   final String label;
@@ -22,15 +24,18 @@ class OutboundBranchSelect extends StatelessWidget {
   final bool isLoading;
   final bool isSearchable;
   final String? dropdownHint;
+  final bool showLabel;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        dropdownText(label),
+        if (showLabel) dropdownText(label),
         CommonDropdown<OutboundBranchOption>(
           hint: dropdownHint ?? label,
+          compact: compact,
           isSearchable: isSearchable,
           isLoading: isLoading,
           selectedValue: selectedId,

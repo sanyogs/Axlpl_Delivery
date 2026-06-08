@@ -68,12 +68,14 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
           OutboundButtonRow(
             start: OutboundSecondaryButton(
               label: OutboundLabels.btnViewReport,
-              onPressed:
-                  busy ? null : () => Get.toNamed(Routes.OUTBOUND_BAGGING_REPORT),
+              onPressed: busy
+                  ? null
+                  : () => Get.toNamed(Routes.OUTBOUND_BAGGING_REPORT),
             ),
             end: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed: busy ? null : () => Get.toNamed(Routes.OUTBOUND_BAG_LIST),
+              onPressed:
+                  busy ? null : () => Get.toNamed(Routes.OUTBOUND_BAG_LIST),
             ),
           ),
           OutboundAdminSection(
@@ -86,6 +88,8 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                   () => OutboundBranchSelect(
                     label: OutboundLabels.originDepot,
                     dropdownHint: OutboundLabels.hintSelectOption,
+                    showLabel: false,
+                    compact: true,
                     items: branchList.branches,
                     selectedId: controller.selectedOriginDepotId.value,
                     isLoading: branchList.isLoadingBranches.value,
@@ -100,6 +104,8 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                   () => OutboundBranchSelect(
                     label: OutboundLabels.destinationDepot,
                     dropdownHint: OutboundLabels.hintSelectOption,
+                    showLabel: false,
+                    compact: true,
                     items: branchList.branches,
                     selectedId: controller.selectedDestDepotId.value,
                     isLoading: branchList.isLoadingBranches.value,
