@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-/// `listbags` — filtered by origin `branch_id` + selected destination sector.
+/// `listbags` — filtered by origin `branch_id` from the bagging screen.
 class BagListView extends StatefulWidget {
   const BagListView({super.key});
 

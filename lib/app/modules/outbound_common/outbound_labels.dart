@@ -25,7 +25,7 @@ class OutboundLabels {
   static const sectionScannedBoxes = 'Scanned Box Details';
   static const btnViewReport = 'View Report';
   static const bagListTitle = 'Bag List';
-  static const bagListEmptyMessage = 'No bags match the selected depots.';
+  static const bagListEmptyMessage = 'No bags at this origin depot.';
   static const baggingReportTitle = 'Bagging Report';
   static const colBoxNumber = 'BOX NUMBER';
   static const colShipmentId = 'SHIPMENT ID';

@@ -52,29 +52,22 @@ class OutboundBaggingController extends GetxController {
   String? _depotContextKey;
   String? _loadedBagCode;
 
-  List<OutboundBagRow> get bagListFilteredRows {
-    final dest = _destId;
-    if (dest == null || dest.isEmpty) return bagListAllRows;
-    return bagListAllRows
-        .where((r) => _destinationIdForRow(r) == dest)
-        .toList();
-  }
-
-  int get bagListTotalCount => bagListFilteredRows.length;
+  int get bagListTotalCount => bagListAllRows.length;
 
   int get bagListTotalPages {
-    if (bagListFilteredRows.isEmpty) return 1;
-    return (bagListFilteredRows.length / bagListPageSize).ceil();
+    if (bagListAllRows.isEmpty) return 1;
+    return (bagListAllRows.length / bagListPageSize).ceil();
   }
 
   List<OutboundBagRow> get bagListPageRows {
-    final filtered = bagListFilteredRows;
-    if (filtered.isEmpty) return const [];
+    final rows = bagListAllRows;
+    if (rows.isEmpty) return const [];
     final page = bagListPage.value.clamp(1, bagListTotalPages);
     final start = (page - 1) * bagListPageSize;
-    if (start >= filtered.length) return const [];
+    if (start >= rows.length) return const [];
     final end = start + bagListPageSize;
-    return filtered.sublist(end > filtered.length ? filtered.length : end);
+    final cappedEnd = end > rows.length ? rows.length : end;
+    return rows.sublist(start, cappedEnd);
   }
 
   int get bagListRowNumberOffset =>
