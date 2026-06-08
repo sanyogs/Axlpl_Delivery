@@ -109,7 +109,44 @@ class OutboundLabels {
       'Add sealed bags from origin to destination.';
   static const subtitleManifestOpen =
       'List by depot, tap a row, or enter manifest number.';
-  static const subtitleManifestReport = 'Choose a date range.';
+  static const subtitleManifestReport =
+      'Choose a date range and optional manifest number.';
+  static const manifestScreenTitle = 'Manifest Screen';
+  static const sectionManifestDetails = 'Manifest Screen details';
+  static const sectionMBagDetails = 'M/Bag Details';
+  static const sectionManifestShipmentDetails = 'Manifest details';
+  static const manifestListTitle = 'Manifest List';
+  static const manifestReportTitle = 'Manifest Report';
+  static const manifestListEmptyMessage =
+      'No manifests at this origin depot.';
+  static const manifestBagTableEmpty = 'Scan an M/Bag code to add bags.';
+  static const manifestShipmentTableEmpty =
+      'Shipment lines appear after bags are scanned.';
+  static const mBagCode = 'M/Bag code';
+  static const hintScanMBagCode = 'Scan M/Bag code';
+  static const modeAirway = 'Airway';
+  static const modeSurface = 'Surface';
+  static const connoteCount = 'Connote count';
+  static const boxCount = 'Box count';
+  static const bagsSelectedCount = 'No of bag selected';
+  static const connoteWeight = 'Connote weight';
+  static const conVolWeight = 'Con Vol weight';
+  static const bagWeight = 'Bag weight';
+  static const colMBagNumber = 'M/BAG NUMBER';
+  static const colBoxNo = 'BOX NO.';
+  static const colConsignmentNo = 'CONSIGNMENT NO.';
+  static const colConsigneeCode = 'CONSIGNEE CODE';
+  static const colConsigneeName = 'CONSIGNEE NAME';
+  static const colCityName = 'CITY NAME';
+  static const colPcs = 'PCS';
+  static const colDescription = 'DESCRIPTION';
+  static const colInvVal = 'INV VAL';
+  static const colWeight = 'WEIGHT';
+  static const btnAddManifest = 'Add Manifest';
+  static const btnPerformManifest = 'Perform Manifest';
+  static const btnNewManifest = 'New Manifest';
+  static const btnManifestReport = 'Generate report';
+  static const manifestCodeOptional = 'Optional manifest number';
   static const subtitleBaggingReport =
       'Enter bag code to view shipments and weights for that bag.';
 
@@ -139,4 +176,78 @@ class OutboundLabels {
   static const btnPrint = 'Print';
   static const btnRefreshLogs = 'Refresh logs';
   static const btnTapRowBag = 'Tap a row to use bag code';
+
+  // Linehaul booking (admin)
+  static const linehaulScreenTitle = 'Linehaul Booking';
+  static const linehaulListTitle = 'Linehaul Management';
+  static const sectionHeaderDetails = 'Header Details';
+  static const sectionDestinationDetails = 'Destination Details';
+  static const sectionBookingDetails = 'Booking Details';
+  static const sectionBagDetails = 'Bag Details';
+  static const sectionLinehaulDetailStatus = 'Linehaul detail & status';
+  static const transportMode = 'Mode';
+  static const manifestNo = 'Manifest No';
+  static const airline = 'Airline';
+  static const transport = 'Transport';
+  static const airwayBillNo = 'Airway Bill No';
+  static const ewayBillNo = 'Eway Bill No';
+  static const airwayBillDate = 'Airway Bill Date';
+  static const airwayBillTime = 'Airway Bill Time';
+  static const noOfBags = 'No of Bags';
+  static const totalWeight = 'Total Weight';
+  static const cityCode = 'City Code';
+  static const estArrivalDate = 'Est Arrival Date';
+  static const estArrivalTime = 'Est Arrival Time';
+  static const totalCdWeight = 'Total CD Weight';
+  static const totalBillingWeight = 'Total Billing Weight';
+  static const flightNo = 'Flight No';
+  static const departureDate = 'Departure Date';
+  static const departureTime = 'Departure Time';
+  static const mBagNumber = 'M/Bag Number';
+  static const mBagWeight = 'M/Bag Weight';
+  static const btnSubmit = 'Submit';
+  static const btnCreateNewLinehaul = 'Create New Linehaul';
+  static const colMawbVehicle = 'MAWB/Vehicle No';
+  static const colOriginHub = 'Origin Hub';
+  static const colDestinationHub = 'Destination Hub';
+  static const colTransport = 'Transport';
+  static const colBookingDate = 'Booking Date';
+  static const btnDetails = 'Details';
+  static const btnRefreshList = 'Refresh list';
+  static const btnUpdateLinehaulStatus = 'Update linehaul status';
+  static const linehaulListEmptyMessage = 'No linehauls found.';
+  static const linehaulReportTitle = 'Linehaul report';
+  static const subtitleLinehaulReport = 'Choose a date range.';
+
+  // Sector pickup (admin New Sector Pickup)
+  static const sectorPickupScreenTitle = 'New Sector Pickup';
+  static const sectorPickupListTitle = 'Sector Pickup List';
+  static const btnBackToList = 'Back to List';
+  static const btnNewSectorPickup = 'New Sector Pickup';
+  static const sectionTransactionHeader = 'Transaction Header';
+  static const sectionScanners = 'Scanners';
+  static const sectionScannedInventory = 'Scanned Inventory';
+  static const sectionMissingFromManifest = 'Missing From Manifest';
+  static const mawbNumber = 'MAWB Number';
+  static const originHub = 'Origin Hub';
+  static const destHub = 'Dest Hub';
+  static const pickupDate = 'Pickup Date';
+  static const pickupTime = 'Pickup Time';
+  static const pickedBy = 'Picked By';
+  static const flightInfo = 'Flight Info';
+  static const step1ScanBagSeal = 'Step 1: Scan Bag Seal (optional)';
+  static const step2ScanDocket = 'Step 2: Scan Shipment Docket';
+  static const colSealNo = 'SEAL NO';
+  static const colDocketNumber = 'DOCKET NUMBER';
+  static const colDocketNo = 'DOCKET NO';
+  static const colPkgs = 'PKGS';
+  static const colStatus = 'STATUS';
+  static const statManifested = 'MANIFESTED';
+  static const statScanned = 'SCANNED';
+  static const statMissing = 'MISSING';
+  static const subtitleSectorPickupList =
+      'Tap a pickup to continue scanning shipments.';
+  static const subtitleSectorPickupReport = 'Choose a date range for summary.';
+  static const sectorPickupReportTitle = 'Sector Pickup Report';
+  static const sectorPickupListEmpty = 'No sector pickups found.';
 }

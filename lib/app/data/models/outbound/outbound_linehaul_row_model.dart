@@ -8,6 +8,11 @@ class OutboundLinehaulRow {
     this.vehicleNo,
     this.driverName,
     this.status,
+    this.origin,
+    this.destination,
+    this.transportType,
+    this.bookingDate,
+    this.mawbNo,
   });
 
   final String? linehaulId;
@@ -15,6 +20,21 @@ class OutboundLinehaulRow {
   final String? vehicleNo;
   final String? driverName;
   final String? status;
+  final String? origin;
+  final String? destination;
+  final String? transportType;
+  final String? bookingDate;
+  final String? mawbNo;
+
+  String get displayMawbOrVehicle {
+    final mawb = mawbNo?.trim();
+    if (mawb != null && mawb.isNotEmpty) return mawb;
+    final vehicle = vehicleNo?.trim();
+    if (vehicle != null && vehicle.isNotEmpty) return vehicle;
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty) return trip;
+    return '—';
+  }
 
   String? get effectiveRef {
     if (tripNo != null && tripNo!.isNotEmpty) return tripNo;
@@ -46,6 +66,33 @@ class OutboundLinehaulRow {
         'driver',
       ]),
       status: OutboundDataParse.optionalString(json, 'status'),
+      origin: OutboundDataParse.firstNonEmptyString(json, const [
+        'origin',
+        'origin_branch',
+        'origin_branch_id',
+        'origin_hub',
+      ]),
+      destination: OutboundDataParse.firstNonEmptyString(json, const [
+        'destination',
+        'destination_branch',
+        'destination_branch_id',
+        'destination_hub',
+        'destination_sector_id',
+      ]),
+      transportType: OutboundDataParse.firstNonEmptyString(json, const [
+        'transport_type',
+        'transport',
+        'airline',
+      ]),
+      bookingDate: OutboundDataParse.firstNonEmptyString(json, const [
+        'booking_date',
+        'created_at',
+        'departure_time',
+      ]),
+      mawbNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'mawb_no',
+        'airway_bill_no',
+      ]),
     );
   }
 
@@ -55,6 +102,11 @@ class OutboundLinehaulRow {
         if (vehicleNo != null) 'vehicle_no': vehicleNo,
         if (driverName != null) 'driver_name': driverName,
         if (status != null) 'status': status,
+        if (origin != null) 'origin': origin,
+        if (destination != null) 'destination': destination,
+        if (transportType != null) 'transport_type': transportType,
+        if (bookingDate != null) 'booking_date': bookingDate,
+        if (mawbNo != null) 'mawb_no': mawbNo,
       };
 
   Map<String, dynamic> get asMap => toJson();

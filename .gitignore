@@ -32,3 +32,4 @@ doc/api/
 # IntelliJ Idea / Android Studio
 .idea
 __pycache__/
+.venv_icons/

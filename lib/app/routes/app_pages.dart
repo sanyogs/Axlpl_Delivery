@@ -26,8 +26,11 @@ import '../modules/outbound_hub_scan/bindings/outbound_hub_scan_binding.dart';
 import '../modules/outbound_hub_scan/views/hub_scan_list_view.dart';
 import '../modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import '../modules/outbound_linehaul/bindings/outbound_linehaul_binding.dart';
+import '../modules/outbound_linehaul/views/linehaul_list_view.dart';
 import '../modules/outbound_linehaul/views/outbound_linehaul_view.dart';
 import '../modules/outbound_manifest/bindings/outbound_manifest_binding.dart';
+import '../modules/outbound_manifest/views/manifest_list_view.dart';
+import '../modules/outbound_manifest/views/manifest_report_view.dart';
 import '../modules/outbound_manifest/views/outbound_manifest_view.dart';
 import '../modules/outbound_menu/bindings/outbound_menu_binding.dart';
 import '../modules/outbound_menu/views/outbound_menu_view.dart';
@@ -35,6 +38,7 @@ import '../modules/outbound_remote_detail/bindings/outbound_remote_detail_bindin
 import '../modules/outbound_remote_detail/views/outbound_remote_detail_view.dart';
 import '../modules/outbound_sector_pickup/bindings/outbound_sector_pickup_binding.dart';
 import '../modules/outbound_sector_pickup/views/outbound_sector_pickup_view.dart';
+import '../modules/outbound_sector_pickup/views/sector_pickup_list_view.dart';
 import '../modules/pickdup_delivery_details/bindings/running_delivery_details_binding.dart';
 import '../modules/pickdup_delivery_details/views/running_delivery_details_view.dart';
 import '../modules/pickup/bindings/pickup_binding.dart';
@@ -186,9 +190,26 @@ class AppPages {
       binding: OutboundManifestBinding(),
     ),
     GetPage(
+      name: _Paths.OUTBOUND_MANIFEST_LIST,
+      page: () => const ManifestListView(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_MANIFEST_REPORT,
+      page: () => const ManifestReportView(),
+    ),
+    GetPage(
       name: _Paths.OUTBOUND_LINEHAUL,
       page: () => const OutboundLinehaulView(),
       binding: OutboundLinehaulBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_LINEHAUL_LIST,
+      page: () => const LinehaulListView(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_SECTOR_PICKUP_LIST,
+      page: () => const SectorPickupListView(),
+      binding: OutboundSectorPickupBinding(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_SECTOR_PICKUP,

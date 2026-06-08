@@ -119,6 +119,50 @@ class OutboundLabeledFieldRow extends StatelessWidget {
   }
 }
 
+/// Compact editable input for admin form rows.
+class OutboundAdminInput extends StatelessWidget {
+  const OutboundAdminInput({
+    super.key,
+    required this.controller,
+    this.hintText = '',
+    this.keyboardType,
+    this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final void Function(String)? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themes.whiteColor,
+        borderRadius: BorderRadius.circular(4.r),
+        border: Border.all(color: themes.grayColor.withValues(alpha: 0.25)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textInputAction: TextInputAction.next,
+        onFieldSubmitted: onSubmitted,
+        style: themes.fontSize14_400.copyWith(fontSize: 12.5.sp),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          hintText: hintText,
+          hintStyle: themes.fontSize14_400.copyWith(
+            color: themes.grayColor,
+            fontSize: 12.5.sp,
+          ),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+}
+
 /// Read-only grey input populated from API (admin auto-fill fields).
 class OutboundReadOnlyInput extends StatelessWidget {
   const OutboundReadOnlyInput({

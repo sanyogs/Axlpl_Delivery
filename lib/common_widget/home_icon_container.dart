@@ -37,6 +37,8 @@ class HomeIconContainer extends StatelessWidget {
                   Image.asset(
                     Img,
                     width: 30.w,
+                    height: 30.w,
+                    fit: BoxFit.contain,
                   ),
                   CircleAvatar(
                     backgroundColor: themes.lightCream,

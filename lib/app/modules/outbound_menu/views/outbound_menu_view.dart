@@ -49,7 +49,7 @@ class OutboundMenuView extends StatelessWidget {
                   HomeIconContainer(
                     title: 'Sector pickup',
                     Img: OutboundMenuIcons.sectorPickup,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_LIST),
                   ),
                 ],
               ),

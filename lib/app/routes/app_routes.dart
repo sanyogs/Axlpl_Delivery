@@ -30,8 +30,12 @@ abstract class Routes {
   static const OUTBOUND_BAG_LIST = _Paths.OUTBOUND_BAG_LIST;
   static const OUTBOUND_BAGGING_REPORT = _Paths.OUTBOUND_BAGGING_REPORT;
   static const OUTBOUND_MANIFEST = _Paths.OUTBOUND_MANIFEST;
+  static const OUTBOUND_MANIFEST_LIST = _Paths.OUTBOUND_MANIFEST_LIST;
+  static const OUTBOUND_MANIFEST_REPORT = _Paths.OUTBOUND_MANIFEST_REPORT;
   static const OUTBOUND_LINEHAUL = _Paths.OUTBOUND_LINEHAUL;
+  static const OUTBOUND_LINEHAUL_LIST = _Paths.OUTBOUND_LINEHAUL_LIST;
   static const OUTBOUND_SECTOR_PICKUP = _Paths.OUTBOUND_SECTOR_PICKUP;
+  static const OUTBOUND_SECTOR_PICKUP_LIST = _Paths.OUTBOUND_SECTOR_PICKUP_LIST;
   static const OUTBOUND_REMOTE_DETAIL = _Paths.OUTBOUND_REMOTE_DETAIL;
 }
 
@@ -64,7 +68,11 @@ abstract class _Paths {
   static const OUTBOUND_BAG_LIST = '/outbound-bag-list';
   static const OUTBOUND_BAGGING_REPORT = '/outbound-bagging-report';
   static const OUTBOUND_MANIFEST = '/outbound-manifest';
+  static const OUTBOUND_MANIFEST_LIST = '/outbound-manifest-list';
+  static const OUTBOUND_MANIFEST_REPORT = '/outbound-manifest-report';
   static const OUTBOUND_LINEHAUL = '/outbound-linehaul';
+  static const OUTBOUND_LINEHAUL_LIST = '/outbound-linehaul-list';
   static const OUTBOUND_SECTOR_PICKUP = '/outbound-sector-pickup';
+  static const OUTBOUND_SECTOR_PICKUP_LIST = '/outbound-sector-pickup-list';
   static const OUTBOUND_REMOTE_DETAIL = '/outbound-remote-detail';
 }
