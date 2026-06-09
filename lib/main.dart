@@ -263,7 +263,8 @@ void main() async {
 
   runApp(
     ScreenUtilInit(
-      designSize: ScreenUtil.defaultSize,
+      designSize: const Size(360, 690),
+      minTextAdapt: true,
       builder: (context, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,

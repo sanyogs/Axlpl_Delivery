@@ -65,6 +65,65 @@ run_block 'addshipmenttobag' \
   curl -sS -w $'\n__HTTP__:%{http_code}' --location --request POST "${BASE}?request=addshipmenttobag" "${HDR[@]}" \
   --form 'bag_code=BAG20260518152744831' --form 'docket_no=825411779084407' --form 'branch_id=1' --form 'user_id=1'
 
+run_block 'manifestreport' \
+"curl --location --request GET '${BASE}?request=manifestreport&start_date=2026-05-01&end_date=2026-05-18&manifest_no=MUM094' \\
+  --header 'Authorization: Bearer \$TOKEN' \\
+  --header 'X-App-Version: 22.1.0' \\
+  --header 'X-App-Platform: ios'" \
+  curl -sS -w $'\n__HTTP__:%{http_code}' --location --request GET "${BASE}?request=manifestreport&start_date=2026-05-01&end_date=2026-05-18&manifest_no=MUM094" "${HDR[@]}"
+
+run_block 'getlinehauldetails' \
+"curl --location --request GET '${BASE}?request=getlinehauldetails&mawb_no=58976412530' \\
+  --header 'Authorization: Bearer \$TOKEN' \\
+  --header 'X-App-Version: 22.1.0' \\
+  --header 'X-App-Platform: ios'" \
+  curl -sS -w $'\n__HTTP__:%{http_code}' --location --request GET "${BASE}?request=getlinehauldetails&mawb_no=58976412530" "${HDR[@]}"
+
+run_block 'getmanifestdetails' \
+"curl --location --request GET '${BASE}?request=getmanifestdetails&manifest_code=MUM208' \\
+  --header 'Authorization: Bearer \$TOKEN' \\
+  --header 'X-App-Version: 22.1.0' \\
+  --header 'X-App-Platform: ios'" \
+  curl -sS -w $'\n__HTTP__:%{http_code}' --location --request GET "${BASE}?request=getmanifestdetails&manifest_code=MUM208" "${HDR[@]}"
+
+run_block 'editlinehaul' \
+"curl --location --request POST '${BASE}?request=editlinehaul' \\
+  --header 'Authorization: Bearer \$TOKEN' \\
+  --header 'X-App-Version: 22.3.0' \\
+  --header 'Content-Type: application/x-www-form-urlencoded' \\
+  --data-urlencode 'linehaul_id=365' \\
+  --data-urlencode 'vehicle_no=MH01AB1234' \\
+  --data-urlencode 'driver_name=Ramesh Kumar' \\
+  --data-urlencode 'driver_mobile=9876543210' \\
+  --data-urlencode 'mawb_no=31229324256' \\
+  --data-urlencode 'trip_no=LH1780998599' \\
+  --data-urlencode 'departure_time=2026-06-09 10:00:00' \\
+  --data-urlencode 'arrival_time=2026-06-10 08:00:00' \\
+  --data-urlencode 'remarks=Updated via API' \\
+  --data-urlencode 'flight_no=AI101' \\
+  --data-urlencode 'airline=Air India' \\
+  --data-urlencode 'eway_bill=EWB123456789' \\
+  --data-urlencode 'transport_type=Airway'" \
+  curl -sS -w $'\n__HTTP__:%{http_code}' --location --request POST "${BASE}?request=editlinehaul" \
+  --header "Authorization: Bearer ${TOKEN}" --header 'X-App-Version: 22.3.0' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'linehaul_id=365' --data-urlencode 'vehicle_no=MH01AB1234' \
+  --data-urlencode 'driver_name=Ramesh Kumar' --data-urlencode 'driver_mobile=9876543210' \
+  --data-urlencode 'mawb_no=31229324256' --data-urlencode 'trip_no=LH1780998599' \
+  --data-urlencode 'departure_time=2026-06-09 10:00:00' --data-urlencode 'arrival_time=2026-06-10 08:00:00' \
+  --data-urlencode 'remarks=Updated via API' --data-urlencode 'flight_no=AI101' \
+  --data-urlencode 'airline=Air India' --data-urlencode 'eway_bill=EWB123456789' \
+  --data-urlencode 'transport_type=Airway'
+
+# Destructive — skip live run by default; documented response from 2026-06-09 verify.
+run_block 'deletelinehaul' \
+"curl --location --request POST '${BASE}?request=deletelinehaul' \\
+  --header 'Authorization: Bearer \$TOKEN' \\
+  --header 'X-App-Version: 22.3.0' \\
+  --header 'Content-Type: application/x-www-form-urlencoded' \\
+  --data-urlencode 'linehaul_id=365'" \
+  echo '{"status":"success","message":"Linehaul deleted successfully","data":{"linehaul_id":365}}' && echo '__HTTP__:200'
+
 run_block 'getbagdetails' \
 "curl --location --request GET '${BASE}?request=getbagdetails&bag_code=BAG20260518152744831' \\
   --header 'Authorization: Bearer \$TOKEN' \\

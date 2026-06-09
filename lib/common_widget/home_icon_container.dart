@@ -4,7 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class HomeIconContainer extends StatelessWidget {
   String? title;
-  final Img;
+  /// Asset path (`String`) or Material icon (`IconData`).
+  final Object? Img;
   final VoidCallback? OnTap;
   HomeIconContainer({
     super.key,
@@ -12,6 +13,26 @@ class HomeIconContainer extends StatelessWidget {
     this.Img,
     this.OnTap,
   });
+
+  Widget _tileIcon() {
+    final img = Img;
+    if (img is IconData) {
+      return Icon(
+        img,
+        size: 30.w,
+        color: themes.darkCyanBlue,
+      );
+    }
+    if (img is String) {
+      return Image.asset(
+        img,
+        width: 30.w,
+        height: 30.w,
+        fit: BoxFit.contain,
+      );
+    }
+    return SizedBox(width: 30.w, height: 30.w);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +55,7 @@ class HomeIconContainer extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Image.asset(
-                    Img,
-                    width: 30.w,
-                    height: 30.w,
-                    fit: BoxFit.contain,
-                  ),
+                  _tileIcon(),
                   CircleAvatar(
                     backgroundColor: themes.lightCream,
                     radius: 15,

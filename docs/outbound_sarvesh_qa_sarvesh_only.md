@@ -2,7 +2,7 @@
 
 Gateway: `api.php?request=<action>` · iOS headers · POST urlencoded for edit/delete linehaul.
 
-**Last live refresh:** 2026-06-09 12:46 UTC · Regenerate: `python3 docs/refresh_sarvesh_responses.py`
+**Last live refresh:** 2026-06-09 12:34 UTC · Regenerate: `python3 docs/refresh_sarvesh_responses.py`
 
 ## Summary
 
@@ -138,7 +138,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
     "arrival_time": "2026-06-10 08:00:00",
     "total_cd_weight": "0.00",
     "created_at": "2026-06-09 15:19:59",
-    "updated_at": "2026-06-09 18:04:42",
+    "updated_at": "2026-06-09 18:03:03",
     "total_billing_weight": "0.00",
     "airway_bill_no": "31229324256",
     "eway_bill": "EWB123456789",
@@ -633,15 +633,6 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
   "message": "Manifests retrieved successfully",
   "data": [
     {
-      "id": "385",
-      "manifest_no": "DEL050",
-      "origin_branch": "79",
-      "destination_branch": "27",
-      "created_by": "144",
-      "created_at": "2026-06-09 18:09:52",
-      "updated_at": "2026-06-09 18:09:52"
-    },
-    {
       "id": "382",
       "manifest_no": "HYD010",
       "origin_branch": "27",
@@ -1081,6 +1072,15 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "created_by": "28",
       "created_at": "2026-06-03 19:57:41",
       "updated_at": "2026-06-03 19:57:41"
+    },
+    {
+      "id": "333",
+      "manifest_no": "MUM171",
+      "origin_branch": "79",
+      "destination_branch": "75",
+      "created_by": "182",
+      "created_at": "2026-06-03 18:06:44",
+      "updated_at": "2026-06-03 18:06:44"
     }
   ]
 }

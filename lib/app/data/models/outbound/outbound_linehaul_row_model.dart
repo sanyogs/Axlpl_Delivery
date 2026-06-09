@@ -13,6 +13,7 @@ class OutboundLinehaulRow {
     this.transportType,
     this.bookingDate,
     this.mawbNo,
+    this.ewayBill,
   });
 
   final String? linehaulId;
@@ -25,6 +26,7 @@ class OutboundLinehaulRow {
   final String? transportType;
   final String? bookingDate;
   final String? mawbNo;
+  final String? ewayBill;
 
   String get displayMawbOrVehicle {
     final mawb = mawbNo?.trim();
@@ -36,13 +38,19 @@ class OutboundLinehaulRow {
     return '—';
   }
 
-  String? get effectiveRef {
-    if (tripNo != null && tripNo!.isNotEmpty) return tripNo;
+  /// Prefer `mawb_no` then `linehaul_id` for `getlinehauldetails` (`trip_no` fails on API).
+  String? get detailLookupRef {
+    final mawb = mawbNo?.trim();
+    if (mawb != null && mawb.isNotEmpty) return mawb;
     if (linehaulId != null && linehaulId!.isNotEmpty && linehaulId != '0') {
       return linehaulId;
     }
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty) return trip;
     return null;
   }
+
+  String? get effectiveRef => detailLookupRef;
 
   factory OutboundLinehaulRow.fromJson(Map<String, dynamic> json) {
     return OutboundLinehaulRow(
@@ -93,6 +101,11 @@ class OutboundLinehaulRow {
         'mawb_no',
         'airway_bill_no',
       ]),
+      ewayBill: OutboundDataParse.firstNonEmptyString(json, const [
+        'eway_bill',
+        'ewayBill',
+        'ewb',
+      ]),
     );
   }
 
@@ -107,6 +120,7 @@ class OutboundLinehaulRow {
         if (transportType != null) 'transport_type': transportType,
         if (bookingDate != null) 'booking_date': bookingDate,
         if (mawbNo != null) 'mawb_no': mawbNo,
+        if (ewayBill != null) 'eway_bill': ewayBill,
       };
 
   Map<String, dynamic> get asMap => toJson();

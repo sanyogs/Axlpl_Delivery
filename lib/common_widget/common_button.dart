@@ -1,6 +1,5 @@
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -19,32 +18,36 @@ class CommonButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelStyle = themes.fontReboto16_600.copyWith(
+      color: themes.whiteColor,
+      fontSize: 16.sp,
+    );
     return SizedBox(
       width: double.infinity,
+      height: 48.h,
       child: CupertinoButton(
         color: backgroundColor ?? themes.darkCyanBlue,
         focusColor: themes.whiteColor,
         borderRadius: BorderRadius.circular(20.r),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         onPressed: onPressed,
-        child: SizedBox(
-          // height: 24, // Set a fixed height
-          child: isLoading == true
-              ? Center(
-                  child: SizedBox(
-                    height: 16, // Adjust this size to match text height
-                    width: 16, // Keep width equal to height for proper scaling
-                    child: SpinKitCubeGrid(
-                      color: themes.whiteColor,
-                      size: 16, // Ensure size remains small
-                    ),
-                  ),
-                )
-              : Text(
-                  title,
-                  style: themes.fontReboto16_600
-                      .copyWith(color: themes.whiteColor),
+        child: isLoading == true
+            ? SizedBox(
+                height: 18.h,
+                width: 18.h,
+                child: SpinKitCubeGrid(
+                  color: themes.whiteColor,
+                  size: 18.h,
                 ),
-        ),
+              )
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  style: labelStyle,
+                ),
+              ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_bag_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_manifest_row_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/pickup_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/shipment_scan_event_model.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
@@ -509,6 +510,7 @@ class OutboundRepository {
     required String bagIdsCommaSeparated,
     required String originBranchId,
     required String destinationBranchId,
+    String? transportMode,
   }) async {
     return _requireTokenUser(
       (token, userId) => _api.createManifest(
@@ -517,6 +519,7 @@ class OutboundRepository {
         originBranchId: originBranchId.trim(),
         destinationBranchId: destinationBranchId.trim(),
         userId: userId,
+        transportMode: transportMode,
       ),
     );
   }
@@ -615,7 +618,7 @@ class OutboundRepository {
   }
 
   Future<List<OutboundLinehaulRow>> listLinehauls({
-    required String status,
+    String? status,
   }) async {
     _clear();
     final token = (await _auth()).token;
@@ -623,7 +626,11 @@ class OutboundRepository {
       lastMessage = 'Not logged in';
       return [];
     }
-    final r = await _api.listLinehauls(token: token, status: status);
+    final filter = status?.trim();
+    final r = await _api.listLinehauls(
+      token: token,
+      status: filter != null && filter.isNotEmpty ? filter : null,
+    );
     return r.when(
       success: OutboundLinehaulRow.listFromDynamic,
       error: (e) {
@@ -689,6 +696,52 @@ class OutboundRepository {
         ),
       );
 
+  Future<APIResponse<dynamic>> editLinehaul({
+    required String linehaulId,
+    String? vehicleNo,
+    String? driverName,
+    String? driverMobile,
+    String? mawbNo,
+    String? tripNo,
+    String? departureTime,
+    String? arrivalTime,
+    String? remarks,
+    String? flightNo,
+    String? airline,
+    String? ewayBill,
+    String? transportType,
+  }) =>
+      _requireToken(
+        (token) => _api.editLinehaul(
+          token: token,
+          body: OutboundApiParams.editLinehaulBody(
+            linehaulId: linehaulId,
+            vehicleNo: vehicleNo,
+            driverName: driverName,
+            driverMobile: driverMobile,
+            mawbNo: mawbNo,
+            tripNo: tripNo,
+            departureTime: departureTime,
+            arrivalTime: arrivalTime,
+            remarks: remarks,
+            flightNo: flightNo,
+            airline: airline,
+            ewayBill: ewayBill,
+            transportType: transportType,
+          ),
+        ),
+      );
+
+  Future<APIResponse<dynamic>> deleteLinehaul({
+    required String linehaulId,
+  }) =>
+      _requireToken(
+        (token) => _api.deleteLinehaul(
+          token: token,
+          linehaulId: linehaulId.trim(),
+        ),
+      );
+
   // --- Sector pickup ---
 
   Future<List<SectorPickupRow>> sectorPickupList() async {
@@ -700,13 +753,54 @@ class OutboundRepository {
     }
     final r = await _api.getPickupListOutbound(token: token);
     return r.when(
-      success: SectorPickupRow.listFromDynamic,
+      success: (data) {
+        final rows = SectorPickupRow.listFromDynamic(data);
+        final seen = <String>{};
+        final unique = <SectorPickupRow>[];
+        for (final row in rows) {
+          final key = row.id?.trim();
+          if (key == null || key.isEmpty) {
+            unique.add(row);
+            continue;
+          }
+          if (seen.add(key)) unique.add(row);
+        }
+        return unique;
+      },
       error: (e) {
         lastMessage = e.message;
         return [];
       },
     );
   }
+
+  Future<PickupDetail?> pickupDetail(String pickupId) async {
+    _clear();
+    final token = (await _auth()).token;
+    if (token == null || token.isEmpty) {
+      lastMessage = 'Not logged in';
+      return null;
+    }
+    final r = await _api.getPickupDetail(
+      token: token,
+      pickupId: pickupId.trim(),
+    );
+    return r.when(
+      success: PickupDetail.fromDynamic,
+      error: (e) {
+        lastMessage = e.message;
+        return null;
+      },
+    );
+  }
+
+  Future<APIResponse<dynamic>> fetchPickupDetail(String pickupId) =>
+      _requireToken(
+        (token) => _api.getPickupDetail(
+          token: token,
+          pickupId: pickupId.trim(),
+        ),
+      );
 
   Future<APIResponse<dynamic>> _treatBenignPickupDuplicate(
     Future<APIResponse<dynamic>> Function() call,

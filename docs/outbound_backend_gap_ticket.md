@@ -36,7 +36,8 @@ Use this as the message body to the backend team. Check off when answered.
 ### Linehaul
 
 - [ ] Full mapping from **Linehaul Booking** web fields to API(s). Is `assignlinehaul` sufficient or is there a **hidden/legacy** booking API?
-- [ ] **Delete** / full **edit** linehaul — any endpoint?
+- [x] **Edit** linehaul — `editlinehaul` POST (verified 2026-06-09, HTTP 200). See `docs/outbound_sarvesh_qa_verified.md`.
+- [x] **Delete** linehaul — `deletelinehaul` POST (verified 2026-06-09, HTTP 200).
 
 ### Sector pickup
 
@@ -45,7 +46,10 @@ Use this as the message body to the backend team. Check off when answered.
 
 ### Reports
 
-- [ ] `baggingreport`, `manifestreport`, `linehaulreport`, `pickupreport` — JSON list vs download URL vs file blob?
+- [x] `manifestreport` — works with `start_date`, `end_date`, **`manifest_no`** (not `manifest_id` / `manifest_code`). Verified 2026-06-09 — see `docs/outbound_sarvesh_qa_verified.md`.
+- [ ] `baggingreport`, `linehaulreport`, `pickupreport` — JSON list vs download URL vs file blob?
+- [x] `getbagdetails` `items[]` — now includes sender, receiver, city, weight, pcs (verified 2026-06-09).
+- [x] `getlinehauldetails` — use **`mawb_no`** (Sarvesh sample `58976412530` → HTTP 200).
 
 ---
 

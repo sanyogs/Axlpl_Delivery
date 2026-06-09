@@ -111,6 +111,20 @@ class SectorPickupExpectedShipment {
     );
   }
 
+  factory SectorPickupExpectedShipment.fromPickupDetailShipment(
+    Map<String, dynamic> json,
+  ) {
+    final docket = OutboundDataParse.firstNonEmptyString(json, const [
+          'shipment_id',
+          'docket_no',
+        ]) ??
+        '';
+    return SectorPickupExpectedShipment(
+      docketNo: docket,
+      pkgs: '1',
+    );
+  }
+
   factory SectorPickupExpectedShipment.fromManifestShipment(
     ManifestShipmentRef shipment,
   ) {

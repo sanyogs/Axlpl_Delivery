@@ -15,6 +15,9 @@ class LinehaulDetail {
     this.airwayBillNo,
     this.vehicleNo,
     this.driverName,
+    this.driverMobile,
+    this.ewayBill,
+    this.remarks,
     this.status,
     this.noOfBoxes,
     this.noOfBags,
@@ -40,6 +43,9 @@ class LinehaulDetail {
   final String? airwayBillNo;
   final String? vehicleNo;
   final String? driverName;
+  final String? driverMobile;
+  final String? ewayBill;
+  final String? remarks;
   final String? status;
   final String? noOfBoxes;
   final String? noOfBags;
@@ -83,6 +89,15 @@ class LinehaulDetail {
         'driver_name',
         'driverName',
       ]),
+      driverMobile: OutboundDataParse.firstNonEmptyString(json, const [
+        'driver_mobile',
+        'driverMobile',
+      ]),
+      ewayBill: OutboundDataParse.firstNonEmptyString(json, const [
+        'eway_bill',
+        'ewayBill',
+      ]),
+      remarks: OutboundDataParse.optionalString(json, 'remarks'),
       status: OutboundDataParse.optionalString(json, 'status'),
       noOfBoxes: OutboundDataParse.optionalString(json, 'no_of_boxes'),
       noOfBags: OutboundDataParse.optionalString(json, 'no_of_bags'),
@@ -103,6 +118,19 @@ class LinehaulDetail {
     final map = OutboundDataParse.asStringKeyedMap(data);
     if (map != null) return LinehaulDetail.fromJson(map);
     return const LinehaulDetail();
+  }
+
+  /// Best ref for `getlinehauldetails` — API expects `mawb_no` when available.
+  String? get detailLookupRef {
+    final mawb = mawbNo?.trim();
+    if (mawb != null && mawb.isNotEmpty) return mawb;
+    final awb = airwayBillNo?.trim();
+    if (awb != null && awb.isNotEmpty) return awb;
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty) return trip;
+    final id = linehaulId?.trim();
+    if (id != null && id.isNotEmpty && id != '0') return id;
+    return null;
   }
 
   /// Short lines for snackbar / response panel after `getlinehauldetails`.
@@ -137,6 +165,9 @@ class LinehaulDetail {
         if (airwayBillNo != null) 'airway_bill_no': airwayBillNo,
         if (vehicleNo != null) 'vehicle_no': vehicleNo,
         if (driverName != null) 'driver_name': driverName,
+        if (driverMobile != null) 'driver_mobile': driverMobile,
+        if (ewayBill != null) 'eway_bill': ewayBill,
+        if (remarks != null) 'remarks': remarks,
         if (status != null) 'status': status,
         if (noOfBoxes != null) 'no_of_boxes': noOfBoxes,
         if (noOfBags != null) 'no_of_bags': noOfBags,

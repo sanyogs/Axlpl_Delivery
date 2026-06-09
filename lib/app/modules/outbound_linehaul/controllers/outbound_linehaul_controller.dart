@@ -5,10 +5,13 @@ import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_mo
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
+import 'package:axlpl_delivery/common_widget/common_tow_btn_dialog.dart';
+import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -243,26 +246,47 @@ class OutboundLinehaulController extends GetxController {
     return value.toStringAsFixed(2);
   }
 
-  String _driverNameForSubmit() {
-    final airline = transportController.text.trim();
-    if (airline.isNotEmpty) return airline;
-    return flightNoController.text.trim();
+  /// `assignlinehaul`: `vehicle_no` = MAWB (airway) or vehicle plate (surface).
+  String _vehicleNoForAssign() {
+    final airway = airwayBillController.text.trim();
+    final transport = transportController.text.trim();
+    if (isAirwayMode) return airway;
+    if (transport.isNotEmpty) return transport;
+    return airway;
+  }
+
+  /// `assignlinehaul`: `driver_name` = airline (airway) or driver name (surface).
+  String _driverNameForAssign() {
+    final transport = transportController.text.trim();
+    final flight = flightNoController.text.trim();
+    if (isAirwayMode) {
+      if (transport.isNotEmpty) return transport;
+      return flight;
+    }
+    if (transport.isNotEmpty) return transport;
+    return flight;
   }
 
   Future<void> submitLinehaulBooking() async {
     final manifestCode = manifestNoController.text.trim();
     final airwayBill = airwayBillController.text.trim();
-    final driver = _driverNameForSubmit();
+    final vehicleForAssign = _vehicleNoForAssign();
+    final driverForAssign = _driverNameForAssign();
 
     if (manifestCode.isEmpty) {
       Get.snackbar('Linehaul', 'Manifest number is required');
       return;
     }
-    if (airwayBill.isEmpty) {
-      Get.snackbar('Linehaul', 'Airway bill number is required');
+    if (vehicleForAssign.isEmpty) {
+      Get.snackbar(
+        'Linehaul',
+        isAirwayMode
+            ? 'Airway bill number is required'
+            : 'Vehicle number is required',
+      );
       return;
     }
-    if (driver.isEmpty) {
+    if (driverForAssign.isEmpty) {
       Get.snackbar(
         'Linehaul',
         '${isAirwayMode ? OutboundLabels.airline : OutboundLabels.transport} or ${OutboundLabels.flightNo} is required',
@@ -272,19 +296,85 @@ class OutboundLinehaulController extends GetxController {
 
     isBusy.value = true;
     try {
-      final r = await _repo.assignLinehaul(
+      final assignR = await _repo.assignLinehaul(
         manifestIdsCommaSeparated: manifestCode,
-        vehicleNo: airwayBill,
-        driverName: driver,
+        vehicleNo: vehicleForAssign,
+        driverName: driverForAssign,
       );
-      r.when(
+
+      String? linehaulId;
+      String? tripNo;
+      assignR.when(
         success: (data) {
-          lastResponseText.value = '';
           final result = OutboundMutationResult.fromDynamic(data);
+          linehaulId = result.linehaulId;
+          tripNo = result.tripNo;
           final ref = result.effectiveLinehaulRef;
           if (ref != null && ref.isNotEmpty) {
             linehaulRefController.text = ref;
           }
+        },
+        error: (e) {
+          lastResponseText.value = e.message;
+          Get.snackbar('Linehaul', e.message);
+        },
+      );
+
+      var id = linehaulId?.trim();
+      if (id == null || id.isEmpty) {
+        final lookupRef = airwayBill.isNotEmpty
+            ? airwayBill
+            : (tripNo?.trim().isNotEmpty == true ? tripNo!.trim() : null);
+        if (lookupRef != null) {
+          final detail = await _repo.linehaulDetails(lookupRef);
+          id = detail?.linehaulId?.trim();
+        }
+      }
+      if (id == null || id.isEmpty) {
+        if (lastResponseText.value.trim().isEmpty) {
+          Get.snackbar(
+            'Linehaul',
+            'Assign succeeded but linehaul_id missing — cannot save booking details',
+          );
+        }
+        return;
+      }
+
+      final editR = await _repo.editLinehaul(
+        linehaulId: id,
+        vehicleNo: isAirwayMode ? null : vehicleForAssign,
+        driverName: driverForAssign,
+        mawbNo: airwayBill.isNotEmpty ? airwayBill : null,
+        tripNo: tripNo?.trim().isNotEmpty == true ? tripNo : null,
+        departureTime: OutboundApiParams.firstCombinedDateTime(
+          departureDateController.text,
+          departureTimeController.text,
+          airwayBillDateController.text,
+          airwayBillTimeController.text,
+        ),
+        arrivalTime: OutboundApiParams.combineDateTime(
+          estArrivalDateController.text,
+          estArrivalTimeController.text,
+        ),
+        flightNo: flightNoController.text.trim().isEmpty
+            ? null
+            : flightNoController.text.trim(),
+        airline: transportController.text.trim().isEmpty
+            ? null
+            : transportController.text.trim(),
+        ewayBill: ewayBillController.text.trim().isEmpty
+            ? null
+            : ewayBillController.text.trim(),
+        transportType: transportMode.value,
+        remarks: totalCdWeightController.text.trim().isNotEmpty ||
+                totalBillingWeightController.text.trim().isNotEmpty
+            ? 'CD: ${totalCdWeightController.text.trim()} Billing: ${totalBillingWeightController.text.trim()}'
+            : null,
+      );
+
+      editR.when(
+        success: (data) {
+          lastResponseText.value = '';
           final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
           if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
@@ -360,11 +450,14 @@ class OutboundLinehaulController extends GetxController {
 
   Future<void> openLinehaulDetailsFromList(OutboundLinehaulRow row) async {
     applyLinehaulFromRow(row);
-    await getLinehaulDetails(refOverride: row.effectiveRef);
+    await getLinehaulDetails(refOverride: row.detailLookupRef);
   }
 
   Future<void> updateLinehaulStatus() async {
-    final trip = linehaulRefController.text.trim();
+    final detail = linehaulDetail.value;
+    final trip = detail?.linehaulId?.trim().isNotEmpty == true
+        ? detail!.linehaulId!
+        : linehaulRefController.text.trim();
     final newStatus = updateStatus.value?.trim() ?? '';
     if (trip.isEmpty || newStatus.isEmpty) return;
 
@@ -406,11 +499,71 @@ class OutboundLinehaulController extends GetxController {
   }
 
   void openLinehaulDetailPage() {
-    final ref = linehaulRefController.text.trim();
+    final ref = linehaulDetail.value?.detailLookupRef ??
+        linehaulRefController.text.trim();
     if (ref.isEmpty) return;
     Get.toNamed(
       Routes.OUTBOUND_REMOTE_DETAIL,
       arguments: {'kind': 'linehaul', 'id': ref},
     );
+  }
+
+  Future<void> openLinehaulEdit(OutboundLinehaulRow row) async {
+    final id = row.linehaulId?.trim();
+    if (id == null || id.isEmpty) {
+      Get.snackbar('Linehaul', 'Linehaul id missing for this row');
+      return;
+    }
+    final refreshed = await Get.toNamed(
+      Routes.OUTBOUND_LINEHAUL_EDIT,
+      arguments: row,
+    );
+    if (refreshed == true) {
+      await loadLinehaulList();
+    }
+  }
+
+  void confirmDeleteLinehaulFromList(OutboundLinehaulRow row) {
+    final id = row.linehaulId?.trim();
+    if (id == null || id.isEmpty) {
+      Get.snackbar('Linehaul', 'Linehaul id missing for this row');
+      return;
+    }
+    final ref = row.tripNo?.trim().isNotEmpty == true
+        ? row.tripNo!
+        : (row.mawbNo?.trim().isNotEmpty == true ? row.mawbNo! : id);
+    commonDialog(
+      OutboundLabels.deleteLinehaulTitle,
+      OutboundLabels.deleteLinehaulConfirmMessage(ref),
+      OutboundLabels.btnDelete,
+      OutboundLabels.btnCancel,
+      () => _deleteLinehaulFromList(id),
+      icon: Icons.delete_outline,
+      iconColor: themes.redColor,
+    );
+  }
+
+  Future<void> _deleteLinehaulFromList(String linehaulId) async {
+    isBusy.value = true;
+    try {
+      final r = await _repo.deleteLinehaul(linehaulId: linehaulId);
+      OutboundUiFeedback.apply(
+        target: lastResponseText,
+        response: r,
+        feature: 'Linehaul',
+        serverMessageOnly: true,
+      );
+      var deleted = false;
+      r.when(success: (_) => deleted = true, error: (_) {});
+      if (deleted) {
+        if (selectedListLinehaulRef.value != null) {
+          selectedListLinehaulRef.value = null;
+          linehaulDetail.value = null;
+        }
+        await loadLinehaulList();
+      }
+    } finally {
+      isBusy.value = false;
+    }
   }
 }

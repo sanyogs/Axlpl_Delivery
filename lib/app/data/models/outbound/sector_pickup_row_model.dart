@@ -7,6 +7,9 @@ class SectorPickupRow {
     this.hubId,
     this.originHub,
     this.destHub,
+    this.originBranchName,
+    this.destinationBranchName,
+    this.flightNo,
     this.pickedBy,
     this.pickupDate,
     this.pickupTime,
@@ -19,7 +22,22 @@ class SectorPickupRow {
   final String? hubId;
   final String? originHub;
   final String? destHub;
+  final String? originBranchName;
+  final String? destinationBranchName;
+  final String? flightNo;
   final String? pickedBy;
+
+  String get displayOriginHub {
+    final hub = originHub?.trim();
+    if (hub != null && hub.isNotEmpty) return hub;
+    return originBranchName?.trim() ?? hubId ?? '—';
+  }
+
+  String get displayDestHub {
+    final hub = destHub?.trim();
+    if (hub != null && hub.isNotEmpty) return hub;
+    return destinationBranchName?.trim() ?? '—';
+  }
   final String? pickupDate;
   final String? pickupTime;
   final String? createdAt;
@@ -43,6 +61,11 @@ class SectorPickupRow {
         'destination_branch_id',
         'destination_sector_id',
       ]),
+      originBranchName:
+          OutboundDataParse.optionalString(json, 'origin_branch_name'),
+      destinationBranchName:
+          OutboundDataParse.optionalString(json, 'destination_branch_name'),
+      flightNo: OutboundDataParse.optionalString(json, 'flight_no'),
       pickedBy: json['picked_by']?.toString(),
       pickupDate: json['pickup_date']?.toString(),
       pickupTime: json['pickup_time']?.toString(),

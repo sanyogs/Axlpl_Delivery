@@ -1,10 +1,11 @@
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('OutboundMenuIcons', () {
-    test('each pipeline step has a distinct asset path', () {
-      const paths = [
+    test('each pipeline step has a distinct icon', () {
+      const icons = [
         OutboundMenuIcons.home,
         OutboundMenuIcons.hubScan,
         OutboundMenuIcons.bagging,
@@ -12,10 +13,9 @@ void main() {
         OutboundMenuIcons.linehaul,
         OutboundMenuIcons.sectorPickup,
       ];
-      expect(paths.toSet().length, paths.length);
-      for (final path in paths) {
-        expect(path, startsWith('assets/'));
-        expect(path, endsWith('.png'));
+      expect(icons.toSet().length, icons.length);
+      for (final icon in icons) {
+        expect(icon, isA<IconData>());
       }
     });
   });

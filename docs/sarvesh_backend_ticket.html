@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AXLPL Outbound API — Sarvesh Backend Ticket</title>
+<style>
+:root{--bg:#0f1117;--card:#181b24;--text:#e6e8ef;--muted:#8b92a8;--green:#4ade80;--red:#f87171;--amber:#fbbf24;--border:#2a2f3d;--code:#0a0c10;--accent:#60a5fa}
+body{margin:0;font:14px/1.5 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--text)}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 18px 60px}
+h1{font:700 22px system-ui,sans-serif;margin:0 0 8px;color:var(--text)}
+h2{font:600 15px system-ui,sans-serif;margin:28px 0 12px}
+.meta{color:var(--muted);font:13px system-ui,sans-serif;margin-bottom:24px;line-height:1.6}
+.ep{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--red);border-radius:8px;padding:14px 16px;margin-bottom:14px}
+.ep.ok{border-left-color:var(--green)}
+.ep.ask{border-left-color:var(--amber)}
+.lbl{font:600 13px system-ui;margin:0 0 6px} .lbl code{color:var(--accent)}
+.bug,.fix{font:12px system-ui;margin:6px 0;line-height:1.5} .bug{color:#fca5a5} .fix{color:var(--green)}
+.lbl-curl,.lbl-resp{font:600 10px system-ui;color:var(--muted);text-transform:uppercase;margin:12px 0 4px}
+pre{margin:0;padding:10px;background:var(--code);border:1px solid var(--border);border-radius:6px;font-size:10px;white-space:pre-wrap;word-break:break-all}
+pre.c{color:#93c5fd} pre.r{color:#c9cdd8}
+.tag{font:600 10px system-ui;padding:2px 8px;border-radius:4px;margin-left:6px}
+.t200{background:#14532d;color:#86efac} .t404{background:#7c2d12;color:#fdba74} .t500{background:#7c2d12;color:#fdba74}
+ul.notes{font:12px system-ui;color:var(--text);padding-left:20px;margin:8px 0;line-height:1.7}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font:11px system-ui}
+</style></head><body><div class="wrap">
+<h1>AXLPL Outbound API — Backend Ticket for Sarvesh</h1>
+<p class="meta">
+Messenger Flutter app outbound module · Live production curls below · Bearer token is real (copy-paste ready)<br>
+<strong>Generated:</strong> 2026-06-09 18:21:16<br>
+<strong>Regenerate:</strong> <code>python3 docs/generate_sarvesh_ticket.py</code>
+</p>
+
+
+
+<h2 style="color:var(--red)">✗ Open bugs (4) — must fix</h2>
+<div class="ep" style="border-left-color:var(--red)">
+<p class="lbl"><code>getlinehauldetails (trip_no)</code> <span class="tag t404">HTTP 404</span></p>
+<p class="bug"><b>Issue:</b> Postman documents trip_no as valid lookup param. Returns fail — was SQL 500, now 404 Linehaul not found. mawb_no and linehaul_id work.</p>
+<p class="fix"><b>We need:</b> Either fix trip_no lookup in SQL OR update Postman/docs: messenger must use mawb_no + linehaul_id only.</p>
+<p class="lbl-curl">curl (copy-paste)</p><pre class="c">curl --location --request GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&amp;trip_no=LH1780998599&#x27; \
+  --header &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  --header &#x27;X-App-Version: 22.1.0&#x27; \
+  --header &#x27;X-App-Platform: ios&#x27;</pre>
+<p class="lbl-resp">live response (2026-06-09 18:21:16)</p><pre class="r">HTTP 404
+{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 404
+}</pre></div><div class="ep" style="border-left-color:var(--red)">
+<p class="lbl"><code>getmanifestdetails MUM075</code> <span class="tag t200">HTTP 200</span></p>
+<p class="bug"><b>Issue:</b> HTTP 200 but shipments[] is empty. debug_joined_shipments_count=0. bags[] has BAG20260515154014 but no shipment rows.</p>
+<p class="fix"><b>We need:</b> Fix bag→shipment join so manifest detail, print, linehaul, and sector pickup missing lists work for MUM075.</p>
+<p class="lbl-curl">curl (copy-paste)</p><pre class="c">curl --location --request GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&amp;manifest_code=MUM075&#x27; \
+  --header &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  --header &#x27;X-App-Version: 22.1.0&#x27; \
+  --header &#x27;X-App-Platform: ios&#x27;</pre>
+<p class="lbl-resp">live response (2026-06-09 18:21:16)</p><pre class="r">HTTP 200
+{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;message&quot;: &quot;Manifest details retrieved successfully&quot;,
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;171&quot;,
+    &quot;manifest_no&quot;: &quot;MUM075&quot;,
+    &quot;origin_branch&quot;: &quot;75&quot;,
+    &quot;destination_branch&quot;: &quot;75&quot;,
+    &quot;created_by&quot;: &quot;81&quot;,
+    &quot;created_at&quot;: &quot;2026-05-15 15:47:10&quot;,
+    &quot;updated_at&quot;: &quot;2026-05-15 15:47:10&quot;,
+    &quot;origin_branch_name&quot;: &quot;Mumbai&quot;,
+    &quot;destination_branch_name&quot;: &quot;Mumbai&quot;,
+    &quot;bags&quot;: [
+      {
+        &quot;id&quot;: &quot;173&quot;,
+        &quot;bag_code&quot;: &quot;BAG20260515154014&quot;,
+        &quot;metal_seal_no&quot;: &quot;bag990831778839479&quot;
+      }
+    ],
+    &quot;debug_raw_bagging_items_count&quot;: &quot;0&quot;,
+    &quot;debug_joined_shipments_count&quot;: &quot;0&quot;,
+    &quot;shipments&quot;: []
+  }
+}</pre></div><div class="ep" style="border-left-color:var(--red)">
+<p class="lbl"><code>getpickuplist duplicates</code> <span class="tag t200">HTTP 200</span></p>
+<p class="bug"><b>Issue:</b> 50 rows returned, 9 are duplicate pickup ids (e.g. id 286 appears multiple times with different origin_hub).</p>
+<p class="fix"><b>We need:</b> Return exactly one row per pickup id. Messenger app dedupes client-side as workaround.</p>
+<p class="lbl-curl">curl (copy-paste)</p><pre class="c">curl --location --request GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=getpickuplist&#x27; \
+  --header &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  --header &#x27;X-App-Version: 22.1.0&#x27; \
+  --header &#x27;X-App-Platform: ios&#x27;</pre>
+<p class="lbl-resp">live response (2026-06-09 18:21:16)</p><pre class="r">HTTP 200
+{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Pickup list retrieved successfully&quot;,&quot;data&quot;:[{&quot;id&quot;:&quot;287&quot;,&quot;mawb_no&quot;:&quot;312-29239943&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;16:02:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 16:02:51&quot;,&quot;updated_at&quot;:&quot;2026-06-09 16:02:51&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Jaipur&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E5262&quot;},{&quot;id&quot;:&quot;286&quot;,&quot;mawb_no&quot;:&quot;31229324256&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;13:24:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 13:18:32&quot;,&quot;updated_at&quot;:&quot;2026-06-09 13:24:23&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Hyderabad&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E5213&quot;},{&quot;id&quot;:&quot;286&quot;,&quot;mawb_no&quot;:&quot;31229324256&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;13:24:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 13:18:32&quot;,&quot;updated_at&quot;:&quot;2026-06-09 13:24:23&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Hyderabad&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E5213&quot;},{&quot;id&quot;:&quot;286&quot;,&quot;mawb_no&quot;:&quot;31229324256&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;13:24:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 13:18:32&quot;,&quot;updated_at&quot;:&quot;2026-06-09 13:24:23&quot;,&quot;destination_hub&quot;:&quot;SURAT&quot;,&quot;origin_hub&quot;:&quot;Delhi&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:null,&quot;flight_no&quot;:&quot;AI101&quot;},{&quot;id&quot;:&quot;285&quot;,&quot;mawb_no&quot;:&quot;312-29319983&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;11:47:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 11:48:04&quot;,&quot;updated_at&quot;:&quot;2026-06-09 11:48:04&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Lucknow&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E2058&quot;},{&quot;id&quot;:&quot;284&quot;,&quot;mawb_no&quot;:&quot;312-29316803&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;11:46:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 11:46:53&quot;,&quot;updated_at&quot;:&quot;2026-06-09 11:46:53&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Bangalore&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E5205&quot;},{&quot;id&quot;:&quot;283&quot;,&quot;mawb_no&quot;:&quot;312-29311273&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;11:44:00&quot;,&quot;created_at&quot;:&quot;2026-06-09 11:44:19&quot;,&quot;updated_at&quot;:&quot;2026-06-09 11:44:19&quot;,&quot;destination_hub&quot;:&quot;Mumbai&quot;,&quot;origin_hub&quot;:&quot;Coimbatore&quot;,&quot;origin_branch_name&quot;:&quot;SURAT&quot;,&quot;destination_branch_name&quot;:&quot;Mumbai&quot;,&quot;flight_no&quot;:&quot;6E2409 \/ 6E353&quot;},{&quot;id&quot;:&quot;282&quot;,&quot;mawb_no&quot;:&quot;MH02FG43141780933201&quot;,&quot;hub_id&quot;:&quot;1&quot;,&quot;picked_by&quot;:null,&quot;pickup_date&quot;:&quot;2026-06-09&quot;,&quot;pickup_time&quot;:&quot;11:43:00&quot;,&quot;created_at&quot;:&quot;202...</pre></div><div class="ep" style="border-left-color:var(--red)">
+<p class="lbl"><code>listmanifests pagination</code> <span class="tag t200">HTTP 200</span></p>
+<p class="bug"><b>Issue:</b> Returns exactly 32 rows with no page, limit, offset, or total_count params.</p>
+<p class="fix"><b>We need:</b> Add server-side pagination (page/limit/total_count) so manifests older than the newest 50 are listable.</p>
+<p class="lbl-curl">curl (copy-paste)</p><pre class="c">curl --location --request GET &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=listmanifests&amp;branch_id=75&#x27; \
+  --header &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  --header &#x27;X-App-Version: 22.1.0&#x27; \
+  --header &#x27;X-App-Platform: ios&#x27;</pre>
+<p class="lbl-resp">live response (2026-06-09 18:21:16)</p><pre class="r">HTTP 200
+{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Manifests retrieved successfully&quot;,&quot;data&quot;:[{&quot;id&quot;:&quot;295&quot;,&quot;manifest_no&quot;:&quot;MUM143&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;75&quot;,&quot;created_by&quot;:&quot;81&quot;,&quot;created_at&quot;:&quot;2026-05-28 15:36:44&quot;,&quot;updated_at&quot;:&quot;2026-05-28 15:36:44&quot;},{&quot;id&quot;:&quot;183&quot;,&quot;manifest_no&quot;:&quot;HYD006&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;49&quot;,&quot;created_by&quot;:&quot;182&quot;,&quot;created_at&quot;:&quot;2026-05-15 22:49:59&quot;,&quot;updated_at&quot;:&quot;2026-05-15 22:49:59&quot;},{&quot;id&quot;:&quot;182&quot;,&quot;manifest_no&quot;:&quot;JAI002&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;41&quot;,&quot;created_by&quot;:&quot;182&quot;,&quot;created_at&quot;:&quot;2026-05-15 22:49:30&quot;,&quot;updated_at&quot;:&quot;2026-05-15 22:49:30&quot;},{&quot;id&quot;:&quot;181&quot;,&quot;manifest_no&quot;:&quot;RAI003&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;53&quot;,&quot;created_by&quot;:&quot;182&quot;,&quot;created_at&quot;:&quot;2026-05-15 22:47:59&quot;,&quot;updated_at&quot;:&quot;2026-05-15 22:47:59&quot;},{&quot;id&quot;:&quot;171&quot;,&quot;manifest_no&quot;:&quot;MUM075&quot;,&quot;origin_branch&quot;:&quot;75&quot;,&quot;destination_branch&quot;:&quot;75&quot;,&quot;created_by&quot;:&quot;81&quot;,&quot;created_at&quot;:&quot;2026-05-15 15:47:10&quot;,&quot;upda
+...(truncated — 32 rows total)</pre></div>
+
+<h2 style="color:var(--amber)">? Clarifications needed (4)</h2>
+<div class="ep ask">
+<p class="lbl"><code>createmanifest transport_mode</code></p>
+<p class="bug"><b>Issue:</b> Admin web has Airway/Surface mode on manifest create. Messenger POSTs transport_mode=Airway|Surface with bag_codes.</p>
+<p class="fix"><b>We need:</b> Confirm transport_mode is stored. If unsupported, document correct field name or add column.</p>
+</div><div class="ep ask">
+<p class="lbl"><code>assignlinehaul + editlinehaul booking flow</code></p>
+<p class="bug"><b>Issue:</b> Admin Linehaul Booking has ~15 fields. Messenger uses assignlinehaul (4 fields) then editlinehaul for the rest.</p>
+<p class="fix"><b>We need:</b> Confirm two-step flow is correct OR provide single createlinehaul endpoint. Add total_cd_weight / total_billing_weight to editlinehaul if supported.</p>
+</div><div class="ep ask">
+<p class="lbl"><code>createpickup / sector pickup creation</code></p>
+<p class="bug"><b>Issue:</b> Admin sector pickup edit URL is /sector-pickup/edit/{id} — pickups exist before scanning. No createpickup in messenger Postman.</p>
+<p class="fix"><b>We need:</b> Document how pickup_id is created OR add createpickup API for messenger.</p>
+</div><div class="ep ask">
+<p class="lbl"><code>hub scan print / bag challan</code></p>
+<p class="bug"><b>Issue:</b> Admin hub scan list has print icon per row. No messenger print endpoint in Postman.</p>
+<p class="fix"><b>We need:</b> Print API for messenger OR confirm web-only.</p>
+</div>
+
+<footer>
+4 open bugs · 4 questions · Open bugs only (working endpoints omitted)<br>
+QA login: 6874654654 / token in curls above
+</footer>
+</div></body></html>

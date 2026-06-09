@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expa
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/outbound_linehaul_controller.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -57,7 +58,7 @@ class _LinehaulListViewState extends State<LinehaulListView> {
           OutboundAdminSection(
             title: OutboundLabels.linehaulListTitle,
             trailing: TextButton.icon(
-              onPressed: () => Get.back(),
+              onPressed: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
               style: TextButton.styleFrom(
                 backgroundColor: themes.whiteColor,
                 foregroundColor: themes.darkCyanBlue,
@@ -102,6 +103,8 @@ class _LinehaulListViewState extends State<LinehaulListView> {
                   rows: rows,
                   branchLabel: branchList.displayLabelForId,
                   onDetails: (row) => controller.openLinehaulDetailsFromList(row),
+                  onEdit: (row) => controller.openLinehaulEdit(row),
+                  onDelete: (row) => controller.confirmDeleteLinehaulFromList(row),
                 ),
             ],
           ),
@@ -140,11 +143,15 @@ class _LinehaulListTable extends StatelessWidget {
     required this.rows,
     required this.branchLabel,
     required this.onDetails,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final List<OutboundLinehaulRow> rows;
   final String Function(String? id) branchLabel;
   final void Function(OutboundLinehaulRow row) onDetails;
+  final void Function(OutboundLinehaulRow row) onEdit;
+  final void Function(OutboundLinehaulRow row) onDelete;
 
   String _hub(String? id, String? fallback) {
     if (id != null && id.trim().isNotEmpty) return branchLabel(id);
@@ -186,21 +193,68 @@ class _LinehaulListTable extends StatelessWidget {
                 (row) => DataRow(
                   cells: [
                     DataCell(
-                      Text(
-                        row.displayMawbOrVehicle,
-                        style: themes.fontSize14_500.copyWith(
-                          color: themes.darkCyanBlue,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            row.displayMawbOrVehicle,
+                            style: themes.fontSize14_500.copyWith(
+                              color: themes.darkCyanBlue,
+                            ),
+                          ),
+                          if (row.ewayBill?.trim().isNotEmpty == true)
+                            Text(
+                              'EWB: ${row.ewayBill!.trim()}',
+                              style: themes.fontSize14_400.copyWith(
+                                fontSize: 10.sp,
+                                color: themes.grayColor,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     DataCell(Text(_hub(row.origin, row.origin))),
                     DataCell(Text(_hub(row.destination, row.destination))),
-                    DataCell(Text(row.transportType ?? row.driverName ?? '—')),
+                    DataCell(_TransportChip(label: row.transportType ?? row.driverName)),
                     DataCell(Text(row.bookingDate ?? '—')),
                     DataCell(
-                      TextButton(
-                        onPressed: () => onDetails(row),
-                        child: Text(OutboundLabels.btnDetails),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            onPressed: () => onDetails(row),
+                            child: Text(OutboundLabels.btnDetails),
+                          ),
+                          IconButton(
+                            tooltip: OutboundLabels.btnEdit,
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              size: 18.sp,
+                              color: themes.darkCyanBlue,
+                            ),
+                            onPressed: () => onEdit(row),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: OutboundLabels.btnDelete,
+                            icon: Icon(
+                              Icons.delete_outline,
+                              size: 18.sp,
+                              color: themes.redColor,
+                            ),
+                            onPressed: () => onDelete(row),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -208,6 +262,35 @@ class _LinehaulListTable extends StatelessWidget {
               )
               .toList(),
         ),
+      ),
+    );
+  }
+}
+
+class _TransportChip extends StatelessWidget {
+  const _TransportChip({this.label});
+
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = label?.trim();
+    if (text == null || text.isEmpty) return const Text('—');
+    final upper = text.toUpperCase();
+    final isAir = upper.contains('AIR');
+    final bg = isAir
+        ? themes.darkCyanBlue.withValues(alpha: 0.12)
+        : const Color(0xFFFFF3E0);
+    final fg = isAir ? themes.darkCyanBlue : const Color(0xFFE65100);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Text(
+        upper.length > 12 ? upper.substring(0, 12) : upper,
+        style: themes.fontSize14_500.copyWith(fontSize: 10.sp, color: fg),
       ),
     );
   }

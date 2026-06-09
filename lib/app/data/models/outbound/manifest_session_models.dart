@@ -122,14 +122,16 @@ class ManifestShipmentSessionRow {
       consigneeName: OutboundDataParse.firstNonEmptyString(json, const [
         'consignee_name',
         'receiver_name',
-      ]),
-      cityName: OutboundDataParse.optionalString(json, 'destination_city'),
+      ]) ??
+          item.receiverName,
+      cityName: OutboundDataParse.optionalString(json, 'destination_city') ??
+          item.destinationCity,
       pcs: OutboundDataParse.firstNonEmptyString(json, const [
             'number_of_parcel',
             'no_of_package',
             'pcs',
           ]) ??
-          item.shipmentInvoiceNo ??
+          item.noOfPackage ??
           '1',
       description: OutboundDataParse.firstNonEmptyString(json, const [
             'description',
@@ -141,7 +143,11 @@ class ManifestShipmentSessionRow {
         'inv_val',
         'actual_value',
       ]),
-      grossWeight: OutboundDataParse.optionalString(json, 'gross_weight'),
+      grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
+            'gross_weight',
+            'total_weight',
+          ]) ??
+          item.totalWeight,
       volumetricWeight: OutboundDataParse.optionalString(json, 'volumetric_weight'),
     );
   }

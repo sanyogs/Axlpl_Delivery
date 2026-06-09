@@ -129,6 +129,11 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
   }
 
   void _openNewPickup() {
+    Get.snackbar(
+      'Sector pickup',
+      'Pickups are created when linehaul arrives. Select an existing row from the list, or scan MAWB after opening one.',
+      duration: const Duration(seconds: 4),
+    );
     controller.resetSession();
     Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP);
   }
@@ -173,6 +178,7 @@ class _SectorPickupListTable extends StatelessWidget {
             DataColumn(label: Text(OutboundLabels.mawbNo)),
             DataColumn(label: Text(OutboundLabels.colOriginHub)),
             DataColumn(label: Text(OutboundLabels.colDestinationHub)),
+            DataColumn(label: Text(OutboundLabels.flightNo)),
             DataColumn(label: Text(OutboundLabels.pickupDate)),
             DataColumn(label: Text(OutboundLabels.pickupTime)),
             DataColumn(label: Text(OutboundLabels.pickedBy)),
@@ -184,8 +190,9 @@ class _SectorPickupListTable extends StatelessWidget {
                   cells: [
                     DataCell(Text(_cell(e.id))),
                     DataCell(Text(_cell(e.mawbNo))),
-                    DataCell(Text(_cell(e.originHub ?? e.hubId))),
-                    DataCell(Text(_cell(e.destHub))),
+                    DataCell(Text(_cell(e.displayOriginHub))),
+                    DataCell(Text(_cell(e.displayDestHub))),
+                    DataCell(Text(_cell(e.flightNo))),
                     DataCell(Text(_cell(e.pickupDate))),
                     DataCell(Text(_cell(e.pickupTime))),
                     DataCell(Text(_cell(e.pickedBy))),

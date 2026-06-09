@@ -44,7 +44,7 @@ class OutboundMenuView extends StatelessWidget {
                   HomeIconContainer(
                     title: 'Linehaul',
                     Img: OutboundMenuIcons.linehaul,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
+                    OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL_LIST),
                   ),
                   HomeIconContainer(
                     title: 'Sector pickup',

@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/pickup_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_api_envelope.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/pickup_report_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
@@ -174,6 +175,11 @@ class OutboundSectorPickupController extends GetxController {
 
   void openPickupRow(SectorPickupRow row) {
     applyPickupRow(row);
+    final pickupId = row.id?.trim();
+    if (pickupId != null && pickupId.isNotEmpty) {
+      fetchPickupDetail(pickupId);
+      return;
+    }
     final mawb = row.mawbNo?.trim();
     if (mawb != null && mawb.isNotEmpty) {
       fetchLinehaulForMawb(mawb);
@@ -186,8 +192,12 @@ class OutboundSectorPickupController extends GetxController {
     pickupDateController.text = row.pickupDate?.trim() ?? '';
     pickupTimeController.text = _formatPickupTime(row.pickupTime);
     pickedByController.text = row.pickedBy?.trim() ?? '';
-    originHubController.text = _hubLabel(row.originHub ?? row.hubId);
-    destHubController.text = _hubLabel(row.destHub);
+    originHubController.text = row.displayOriginHub;
+    destHubController.text = row.displayDestHub;
+    final flight = row.flightNo?.trim();
+    if (flight != null && flight.isNotEmpty) {
+      flightInfoController.text = flight;
+    }
   }
 
   String _formatPickupTime(String? raw) {
@@ -226,6 +236,66 @@ class OutboundSectorPickupController extends GetxController {
 
     await fetchLinehaulForMawb(code);
     docketFocusNode.requestFocus();
+  }
+
+  Future<void> fetchPickupDetail(String pickupId) async {
+    final id = pickupId.trim();
+    if (id.isEmpty) return;
+
+    isBusy.value = true;
+    try {
+      final detail = await _repo.pickupDetail(id);
+      if (detail == null) {
+        if (_repo.lastMessage.trim().isNotEmpty) {
+          _snack(_repo.lastMessage, isError: true);
+        }
+        final mawb = mawbController.text.trim();
+        if (mawb.isNotEmpty) await fetchLinehaulForMawb(mawb);
+        return;
+      }
+      _applyPickupDetail(detail);
+      final expected = detail.shipmentList
+          .map(
+            (s) => SectorPickupExpectedShipment(
+              docketNo: s.shipmentId ?? s.shipmentInvoiceNo ?? '',
+              pkgs: '1',
+            ),
+          )
+          .where((e) => e.docketNo.trim().isNotEmpty)
+          .toList();
+      _applyExpectedShipments(expected);
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  void _applyPickupDetail(PickupDetail detail) {
+    pickupIdController.text = detail.id?.trim() ?? pickupIdController.text;
+    if (detail.mawbNo?.trim().isNotEmpty == true) {
+      mawbController.text = detail.mawbNo!.trim();
+    }
+    if (detail.pickupDate?.trim().isNotEmpty == true) {
+      pickupDateController.text = detail.pickupDate!.trim();
+    }
+    if (detail.pickupTime?.trim().isNotEmpty == true) {
+      pickupTimeController.text = _formatPickupTime(detail.pickupTime);
+    }
+    if (detail.pickedBy?.trim().isNotEmpty == true) {
+      pickedByController.text = detail.pickedBy!.trim();
+    }
+    if (detail.originHub?.trim().isNotEmpty == true) {
+      originHubController.text = detail.originHub!.trim();
+    } else if (detail.originBranch?.trim().isNotEmpty == true) {
+      originHubController.text = detail.originBranch!.trim();
+    }
+    if (detail.destinationHub?.trim().isNotEmpty == true) {
+      destHubController.text = detail.destinationHub!.trim();
+    } else if (detail.destinationBranch?.trim().isNotEmpty == true) {
+      destHubController.text = detail.destinationBranch!.trim();
+    }
+    if (detail.flightNo?.trim().isNotEmpty == true) {
+      flightInfoController.text = detail.flightNo!.trim();
+    }
   }
 
   Future<void> fetchLinehaulForMawb(String mawb) async {
@@ -345,8 +415,10 @@ class OutboundSectorPickupController extends GetxController {
     final pickupId = pickupIdController.text.trim();
     final docket = docketController.text.trim();
     if (pickupId.isEmpty) {
-      _snack('Pickup id is required — scan MAWB or select from list',
-          isError: true);
+      _snack(
+        'Pickup id is required — open an existing pickup from the list (new pickups are created server-side when linehaul arrives)',
+        isError: true,
+      );
       return;
     }
     if (docket.isEmpty) {

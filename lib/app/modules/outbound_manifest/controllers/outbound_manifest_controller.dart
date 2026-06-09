@@ -349,6 +349,7 @@ class OutboundManifestController extends GetxController {
         bagIdsCommaSeparated: bagCodes,
         originBranchId: origin,
         destinationBranchId: dest,
+        transportMode: selectedTransportMode.value,
       );
       r.when(
         success: (data) {

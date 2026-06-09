@@ -1306,6 +1306,7 @@ class ApiServices {
     required String originBranchId,
     required String destinationBranchId,
     required String userId,
+    String? transportMode,
   }) async {
     final body = FormData.fromMap(
       OutboundApiParams.createManifestBody(
@@ -1313,6 +1314,7 @@ class ApiServices {
         originBranchId: originBranchId,
         destinationBranchId: destinationBranchId,
         userId: userId,
+        transportMode: transportMode,
       ),
     );
     return _api.postOutbound(
@@ -1431,12 +1433,17 @@ class ApiServices {
 
   Future<APIResponse> listLinehauls({
     required String token,
-    required String status,
+    String? status,
   }) async {
+    final query = <String, dynamic>{};
+    final filter = status?.trim();
+    if (filter != null && filter.isNotEmpty) {
+      query['status'] = filter;
+    }
     return _api.getOutbound(
       listLinehaulsPoint,
       token: token,
-      query: {'status': status},
+      query: query.isEmpty ? null : query,
       contentType: ContentType.urlEncoded,
     );
   }
@@ -1503,6 +1510,32 @@ class ApiServices {
     );
   }
 
+  Future<APIResponse> editLinehaul({
+    required String token,
+    required Map<String, String> body,
+  }) async {
+    return _api.postOutbound(
+      editLinehaulPoint,
+      body,
+      token: token,
+      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
+    );
+  }
+
+  Future<APIResponse> deleteLinehaul({
+    required String token,
+    required String linehaulId,
+  }) async {
+    return _api.postOutbound(
+      deleteLinehaulPoint,
+      OutboundApiParams.deleteLinehaulBody(linehaulId: linehaulId),
+      token: token,
+      contentType: ContentType.urlEncoded,
+      appendPlatform: false,
+    );
+  }
+
   // =========================
   // Outbound — Sector pickup
   // =========================
@@ -1542,6 +1575,18 @@ class ApiServices {
       getPickupListPoint,
       token: token,
       query: null,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> getPickupDetail({
+    required String token,
+    required String pickupId,
+  }) async {
+    return _api.getOutbound(
+      getPickupDetailPoint,
+      token: token,
+      query: {'pickup_id': pickupId},
       contentType: ContentType.urlEncoded,
     );
   }

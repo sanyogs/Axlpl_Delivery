@@ -56,7 +56,7 @@ class OutboundApiParams {
   static List<Map<String, String>> linehaulDetailQueries(String linehaulRef) {
     final ref = linehaulRef.trim();
     return [
-      if (looksLikeTripNo(ref)) {'trip_no': ref},
+      {'mawb_no': ref},
       {'linehaul_id': ref},
     ];
   }
@@ -109,18 +109,48 @@ class OutboundApiParams {
   }
 
   /// POST `createmanifest` — verified: `bag_codes`, branches, `user_id`.
+  /// Optional `transport_mode` (Airway / Surface) — sent when admin mode is set.
   static Map<String, String> createManifestBody({
     required String bagCodesCsv,
     required String originBranchId,
     required String destinationBranchId,
     required String userId,
-  }) =>
-      {
-        ...createManifestBagFields(bagCodesCsv),
-        'origin_branch_id': originBranchId.trim(),
-        'destination_branch_id': destinationBranchId.trim(),
-        'user_id': userId,
-      };
+    String? transportMode,
+  }) {
+    final body = <String, String>{
+      ...createManifestBagFields(bagCodesCsv),
+      'origin_branch_id': originBranchId.trim(),
+      'destination_branch_id': destinationBranchId.trim(),
+      'user_id': userId,
+    };
+    final mode = transportMode?.trim();
+    if (mode != null && mode.isNotEmpty) {
+      body['transport_mode'] = mode;
+    }
+    return body;
+  }
+
+  /// Combine date + time for `editlinehaul` / linehaul booking POST fields.
+  static String combineDateTime(String date, String time) {
+    final d = date.trim();
+    if (d.isEmpty) return '';
+    final t = time.trim();
+    if (t.isEmpty) return '$d 00:00:00';
+    if (t.length == 5) return '$d $t:00';
+    return '$d $t';
+  }
+
+  /// First non-empty combined datetime (e.g. booking departure vs AWB datetime).
+  static String firstCombinedDateTime(
+    String date1,
+    String time1,
+    String date2,
+    String time2,
+  ) {
+    final a = combineDateTime(date1, time1);
+    if (a.isNotEmpty) return a;
+    return combineDateTime(date2, time2);
+  }
 
   /// POST `assignlinehaul` — verified: `manifest_codes`, vehicle, driver, `user_id`.
   static Map<String, String> assignLinehaulBody({
@@ -155,6 +185,49 @@ class OutboundApiParams {
     }
     return body;
   }
+
+  /// POST `editlinehaul` — urlencoded; `linehaul_id` required.
+  static Map<String, String> editLinehaulBody({
+    required String linehaulId,
+    String? vehicleNo,
+    String? driverName,
+    String? driverMobile,
+    String? mawbNo,
+    String? tripNo,
+    String? departureTime,
+    String? arrivalTime,
+    String? remarks,
+    String? flightNo,
+    String? airline,
+    String? ewayBill,
+    String? transportType,
+  }) {
+    final body = <String, String>{'linehaul_id': linehaulId.trim()};
+    void add(String key, String? value) {
+      final t = value?.trim();
+      if (t != null && t.isNotEmpty) body[key] = t;
+    }
+
+    add('vehicle_no', vehicleNo);
+    add('driver_name', driverName);
+    add('driver_mobile', driverMobile);
+    add('mawb_no', mawbNo);
+    add('trip_no', tripNo);
+    add('departure_time', departureTime);
+    add('arrival_time', arrivalTime);
+    add('remarks', remarks);
+    add('flight_no', flightNo);
+    add('airline', airline);
+    add('eway_bill', ewayBill);
+    add('transport_type', transportType);
+    return body;
+  }
+
+  /// POST `deletelinehaul` — urlencoded; `linehaul_id` required.
+  static Map<String, String> deleteLinehaulBody({
+    required String linehaulId,
+  }) =>
+      {'linehaul_id': linehaulId.trim()};
 
   /// POST bagging mutations — `bag_code` (+ `bag_id` when not a BAG… code).
   static Map<String, String> bagMutationBody(

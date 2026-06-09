@@ -24,12 +24,34 @@ class OutboundManifestView extends StatefulWidget {
 }
 
 class _OutboundManifestViewState extends State<OutboundManifestView> {
+  final _bagTableKey = GlobalKey();
   late final OutboundManifestController controller;
+  Worker? _scrollWorker;
 
   @override
   void initState() {
     super.initState();
     controller = Get.find<OutboundManifestController>();
+    _scrollWorker = ever(controller.sessionBags, (_) {
+      if (controller.sessionBags.isEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _bagTableKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOut,
+            alignment: 0.12,
+          );
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollWorker?.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,52 +127,7 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
                   ),
                 ),
               ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.connoteCount,
-                child: OutboundReadOnlyInput(
-                  controller: controller.connoteCountController,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.boxCount,
-                child: OutboundReadOnlyInput(
-                  controller: controller.boxCountController,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.bagsSelectedCount,
-                child: OutboundReadOnlyInput(
-                  controller: controller.bagsSelectedController,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.connoteWeight,
-                child: OutboundReadOnlyInput(
-                  controller: controller.connoteWeightController,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.conVolWeight,
-                child: OutboundReadOnlyInput(
-                  controller: controller.conVolWeightController,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.bagWeight,
-                child: OutboundReadOnlyInput(
-                  controller: controller.bagWeightController,
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  width: 200.w,
-                  child: OutboundPrimaryButtonCompact(
-                    title: OutboundLabels.btnAddManifest,
-                    onPressed: busy ? null : controller.createManifest,
-                  ),
-                ),
-              ),
+              const _ManifestSummaryGrid(),
             ],
           ),
           OutboundAdminSection(
@@ -158,6 +135,7 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
             children: [
               OutboundLabeledFieldRow(
                 label: OutboundLabels.mBagCode,
+                required: true,
                 child: OutboundScanField(
                   controller: controller.bagScanController,
                   focusNode: controller.bagScanFocusNode,
@@ -173,6 +151,7 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
                   style: themes.fontSize14_400.copyWith(color: themes.redColor),
                 ),
               _ManifestBagTable(
+                key: _bagTableKey,
                 rows: controller.sessionBags,
                 onRemove: busy ? null : controller.removeSessionBag,
               ),
@@ -184,14 +163,93 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
               _ManifestShipmentTable(rows: controller.shipmentLines),
             ],
           ),
+          OutboundPrimaryButton(
+            title: OutboundLabels.btnAddManifest,
+            onPressed: busy ? null : controller.createManifest,
+          ),
         ],
       );
     });
   }
 }
 
+/// Admin video: 3×2 summary grid (counts top row, weights bottom row).
+class _ManifestSummaryGrid extends GetView<OutboundManifestController> {
+  const _ManifestSummaryGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      spacing: 8,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
+          children: [
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.connoteCount,
+                child: OutboundReadOnlyInput(
+                  controller: controller.connoteCountController,
+                ),
+              ),
+            ),
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.boxCount,
+                child: OutboundReadOnlyInput(
+                  controller: controller.boxCountController,
+                ),
+              ),
+            ),
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.bagsSelectedCount,
+                child: OutboundReadOnlyInput(
+                  controller: controller.bagsSelectedController,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
+          children: [
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.connoteWeight,
+                child: OutboundReadOnlyInput(
+                  controller: controller.connoteWeightController,
+                ),
+              ),
+            ),
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.conVolWeight,
+                child: OutboundReadOnlyInput(
+                  controller: controller.conVolWeightController,
+                ),
+              ),
+            ),
+            Expanded(
+              child: OutboundLabeledFieldRow(
+                label: OutboundLabels.bagWeight,
+                child: OutboundReadOnlyInput(
+                  controller: controller.bagWeightController,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _ManifestBagTable extends StatelessWidget {
   const _ManifestBagTable({
+    super.key,
     required this.rows,
     this.onRemove,
   });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// App text styles — use getters so [.sp] runs after [ScreenUtilInit].
 class Themes {
   final whiteColor = Colors.white;
   final lightWhite = Color.fromRGBO(246, 248, 249, 1);
@@ -17,17 +18,20 @@ class Themes {
   final lightGrayColor = Color.fromRGBO(235, 237, 237, 1);
   final darkCyanBlue = Color.fromRGBO(0, 67, 110, 1);
 
-  final fontSize18_600 =
+  TextStyle get fontSize18_600 =>
       GoogleFonts.workSans(fontSize: 18.sp, fontWeight: FontWeight.w600);
 
-  final fontSize16_400 =
+  TextStyle get fontSize16_400 =>
       GoogleFonts.workSans(fontSize: 16.sp, fontWeight: FontWeight.w400);
-  final fontSize14_400 =
+
+  TextStyle get fontSize14_400 =>
       GoogleFonts.workSans(fontSize: 14.sp, fontWeight: FontWeight.w400);
 
-  final fontSize14_500 =
+  TextStyle get fontSize14_500 =>
       GoogleFonts.workSans(fontSize: 14.sp, fontWeight: FontWeight.w500);
 
-  final fontReboto16_600 =
-      TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600);
+  TextStyle get fontReboto16_600 => GoogleFonts.workSans(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w600,
+      );
 }

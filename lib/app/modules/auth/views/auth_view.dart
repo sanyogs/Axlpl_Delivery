@@ -415,21 +415,33 @@ class AuthView extends GetView<AuthController> {
                   Row(
                     children: [
                       Expanded(child: Divider()),
-                      Center(
-                        child: CupertinoButton(
-                          color: themes.orangeColor,
-                          focusColor: themes.whiteColor,
-                          borderRadius: BorderRadius.circular(5.r),
-                          child: Text(
-                            registerNow,
-                            style: themes.fontReboto16_600
-                                .copyWith(color: themes.whiteColor),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 40.h,
+                          child: CupertinoButton(
+                            color: themes.orangeColor,
+                            focusColor: themes.whiteColor,
+                            borderRadius: BorderRadius.circular(5.r),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 8.h,
+                            ),
+                            onPressed: () {
+                              Get.toNamed(Routes.REGISTER);
+                            },
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                registerNow,
+                                maxLines: 1,
+                                style: themes.fontReboto16_600.copyWith(
+                                  color: themes.whiteColor,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: () {
-                            Get.toNamed(
-                              Routes.REGISTER,
-                            );
-                          },
                         ),
                       ),
                       Expanded(child: Divider()),

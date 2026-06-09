@@ -47,6 +47,26 @@ void main() {
     expect(body['status'], 'ARRIVED');
   });
 
+  test('createManifestBody includes transport_mode when set', () {
+    final body = OutboundApiParams.createManifestBody(
+      bagCodesCsv: 'BAG20260518152744831',
+      originBranchId: '37',
+      destinationBranchId: '75',
+      userId: '1',
+      transportMode: 'Airway',
+    );
+    expect(body['transport_mode'], 'Airway');
+    expect(body['bag_codes'], 'BAG20260518152744831');
+  });
+
+  test('combineDateTime formats editlinehaul datetime', () {
+    expect(
+      OutboundApiParams.combineDateTime('2026-06-09', '10:30'),
+      '2026-06-09 10:30:00',
+    );
+    expect(OutboundApiParams.combineDateTime('', '10:30'), '');
+  });
+
   test('bagDocketMutationBody sends bag_code for BAG prefix', () {
     final body = OutboundApiParams.bagDocketMutationBody(
       bagRef: 'BAG20260518152744831',

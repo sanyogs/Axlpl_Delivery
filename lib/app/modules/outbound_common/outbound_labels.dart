@@ -160,6 +160,13 @@ class OutboundLabels {
   static const btnRemoveShipment = 'Remove';
   static const btnCancel = 'Cancel';
   static const btnDelete = 'Delete';
+  static const btnEdit = 'Edit';
+  static const linehaulEditTitle = 'Edit Linehaul';
+  static const driverMobile = 'Driver Mobile';
+  static const deleteLinehaulTitle = 'Delete linehaul?';
+  static String deleteLinehaulConfirmMessage(String ref) =>
+      'Delete linehaul $ref? This cannot be undone.';
+  static const btnSaveChanges = 'Save changes';
   static const deleteDocketTitle = 'Remove docket?';
   static String deleteDocketConfirmMessage(String docketNo) =>
       'Remove docket $docketNo from this scan session? '
