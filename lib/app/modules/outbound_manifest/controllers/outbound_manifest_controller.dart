@@ -304,6 +304,7 @@ class OutboundManifestController extends GetxController {
             detail,
             branchLabel: _branchList.displayLabelForId,
             rawData: data,
+            scannedBagCode: bagCode,
           );
           if (row.bagCode.isEmpty) {
             fetchStatusMessage.value = 'Bag code not found in response.';

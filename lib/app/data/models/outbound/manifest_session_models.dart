@@ -22,8 +22,11 @@ class ManifestBagSessionRow {
     BagDetail detail, {
     required String Function(String? id) branchLabel,
     dynamic rawData,
+    String? scannedBagCode,
   }) {
-    final code = detail.bagCode?.trim() ?? '';
+    final code = detail.bagCode?.trim().isNotEmpty == true
+        ? detail.bagCode!.trim()
+        : (scannedBagCode?.trim() ?? '');
     final origin = _branchDisplay(
       name: detail.originBranchName,
       id: detail.originBranchId,

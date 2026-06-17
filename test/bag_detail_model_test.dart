@@ -83,4 +83,119 @@ void main() {
     expect(detail.destinationSectorId, '39');
     expect(detail.shipmentCount, 2);
   });
+
+  test('resolves scanned M/Bag from metal_seal_no when bag_code is absent', () {
+    const sample = {
+      'metal_seal_no': 'G20260610121223737',
+      'origin_branch_id': '27',
+      'destination_sector_id': '39',
+      'shipment_count': 2,
+      'items': [
+        {
+          'shipment_id': '825411779084407',
+          'shipment_invoice_no': '1',
+        },
+      ],
+      '__server_message': 'Bag details retrieved successfully',
+    };
+
+    final detail = BagDetail.fromDynamic(
+      sample,
+      requestedBagCode: 'G20260610121223737',
+    );
+
+    expect(detail.bagCode, 'G20260610121223737');
+    expect(detail.metalSealNo, 'G20260610121223737');
+    expect(detail.originBranchId, '27');
+    expect(detail.destinationSectorId, '39');
+    expect(detail.shipmentCount, 2);
+  });
+
+  test('prefers scanned G code when response also includes BAG bag_code', () {
+    const sample = {
+      'bag_code': 'BAG20260610121223737',
+      'metal_seal_no': 'G20260610121223737',
+      'origin_branch_id': '27',
+      'destination_sector_id': '39',
+    };
+
+    final detail = BagDetail.fromDynamic(
+      sample,
+      requestedBagCode: 'G20260610121223737',
+    );
+
+    expect(detail.bagCode, 'G20260610121223737');
+  });
+
+  test('parses live getbagdetails nested data.bag wrapper from curl', () {
+    const sample = {
+      'status': 'success',
+      'message': 'Bag details fetched successfully',
+      'data': {
+        'bag': {
+          'id': '200',
+          'bag_code': 'BAG20260518152744831',
+          'metal_seal_no': 'MSeal825411779084407',
+          'origin_branch_id': '37',
+          'destination_sector_id': '95',
+          'origin_branch_name': 'KOLKATTA',
+          'destination_city_name': 'Puttur',
+          'gross_weight': '11.00',
+        },
+        'items': [
+          {
+            'shipment_id': '825411779084407',
+            'shipment_invoice_no': '1',
+            'sender_name': 'prajakta rajeshirke',
+            'receiver_name': 'receiver_version',
+            'city_name': 'Mumbai',
+            'number_of_parcel': '1',
+            'gross_weight': '11.00',
+          },
+        ],
+      },
+      '__server_message': 'Bag details retrieved successfully',
+    };
+
+    final detail = BagDetail.fromDynamic(
+      sample,
+      requestedBagCode: 'BAG20260518152744831',
+    );
+
+    expect(detail.bagCode, 'BAG20260518152744831');
+    expect(detail.metalSealNo, 'MSeal825411779084407');
+    expect(detail.originBranchId, '37');
+    expect(detail.items, hasLength(1));
+    expect(detail.items.first.shipmentId, '825411779084407');
+  });
+
+  test('parses live nested data.bag wrapper for G M/Bag in metal_seal_no', () {
+    const sample = {
+      'status': 'success',
+      'message': 'Bag details fetched successfully',
+      'data': {
+        'bag': {
+          'id': '300',
+          'metal_seal_no': 'G20260610121223737',
+          'origin_branch_id': '27',
+          'destination_sector_id': '39',
+          'gross_weight': '5.00',
+        },
+        'items': [
+          {'shipment_id': '123', 'shipment_invoice_no': '1'},
+        ],
+      },
+      '__server_message': 'Bag details retrieved successfully',
+    };
+
+    final detail = BagDetail.fromDynamic(
+      sample,
+      requestedBagCode: 'G20260610121223737',
+    );
+
+    expect(detail.bagCode, 'G20260610121223737');
+    expect(detail.originBranchId, '27');
+    expect(detail.destinationSectorId, '39');
+    expect(detail.items, hasLength(1));
+  });
 }

@@ -58,15 +58,51 @@ class BagDetail {
     'mBagNo',
   ];
 
-  factory BagDetail.fromJson(Map<String, dynamic> json) {
+  static const _metalSealKeys = [
+    'metal_seal_no',
+    'metal_seal',
+    'seal_no',
+  ];
+
+  static const _scanMatchKeys = [
+    ..._bagCodeKeys,
+    ..._metalSealKeys,
+    'bag_id',
+    'id',
+  ];
+
+  /// Manifest / bagging scans often use M/Bag values stored as `metal_seal_no`.
+  static String? resolveBagCode(
+    Map<String, dynamic> json, {
+    String? requestedBagCode,
+  }) {
+    final requested = requestedBagCode?.trim();
+    if (requested != null && requested.isNotEmpty) {
+      final requestedLower = requested.toLowerCase();
+      for (final key in _scanMatchKeys) {
+        final value = json[key]?.toString().trim();
+        if (value != null &&
+            value.isNotEmpty &&
+            value.toLowerCase() == requestedLower) {
+          return requested;
+        }
+      }
+    }
+
+    final bagCode = OutboundDataParse.firstNonEmptyString(json, _bagCodeKeys);
+    if (bagCode != null) return bagCode;
+
+    return OutboundDataParse.firstNonEmptyString(json, _metalSealKeys);
+  }
+
+  factory BagDetail.fromJson(
+    Map<String, dynamic> json, {
+    String? requestedBagCode,
+  }) {
     return BagDetail(
       id: OutboundDataParse.optionalString(json, 'id'),
-      bagCode: OutboundDataParse.firstNonEmptyString(json, _bagCodeKeys),
-      metalSealNo: OutboundDataParse.firstNonEmptyString(json, const [
-        'metal_seal_no',
-        'metal_seal',
-        'seal_no',
-      ]),
+      bagCode: resolveBagCode(json, requestedBagCode: requestedBagCode),
+      metalSealNo: OutboundDataParse.firstNonEmptyString(json, _metalSealKeys),
       originBranchId: OutboundDataParse.firstNonEmptyString(json, const [
         'origin_branch_id',
         'origin_branchId',
@@ -111,37 +147,101 @@ class BagDetail {
         requestedBagCode: requestedBagCode,
       );
       return listDetail != null
-          ? BagDetail.fromJson(listDetail)
+          ? BagDetail.fromJson(
+              listDetail,
+              requestedBagCode: requestedBagCode,
+            )
           : const BagDetail();
     }
-    if (_looksLikeBagDetail(map)) return BagDetail.fromJson(map);
+
+    final fromContainer = _bagDetailFromBagContainer(map);
+    if (fromContainer != null) {
+      return BagDetail.fromJson(
+        fromContainer,
+        requestedBagCode: requestedBagCode,
+      );
+    }
+
+    if (_looksLikeBagDetail(map)) {
+      return BagDetail.fromJson(map, requestedBagCode: requestedBagCode);
+    }
 
     final listDetail = _bagDetailFromListPayload(
       map,
       requestedBagCode: requestedBagCode,
     );
-    if (listDetail != null) return BagDetail.fromJson(listDetail);
+    if (listDetail != null) {
+      return BagDetail.fromJson(
+        listDetail,
+        requestedBagCode: requestedBagCode,
+      );
+    }
 
     for (final key in const [
       'data',
       'bag',
       'bag_detail',
       'details',
-      'result'
+      'result',
+      'bags',
     ]) {
       final nested = OutboundDataParse.asStringKeyedMap(map[key]);
-      if (nested != null && _looksLikeBagDetail(nested)) {
-        return BagDetail.fromJson(nested);
+      if (nested == null) continue;
+
+      final nestedContainer = _bagDetailFromBagContainer(nested);
+      if (nestedContainer != null) {
+        return BagDetail.fromJson(
+          nestedContainer,
+          requestedBagCode: requestedBagCode,
+        );
+      }
+
+      if (_looksLikeBagDetail(nested)) {
+        return BagDetail.fromJson(
+          nested,
+          requestedBagCode: requestedBagCode,
+        );
       }
       final nestedListDetail = _bagDetailFromListPayload(
         map[key],
         requestedBagCode: requestedBagCode,
       );
       if (nestedListDetail != null) {
-        return BagDetail.fromJson(nestedListDetail);
+        return BagDetail.fromJson(
+          nestedListDetail,
+          requestedBagCode: requestedBagCode,
+        );
       }
     }
-    return BagDetail.fromJson(map);
+    return BagDetail.fromJson(map, requestedBagCode: requestedBagCode);
+  }
+
+  /// Live `getbagdetails` wraps bag fields under `data.bag` with sibling `items`.
+  static Map<String, dynamic>? _bagDetailFromBagContainer(
+    Map<String, dynamic> map,
+  ) {
+    for (final container in _bagContainerLevels(map)) {
+      final bag = OutboundDataParse.asStringKeyedMap(container['bag']);
+      if (bag == null) continue;
+      final merged = Map<String, dynamic>.from(bag);
+      final items = container['items'];
+      if (items is List) merged['items'] = items;
+      return merged;
+    }
+    return null;
+  }
+
+  static List<Map<String, dynamic>> _bagContainerLevels(
+    Map<String, dynamic> map,
+  ) {
+    final levels = <Map<String, dynamic>>[map];
+    final data = OutboundDataParse.asStringKeyedMap(map['data']);
+    if (data != null) {
+      levels.add(data);
+      final inner = OutboundDataParse.asStringKeyedMap(data['data']);
+      if (inner != null) levels.add(inner);
+    }
+    return levels;
   }
 
   static bool _looksLikeBagDetail(Map<String, dynamic> map) {
@@ -162,7 +262,7 @@ class BagDetail {
     final requested = requestedBagCode?.trim().toLowerCase();
     if (requested != null && requested.isNotEmpty) {
       for (final row in rows) {
-        final code = OutboundDataParse.firstNonEmptyString(row, _bagCodeKeys);
+        final code = OutboundDataParse.firstNonEmptyString(row, _scanMatchKeys);
         if (code != null && code.toLowerCase() == requested) {
           return row;
         }
