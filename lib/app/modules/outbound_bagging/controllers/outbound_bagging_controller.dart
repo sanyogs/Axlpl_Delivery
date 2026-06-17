@@ -298,7 +298,10 @@ class OutboundBaggingController extends GetxController {
       final r = await _repo.fetchBagDetails(code);
       r.when(
         success: (data) {
-          final detail = BagDetail.fromDynamic(data);
+          final detail = BagDetail.fromDynamic(
+            data,
+            requestedBagCode: code,
+          );
           bagDetail.value = detail;
           _applyBagDetailToSelection(detail);
           sessionScannedRows.clear();
@@ -517,7 +520,10 @@ class OutboundBaggingController extends GetxController {
     final r = await _repo.fetchBagDetails(code);
     return r.when(
       success: (data) {
-        final detail = BagDetail.fromDynamic(data);
+        final detail = BagDetail.fromDynamic(
+          data,
+          requestedBagCode: code,
+        );
         bagDetail.value = detail;
         _applyBagDetailToSelection(detail);
         return true;

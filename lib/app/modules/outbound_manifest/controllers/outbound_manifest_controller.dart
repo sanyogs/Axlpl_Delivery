@@ -276,7 +276,10 @@ class OutboundManifestController extends GetxController {
       final r = await _repo.fetchBagDetails(bagCode);
       await r.when(
         success: (data) async {
-          final detail = BagDetail.fromDynamic(data);
+          final detail = BagDetail.fromDynamic(
+            data,
+            requestedBagCode: bagCode,
+          );
           final resolvedCode = detail.bagCode?.trim() ?? bagCode;
           if (sessionBags.any((b) => b.bagCode == resolvedCode)) {
             fetchStatusMessage.value =
@@ -284,14 +287,15 @@ class OutboundManifestController extends GetxController {
             return;
           }
 
+          final canAutoFillDepot = sessionBags.isEmpty;
           if (detail.originBranchId != null &&
               detail.originBranchId!.isNotEmpty &&
-              _originId == null) {
+              (canAutoFillDepot || _originId == null)) {
             selectedOriginDepotId.value = detail.originBranchId;
           }
           if (detail.destinationSectorId != null &&
               detail.destinationSectorId!.isNotEmpty &&
-              _destId == null) {
+              (canAutoFillDepot || _destId == null)) {
             selectedDestDepotId.value = detail.destinationSectorId;
           }
           _depotContextKey = _buildDepotContextKey();

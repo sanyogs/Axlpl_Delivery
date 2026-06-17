@@ -52,4 +52,35 @@ void main() {
     expect(detail.originBranchName, 'Mumbai Hub');
     expect(detail.destinationSectorName, 'Delhi Sector');
   });
+
+  test('selects requested M/Bag from list-style API client wrapper', () {
+    const sample = {
+      'items': [
+        {
+          'bag_code': 'BAG20260518152744831',
+          'origin_branch_id': '37',
+          'destination_sector_id': '95',
+        },
+        {
+          'm_bag_code': 'G2026061021223737',
+          'metal_seal_no': 'MSeal1021223737',
+          'origin_branch_id': '27',
+          'destination_sector_id': '39',
+          'shipment_count': 2,
+        },
+      ],
+      '__server_message': 'Bag details retrieved successfully',
+    };
+
+    final detail = BagDetail.fromDynamic(
+      sample,
+      requestedBagCode: 'G2026061021223737',
+    );
+
+    expect(detail.bagCode, 'G2026061021223737');
+    expect(detail.metalSealNo, 'MSeal1021223737');
+    expect(detail.originBranchId, '27');
+    expect(detail.destinationSectorId, '39');
+    expect(detail.shipmentCount, 2);
+  });
 }
