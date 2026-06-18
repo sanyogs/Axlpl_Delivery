@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scre
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// `listbags` — filtered by origin `branch_id` from the bagging screen.
@@ -83,13 +84,15 @@ class _BagListViewState extends State<BagListView> {
               if (filterNote.isNotEmpty)
                 Text(
                   filterNote,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
                 ),
               if (loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Center(
-                    child: CircularProgressIndicator(color: themes.darkCyanBlue),
+                    child:
+                        CircularProgressIndicator(color: themes.darkCyanBlue),
                   ),
                 )
               else if (err.isNotEmpty)
@@ -102,7 +105,8 @@ class _BagListViewState extends State<BagListView> {
               else ...[
                 Text(
                   rangeLabel,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
                 ),
                 _BagListTable(
                   rows: rows,
@@ -112,19 +116,22 @@ class _BagListViewState extends State<BagListView> {
                   onRebag: (row) => controller.showRebagDialog(
                     defaultNewBagCode: row.bagCode,
                   ),
+                  onCopy: _copyBagCode,
                 ),
                 if (totalPages > 1) ...[
                   SizedBox(height: 8.h),
                   Text(
                     'Page $page of $totalPages',
                     textAlign: TextAlign.center,
-                    style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                    style:
+                        themes.fontSize14_400.copyWith(color: themes.grayColor),
                   ),
                   SizedBox(height: 8.h),
                   OutboundButtonRow(
                     start: OutboundSecondaryButton(
                       label: 'Previous',
-                      onPressed: page > 1 ? controller.bagListPreviousPage : null,
+                      onPressed:
+                          page > 1 ? controller.bagListPreviousPage : null,
                     ),
                     end: OutboundSecondaryButton(
                       label: 'Next',
@@ -149,6 +156,7 @@ class _BagListTable extends StatelessWidget {
     required this.branchLabel,
     required this.onTap,
     required this.onRebag,
+    required this.onCopy,
   });
 
   final List<OutboundBagRow> rows;
@@ -156,6 +164,7 @@ class _BagListTable extends StatelessWidget {
   final String Function(String? id) branchLabel;
   final void Function(OutboundBagRow row) onTap;
   final void Function(OutboundBagRow row) onRebag;
+  final void Function(String? bagCode) onCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -171,6 +180,7 @@ class _BagListTable extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(vertical: 4.h),
         child: DataTable(
+          showCheckboxColumn: false,
           headingRowHeight: 44,
           dataRowMinHeight: 48,
           headingTextStyle: themes.fontSize14_500.copyWith(
@@ -188,7 +198,6 @@ class _BagListTable extends StatelessWidget {
           rows: [
             for (var i = 0; i < rows.length; i++)
               DataRow(
-                onSelectChanged: (_) => onTap(rows[i]),
                 cells: [
                   DataCell(Text('${rowOffset + i + 1}')),
                   DataCell(
@@ -204,7 +213,8 @@ class _BagListTable extends StatelessWidget {
                   DataCell(
                     Text(
                       branchLabel(
-                        rows[i].destinationSectorId ?? rows[i].destinationBranchId,
+                        rows[i].destinationSectorId ??
+                            rows[i].destinationBranchId,
                       ),
                     ),
                   ),
@@ -215,6 +225,20 @@ class _BagListTable extends StatelessWidget {
                         TextButton(
                           onPressed: () => onTap(rows[i]),
                           child: const Text('Open'),
+                        ),
+                        IconButton(
+                          tooltip: OutboundLabels.btnCopy,
+                          onPressed: () => onCopy(rows[i].bagCode),
+                          icon: Icon(
+                            Icons.copy_outlined,
+                            size: 18.sp,
+                            color: themes.darkCyanBlue,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
                         ),
                         TextButton(
                           onPressed: () => onRebag(rows[i]),
@@ -230,6 +254,13 @@ class _BagListTable extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _copyBagCode(String? bagCode) async {
+  final code = bagCode?.trim();
+  if (code == null || code.isEmpty) return;
+  await Clipboard.setData(ClipboardData(text: code));
+  Get.snackbar('Bagging', 'Bag code copied.');
 }
 
 class _ListMessage extends StatelessWidget {

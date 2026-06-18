@@ -6,12 +6,11 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_acti
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_manifest/controllers/outbound_manifest_controller.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -77,10 +76,11 @@ class _ManifestReportViewState extends State<ManifestReportView> {
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.manifestCode,
-                child: OutboundScanField(
+                child: OutboundField(
                   controller: controller.reportManifestCodeController,
                   hintText: OutboundLabels.manifestCodeOptional,
-                  prefixIcon: const Icon(CupertinoIcons.doc_text),
+                  keyboardType: TextInputType.number,
+                  prefixIcon: const Icon(Icons.numbers_outlined),
                 ),
               ),
               OutboundPrimaryButton(

@@ -38,6 +38,7 @@ class OutboundDynamicMapTable extends StatelessWidget {
       );
     }
     final cols = _columnKeys(rows, maxColumns);
+    final tableColumns = onRowTap == null ? cols : [...cols, '__actions'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -56,11 +57,13 @@ class OutboundDynamicMapTable extends StatelessWidget {
               dataRowMinHeight: 40,
               dataRowMaxHeight: 56,
               headingTextStyle: themes.fontSize14_500,
-              columns: cols
+              columns: tableColumns
                   .map(
                     (c) => DataColumn(
                       label: Text(
-                        OutboundDisplayText.labelForKey(c),
+                        c == '__actions'
+                            ? 'Actions'
+                            : OutboundDisplayText.labelForKey(c),
                         maxLines: 2,
                       ),
                     ),
@@ -68,12 +71,18 @@ class OutboundDynamicMapTable extends StatelessWidget {
                   .toList(),
               rows: rows.map((row) {
                 return DataRow(
-                  onSelectChanged: onRowTap == null
-                      ? null
-                      : (_) => onRowTap!(row),
-                  cells: cols
-                      .map((c) => DataCell(Text('${row[c] ?? ''}')))
-                      .toList(),
+                  cells: tableColumns.map((c) {
+                    if (c == '__actions') {
+                      return DataCell(
+                        TextButton(
+                          onPressed:
+                              onRowTap == null ? null : () => onRowTap!(row),
+                          child: const Text('Open'),
+                        ),
+                      );
+                    }
+                    return DataCell(Text('${row[c] ?? ''}'));
+                  }).toList(),
                 );
               }).toList(),
             ),

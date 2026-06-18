@@ -85,13 +85,15 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Center(
-                    child: CircularProgressIndicator(color: themes.darkCyanBlue),
+                    child:
+                        CircularProgressIndicator(color: themes.darkCyanBlue),
                   ),
                 )
               else if (rows.isEmpty)
                 Text(
                   OutboundLabels.sectorPickupListEmpty,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
                 )
               else
                 _SectorPickupListTable(
@@ -182,11 +184,11 @@ class _SectorPickupListTable extends StatelessWidget {
             DataColumn(label: Text(OutboundLabels.pickupDate)),
             DataColumn(label: Text(OutboundLabels.pickupTime)),
             DataColumn(label: Text(OutboundLabels.pickedBy)),
+            DataColumn(label: Text(OutboundLabels.colActions)),
           ],
           rows: rows
               .map(
                 (e) => DataRow(
-                  onSelectChanged: busy ? null : (_) => onRowTap(e),
                   cells: [
                     DataCell(Text(_cell(e.id))),
                     DataCell(Text(_cell(e.mawbNo))),
@@ -196,6 +198,12 @@ class _SectorPickupListTable extends StatelessWidget {
                     DataCell(Text(_cell(e.pickupDate))),
                     DataCell(Text(_cell(e.pickupTime))),
                     DataCell(Text(_cell(e.pickedBy))),
+                    DataCell(
+                      TextButton(
+                        onPressed: busy ? null : () => onRowTap(e),
+                        child: const Text('Open'),
+                      ),
+                    ),
                   ],
                 ),
               )

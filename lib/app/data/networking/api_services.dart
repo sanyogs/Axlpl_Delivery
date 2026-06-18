@@ -1536,10 +1536,16 @@ class ApiServices {
   Future<APIResponse> deleteLinehaul({
     required String token,
     required String linehaulId,
+    String? tripNo,
+    String? mawbNo,
   }) async {
     return _api.postOutbound(
       deleteLinehaulPoint,
-      OutboundApiParams.deleteLinehaulBody(linehaulId: linehaulId),
+      OutboundApiParams.deleteLinehaulBody(
+        linehaulId: linehaulId,
+        tripNo: tripNo,
+        mawbNo: mawbNo,
+      ),
       token: token,
       contentType: ContentType.urlEncoded,
       appendPlatform: false,

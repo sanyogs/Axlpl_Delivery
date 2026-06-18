@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/modules/outbound_bagging/controllers/outbound_bagging_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_bagging/widgets/bagging_bag_summary.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/widgets/bagging_scanned_box_table.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
@@ -10,7 +11,9 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scre
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// Admin **Bagging Screen** — origin/destination depot, M/Bag No, scan shipment, table, Save/Confirm.
@@ -57,6 +60,8 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
     return Obx(() {
       final busy = controller.isBusy.value;
       final statusMsg = controller.fetchStatusMessage.value.trim();
+      final bagDetail = controller.bagDetail.value;
+      final currentBagCode = controller.visibleBagCode;
       final _ = controller.scannedBoxRows.length;
       final __ = controller.selectedOriginDepotId.value;
       final ___ = controller.selectedDestDepotId.value;
@@ -123,6 +128,35 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                 ),
               ),
               OutboundLabeledFieldRow(
+                label: OutboundLabels.workingBagCode,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutboundScanField(
+                        controller: controller.bagCodeWorkingController,
+                        focusNode: controller.bagCodeFocusNode,
+                        hintText: OutboundLabels.workingBagCode,
+                        prefixIcon: const Icon(CupertinoIcons.cube_box),
+                        onSubmitted: (_) => controller.loadBagByCode(),
+                        onScanned: controller.onBagCodeScanned,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: OutboundLabels.btnCopy,
+                      onPressed: currentBagCode.isEmpty
+                          ? null
+                          : () => _copyBagCode(currentBagCode),
+                      icon: Icon(
+                        Icons.copy_outlined,
+                        color: currentBagCode.isEmpty
+                            ? themes.grayColor
+                            : themes.darkCyanBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              OutboundLabeledFieldRow(
                 label: OutboundLabels.scanShipmentId,
                 child: OutboundScanField(
                   controller: controller.shipmentController,
@@ -137,6 +171,13 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                 Text(
                   statusMsg,
                   style: themes.fontSize14_400.copyWith(color: themes.redColor),
+                ),
+              if (bagDetail != null)
+                BaggingBagSummaryBanner(
+                  detail: bagDetail,
+                  onCopy: currentBagCode.isEmpty
+                      ? null
+                      : () => _copyBagCode(currentBagCode),
                 ),
               Align(
                 alignment: Alignment.centerRight,
@@ -171,5 +212,12 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
         ],
       );
     });
+  }
+
+  Future<void> _copyBagCode(String code) async {
+    final value = code.trim();
+    if (value.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: value));
+    Get.snackbar('Bagging', 'Bag code copied.');
   }
 }

@@ -44,6 +44,7 @@ class BaggingScannedBoxTable extends StatelessWidget {
           ),
           columns: const [
             DataColumn(label: Text(OutboundLabels.colSlNo)),
+            DataColumn(label: Text(OutboundLabels.bagCode)),
             DataColumn(label: Text(OutboundLabels.colBoxNumber)),
             DataColumn(label: Text(OutboundLabels.colShipmentId)),
             DataColumn(label: Text(OutboundLabels.colDestination)),
@@ -73,6 +74,7 @@ class BaggingScannedBoxTable extends StatelessWidget {
       color: WidgetStateProperty.all(stripe),
       cells: [
         DataCell(Text('$index', style: themes.fontSize14_400)),
+        DataCell(Text(cell(row.bagCode), style: themes.fontSize14_400)),
         DataCell(Text(cell(row.boxNumber), style: themes.fontSize14_400)),
         DataCell(
           Text(
@@ -87,7 +89,8 @@ class BaggingScannedBoxTable extends StatelessWidget {
               ? const SizedBox.shrink()
               : IconButton(
                   onPressed: () => onRemove!(row),
-                  icon: Icon(Icons.delete_outline, color: themes.redColor, size: 22.sp),
+                  icon: Icon(Icons.delete_outline,
+                      color: themes.redColor, size: 22.sp),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
                   tooltip: 'Remove',

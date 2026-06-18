@@ -117,8 +117,7 @@ class OutboundLabels {
   static const sectionManifestShipmentDetails = 'Manifest details';
   static const manifestListTitle = 'Manifest List';
   static const manifestReportTitle = 'Manifest Report';
-  static const manifestListEmptyMessage =
-      'No manifests at this origin depot.';
+  static const manifestListEmptyMessage = 'No manifests at this origin depot.';
   static const manifestBagTableEmpty = 'Scan an M/Bag code to add bags.';
   static const manifestShipmentTableEmpty =
       'Shipment lines appear after bags are scanned.';
@@ -154,6 +153,7 @@ class OutboundLabels {
   static const btnShipmentInfo = 'Shipment info';
   static const btnScanHistory = 'History';
   static const btnListBags = 'List bags';
+  static const btnCopy = 'Copy';
   static const btnBaggingReport = 'Load report';
   static const btnLinehaulReport = 'Report';
   static const btnPickupReport = 'Report';

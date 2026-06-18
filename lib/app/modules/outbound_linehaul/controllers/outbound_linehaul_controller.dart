@@ -573,9 +573,9 @@ class OutboundLinehaulController extends GetxController {
   }
 
   void confirmDeleteLinehaulFromList(OutboundLinehaulRow row) {
-    final id = row.linehaulId?.trim();
+    final id = row.deleteRef?.trim();
     if (id == null || id.isEmpty) {
-      Get.snackbar('Linehaul', 'Linehaul id missing for this row');
+      Get.snackbar('Linehaul', 'Linehaul reference missing for this row');
       return;
     }
     final ref = row.tripNo?.trim().isNotEmpty == true
@@ -586,16 +586,28 @@ class OutboundLinehaulController extends GetxController {
       OutboundLabels.deleteLinehaulConfirmMessage(ref),
       OutboundLabels.btnDelete,
       OutboundLabels.btnCancel,
-      () => _deleteLinehaulFromList(id),
+      () => _deleteLinehaulFromList(
+        id,
+        tripNo: row.tripNo,
+        mawbNo: row.mawbNo,
+      ),
       icon: Icons.delete_outline,
       iconColor: themes.redColor,
     );
   }
 
-  Future<void> _deleteLinehaulFromList(String linehaulId) async {
+  Future<void> _deleteLinehaulFromList(
+    String linehaulId, {
+    String? tripNo,
+    String? mawbNo,
+  }) async {
     isBusy.value = true;
     try {
-      final r = await _repo.deleteLinehaul(linehaulId: linehaulId);
+      final r = await _repo.deleteLinehaul(
+        linehaulId: linehaulId,
+        tripNo: tripNo,
+        mawbNo: mawbNo,
+      );
       OutboundUiFeedback.apply(
         target: lastResponseText,
         response: r,

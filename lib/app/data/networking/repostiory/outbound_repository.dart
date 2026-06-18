@@ -805,11 +805,15 @@ class OutboundRepository {
 
   Future<APIResponse<dynamic>> deleteLinehaul({
     required String linehaulId,
+    String? tripNo,
+    String? mawbNo,
   }) =>
       _requireToken(
         (token) => _api.deleteLinehaul(
           token: token,
           linehaulId: linehaulId.trim(),
+          tripNo: tripNo,
+          mawbNo: mawbNo,
         ),
       );
 

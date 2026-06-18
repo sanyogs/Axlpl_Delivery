@@ -93,6 +93,13 @@ class OutboundBaggingController extends GetxController {
   bool get isBagCodeFromServer =>
       _loadedBagCode != null && _loadedBagCode!.isNotEmpty;
 
+  String get visibleBagCode {
+    final detailCode = bagDetail.value?.bagCode?.trim();
+    if (detailCode != null && detailCode.isNotEmpty) return detailCode;
+    final working = bagCodeWorkingController.text.trim();
+    return working;
+  }
+
   List<BaggingTableRow> get scannedBoxRows {
     final rows = <BaggingTableRow>[];
     final pendingKeys = <String>{};
@@ -120,7 +127,12 @@ class OutboundBaggingController extends GetxController {
         rows.add(
           BaggingTableRow.fromBagDetailItem(
             item,
+            bagCode: detail.bagCode,
             destination: savedDestLabel,
+            mode: _statusForScannedBoxRow(
+              shipmentStatus: item.shipmentStatus,
+              bagStatus: detail.manifestStatus,
+            ),
           ),
         );
       }
@@ -193,6 +205,21 @@ class OutboundBaggingController extends GetxController {
     return fallback;
   }
 
+  String? _statusForScannedBoxRow({
+    required String? shipmentStatus,
+    required String? bagStatus,
+  }) {
+    final raw = shipmentStatus?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      if (!raw.toLowerCase().contains('shipment already delivered')) {
+        return raw;
+      }
+    }
+    final fallback = bagStatus?.trim();
+    if (fallback != null && fallback.isNotEmpty) return fallback;
+    return null;
+  }
+
   static String? _destinationIdForRow(OutboundBagRow row) =>
       row.destinationSectorId ?? row.destinationBranchId;
 
@@ -259,13 +286,15 @@ class OutboundBaggingController extends GetxController {
     final row = BaggingTableRow.fromFetchedShipment(
       shipment: shipment,
       scanTyped: shipmentController.text.trim(),
+      bagCode: visibleBagCode.isEmpty ? null : visibleBagCode,
       destination: _destinationLabel(),
       saved: false,
     );
     if (row.sessionKey.isEmpty) return;
 
     final next = List<BaggingTableRow>.from(sessionScannedRows);
-    final idx = next.indexWhere((r) => r.sessionKey == row.sessionKey && !r.saved);
+    final idx =
+        next.indexWhere((r) => r.sessionKey == row.sessionKey && !r.saved);
     if (idx >= 0) {
       next[idx] = row;
     } else {
@@ -307,7 +336,10 @@ class OutboundBaggingController extends GetxController {
           sessionScannedRows.clear();
           _snackServerData(data);
         },
-        error: _snackServerError,
+        error: (e) {
+          fetchStatusMessage.value = e.message.trim();
+          _snackServerError(e);
+        },
       );
     } finally {
       isBusy.value = false;
@@ -316,6 +348,16 @@ class OutboundBaggingController extends GetxController {
 
   Future<void> fetchShipment({String? shipmentOverride}) async {
     final connote = (shipmentOverride ?? shipmentController.text).trim();
+    if (connote.isEmpty) return;
+    if (_looksLikeBagReference(connote)) {
+      bagCodeWorkingController.text = connote;
+      await loadBagByCode();
+      if (bagDetail.value != null) {
+        shipmentController.clear();
+        fetchStatusMessage.value = 'Bag loaded. Scan shipment ID to add boxes.';
+      }
+      return;
+    }
     if (connote == _lastFetchedShipmentId && fetchedShipment.value != null) {
       return;
     }
@@ -360,6 +402,15 @@ class OutboundBaggingController extends GetxController {
     if (value.trim().isEmpty || value == '-1') return;
     bagCodeWorkingController.text = value.trim();
     await loadBagByCode();
+  }
+
+  bool _looksLikeBagReference(String value) {
+    final ref = value.trim();
+    if (ref.isEmpty) return false;
+    final upper = ref.toUpperCase();
+    return OutboundApiParams.looksLikeBagCode(ref) ||
+        upper.startsWith('G') ||
+        upper.startsWith('MSEAL');
   }
 
   Future<void> confirmBagging() async {
@@ -458,6 +509,9 @@ class OutboundBaggingController extends GetxController {
           if (loaded) {
             sessionScannedRows.clear();
             scrollToScannedTable.value++;
+          } else {
+            _markPendingRowsSaved(pending, bagCode: bagCode);
+            scrollToScannedTable.value++;
           }
         } else if (pending.isEmpty) {
           ok = true;
@@ -465,7 +519,10 @@ class OutboundBaggingController extends GetxController {
           ok = false;
         }
       } else {
-        final ids = pending.map((r) => r.docketForApi).where((s) => s.isNotEmpty).toList();
+        final ids = pending
+            .map((r) => r.docketForApi)
+            .where((s) => s.isNotEmpty)
+            .toList();
         final customBagCode = _workingBagCode;
         String? createBagCode;
         if (customBagCode != null && customBagCode.isNotEmpty) {
@@ -506,12 +563,36 @@ class OutboundBaggingController extends GetxController {
         if (loaded) {
           sessionScannedRows.clear();
           scrollToScannedTable.value++;
+        } else {
+          _markPendingRowsSaved(pending, bagCode: _workingBagCode);
+          scrollToScannedTable.value++;
         }
       }
     } finally {
       isBusy.value = false;
     }
     return ok;
+  }
+
+  void _markPendingRowsSaved(
+    List<BaggingTableRow> pending, {
+    String? bagCode,
+  }) {
+    final savedBagCode = bagCode?.trim();
+    final pendingKeys = pending.map((r) => r.sessionKey).toSet();
+    sessionScannedRows.assignAll(
+      sessionScannedRows
+          .map(
+            (r) => pendingKeys.contains(r.sessionKey)
+                ? r.copyWith(
+                    bagCode:
+                        savedBagCode?.isEmpty == false ? savedBagCode : null,
+                    saved: true,
+                  )
+                : r,
+          )
+          .toList(growable: false),
+    );
   }
 
   Future<bool> refreshBagDetailsQuiet() async {
@@ -545,7 +626,10 @@ class OutboundBaggingController extends GetxController {
 
     final origin = _originId;
     final bagCode = _workingBagCode;
-    if (origin == null || origin.isEmpty || bagCode == null || bagCode.isEmpty) {
+    if (origin == null ||
+        origin.isEmpty ||
+        bagCode == null ||
+        bagCode.isEmpty) {
       _removeShipmentFromBag(
         bagCode: bagCode ?? '',
         docket: row.docketForApi,
@@ -702,7 +786,8 @@ class OutboundBaggingController extends GetxController {
   }
 
   void showRebagDialog({String? defaultNewBagCode}) {
-    final newBagCtrl = TextEditingController(text: defaultNewBagCode?.trim() ?? '');
+    final newBagCtrl =
+        TextEditingController(text: defaultNewBagCode?.trim() ?? '');
     final docketCtrl = TextEditingController();
     Get.dialog(
       AlertDialog(

@@ -174,8 +174,14 @@ class OutboundHubScanController extends GetxController {
     return uiStatus?.trim() ?? '';
   }
 
-  bool _canStageScan() {
-    return true;
+  bool _canStageScan() => _branchList.selectedBranchIdOrNull != null;
+
+  bool _requireBranchSelection() {
+    if (_branchList.selectedBranchIdOrNull != null) return true;
+    const msg = 'Select Branch / hub before scanning or saving.';
+    fetchStatusMessage.value = msg;
+    Get.snackbar('Hub scan', msg);
+    return false;
   }
 
   /// Push current form + shipment into Scanned Docket Details (staging).
@@ -265,6 +271,8 @@ class OutboundHubScanController extends GetxController {
 
   Future<void> fetchShipment({String? connoteOverride}) async {
     final connote = (connoteOverride ?? docketController.text).trim();
+    if (connote.isEmpty) return;
+    if (!_requireBranchSelection()) return;
     if (connote == _lastFetchedConnote && fetchedShipment.value != null) {
       return;
     }
@@ -354,6 +362,7 @@ class OutboundHubScanController extends GetxController {
 
   /// Confirm — ready for next docket (row already staged below after fetch).
   Future<void> confirmHubScan() async {
+    if (!_requireBranchSelection()) return;
     if (fetchedShipment.value != null) {
       _stageCurrentForm(fetchedShipment.value!);
     } else if (docketController.text.trim().isNotEmpty) {
@@ -388,6 +397,7 @@ class OutboundHubScanController extends GetxController {
     final pending =
         sessionScannedRows.where((r) => !r.saved).toList(growable: false);
     if (pending.isEmpty) return;
+    if (!_requireBranchSelection()) return;
 
     isBusy.value = true;
     try {
@@ -397,8 +407,13 @@ class OutboundHubScanController extends GetxController {
             : (row.docketNo?.trim() ?? '');
         if (connote.isEmpty) continue;
 
-        final branchId =
-            row.branchId ?? _branchList.selectedBranchIdOrNull ?? '';
+        final branchId = row.branchId?.trim().isNotEmpty == true
+            ? row.branchId!.trim()
+            : (_branchList.selectedBranchIdOrNull ?? '');
+        if (branchId.isEmpty) {
+          _requireBranchSelection();
+          break;
+        }
         final scanStatus = _statusForApi(row.scanType ?? status.value ?? '');
 
         final r = await _repo.hubScanSubmit(

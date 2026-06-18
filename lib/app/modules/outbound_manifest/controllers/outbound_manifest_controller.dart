@@ -310,7 +310,10 @@ class OutboundManifestController extends GetxController {
             scannedBagCode: bagCode,
           );
           if (row.bagCode.isEmpty) {
-            fetchStatusMessage.value = 'Bag code not found in response.';
+            final msg =
+                'Invalid M/Bag code. Scan a valid M/Bag before creating manifest.';
+            fetchStatusMessage.value = msg;
+            Get.snackbar('Manifest', msg);
             return;
           }
 

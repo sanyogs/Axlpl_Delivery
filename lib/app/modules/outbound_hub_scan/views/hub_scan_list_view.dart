@@ -43,14 +43,6 @@ class _HubScanListViewState extends State<HubScanListView> {
       final page = controller.hubScanListPage.value;
       final totalPages = controller.hubScanListTotalPages;
       final rangeLabel = controller.hubScanListRangeLabel;
-      final activeBranchId = controller.hubScanListBranchId.value.trim().isEmpty
-          ? branchList.selectedBranchId.value
-          : controller.hubScanListBranchId.value.trim();
-      final activeBranchName = _branchDisplayName(
-        branchId: activeBranchId,
-        branchName: controller.hubScanListBranchName.value,
-        branchLabel: branchLabel,
-      );
       final _ = controller.hubScanListAllRows.length;
 
       return OutboundScreen(
@@ -76,7 +68,6 @@ class _HubScanListViewState extends State<HubScanListView> {
               onPressed: _openDocketScan,
             ),
             children: [
-              _HubScanListBranchLabel(branchName: activeBranchName),
               if (loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
@@ -126,37 +117,6 @@ class _HubScanListViewState extends State<HubScanListView> {
 
   void _openDocketScan() {
     Get.offNamed(Routes.OUTBOUND_HUB_SCAN);
-  }
-}
-
-String _branchDisplayName({
-  required String? branchId,
-  required String branchName,
-  required String Function(String? id) branchLabel,
-}) {
-  final name = branchName.trim();
-  if (name.isNotEmpty) return name;
-  final label = branchLabel(branchId).trim();
-  if (label.isNotEmpty && label != '—') return label;
-  return 'Branch';
-}
-
-class _HubScanListBranchLabel extends StatelessWidget {
-  const _HubScanListBranchLabel({required this.branchName});
-
-  final String branchName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        branchName,
-        style: themes.fontSize14_500.copyWith(
-          color: themes.darkCyanBlue,
-        ),
-      ),
-    );
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_
 /// One row in **Scanned Box Details** (staging before save or from `getbagdetails`).
 class BaggingTableRow {
   const BaggingTableRow({
+    this.bagCode,
     this.boxNumber,
     this.shipmentId,
     this.destination,
@@ -11,6 +12,7 @@ class BaggingTableRow {
     this.saved = false,
   });
 
+  final String? bagCode;
   final String? boxNumber;
   final String? shipmentId;
   final String? destination;
@@ -26,8 +28,9 @@ class BaggingTableRow {
   /// Value for `docket_no` on `addshipmenttobag` / `removeshipmentfrombag` (Postman).
   String get docketForApi => sessionKey;
 
-  BaggingTableRow copyWith({bool? saved}) {
+  BaggingTableRow copyWith({String? bagCode, bool? saved}) {
     return BaggingTableRow(
+      bagCode: bagCode ?? this.bagCode,
       boxNumber: boxNumber,
       shipmentId: shipmentId,
       destination: destination,
@@ -39,6 +42,7 @@ class BaggingTableRow {
   factory BaggingTableRow.fromFetchedShipment({
     required HubScanFetchedShipment shipment,
     required String scanTyped,
+    String? bagCode,
     String? destination,
     bool saved = false,
   }) {
@@ -46,6 +50,7 @@ class BaggingTableRow {
         ? shipment.connoteForScan
         : scanTyped.trim();
     return BaggingTableRow(
+      bagCode: bagCode,
       boxNumber: shipment.numberOfParcel ?? shipment.scannedCount ?? '1',
       shipmentId: id,
       destination: destination ??
@@ -58,13 +63,16 @@ class BaggingTableRow {
 
   factory BaggingTableRow.fromBagDetailItem(
     BagDetailItem item, {
+    String? bagCode,
     String? destination,
+    String? mode,
   }) {
     return BaggingTableRow(
+      bagCode: bagCode,
       boxNumber: item.boxNo ?? item.shipmentInvoiceNo ?? '1',
       shipmentId: item.shipmentId,
       destination: destination,
-      mode: item.shipmentStatus ?? '—',
+      mode: mode ?? item.shipmentStatus ?? '—',
       saved: true,
     );
   }

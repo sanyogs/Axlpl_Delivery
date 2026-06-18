@@ -47,6 +47,25 @@ void main() {
     expect(body['status'], 'ARRIVED');
   });
 
+  test('deleteLinehaulBody includes trip and airway refs when available', () {
+    final body = OutboundApiParams.deleteLinehaulBody(
+      linehaulId: '129',
+      tripNo: 'LH1779101374',
+      mawbNo: 'AWB123',
+    );
+    expect(body['linehaul_id'], '129');
+    expect(body['trip_no'], 'LH1779101374');
+    expect(body['mawb_no'], 'AWB123');
+  });
+
+  test('deleteLinehaulBody mirrors LH ref as trip_no fallback', () {
+    final body = OutboundApiParams.deleteLinehaulBody(
+      linehaulId: 'LH1779101374',
+    );
+    expect(body['linehaul_id'], 'LH1779101374');
+    expect(body['trip_no'], 'LH1779101374');
+  });
+
   test('createManifestBody includes transport_mode when set', () {
     final body = OutboundApiParams.createManifestBody(
       bagCodesCsv: 'BAG20260518152744831',

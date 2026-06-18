@@ -80,9 +80,14 @@ class BaggingBagSummary extends StatelessWidget {
 
 /// Compact banner when bag exists but full summary is below the fold.
 class BaggingBagSummaryBanner extends StatelessWidget {
-  const BaggingBagSummaryBanner({super.key, required this.detail});
+  const BaggingBagSummaryBanner({
+    super.key,
+    required this.detail,
+    this.onCopy,
+  });
 
   final BagDetail detail;
+  final VoidCallback? onCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -97,9 +102,25 @@ class BaggingBagSummaryBanner extends StatelessWidget {
         color: themes.lightGrayColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(6.r),
       ),
-      child: Text(
-        '$code · ${status ?? '—'} · $count shipment(s)',
-        style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$code · ${status ?? '—'} · $count shipment(s)',
+              style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
+            ),
+          ),
+          IconButton(
+            onPressed: onCopy,
+            icon: Icon(
+              Icons.copy_outlined,
+              size: 18.sp,
+              color: themes.darkCyanBlue,
+            ),
+            visualDensity: VisualDensity.compact,
+            tooltip: OutboundLabels.btnCopy,
+          ),
+        ],
       ),
     );
   }

@@ -255,7 +255,11 @@ class LinehaulEditController extends GetxController {
 
     isBusy.value = true;
     try {
-      final r = await _repo.deleteLinehaul(linehaulId: id);
+      final r = await _repo.deleteLinehaul(
+        linehaulId: id,
+        tripNo: tripNoController.text,
+        mawbNo: mawbNoController.text,
+      );
       var saved = false;
       r.when(success: (_) => saved = true, error: (_) {});
       OutboundUiFeedback.apply(

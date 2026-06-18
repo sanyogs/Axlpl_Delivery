@@ -52,6 +52,16 @@ class OutboundLinehaulRow {
 
   String? get effectiveRef => detailLookupRef;
 
+  String? get deleteRef {
+    final id = linehaulId?.trim();
+    if (id != null && id.isNotEmpty && id != '0') return id;
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty) return trip;
+    final mawb = mawbNo?.trim();
+    if (mawb != null && mawb.isNotEmpty) return mawb;
+    return null;
+  }
+
   factory OutboundLinehaulRow.fromJson(Map<String, dynamic> json) {
     return OutboundLinehaulRow(
       linehaulId: OutboundDataParse.firstNonEmptyString(json, const [

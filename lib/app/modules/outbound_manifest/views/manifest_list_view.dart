@@ -212,6 +212,7 @@ class _ManifestListTable extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(vertical: 4.h),
         child: DataTable(
+          showCheckboxColumn: false,
           headingRowHeight: 44,
           dataRowMinHeight: 48,
           headingTextStyle: themes.fontSize14_500.copyWith(
@@ -229,7 +230,6 @@ class _ManifestListTable extends StatelessWidget {
           rows: [
             for (var i = 0; i < rows.length; i++)
               DataRow(
-                onSelectChanged: (_) => onOpen(rows[i]),
                 cells: [
                   DataCell(Text('${rowOffset + i + 1}')),
                   DataCell(
@@ -247,6 +247,10 @@ class _ManifestListTable extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        TextButton(
+                          onPressed: busy ? null : () => onOpen(rows[i]),
+                          child: const Text('Open'),
+                        ),
                         TextButton(
                           onPressed: busy ? null : () => onDetails(rows[i]),
                           child: Text(OutboundLabels.btnViewDetails),

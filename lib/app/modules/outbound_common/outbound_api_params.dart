@@ -223,11 +223,28 @@ class OutboundApiParams {
     return body;
   }
 
-  /// POST `deletelinehaul` — urlencoded; `linehaul_id` required.
+  /// POST `deletelinehaul` — urlencoded; send the available linehaul refs.
   static Map<String, String> deleteLinehaulBody({
     required String linehaulId,
-  }) =>
-      {'linehaul_id': linehaulId.trim()};
+    String? tripNo,
+    String? mawbNo,
+  }) {
+    final ref = linehaulId.trim();
+    final body = <String, String>{'linehaul_id': ref};
+
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty) {
+      body['trip_no'] = trip;
+    } else if (looksLikeTripNo(ref)) {
+      body['trip_no'] = ref;
+    }
+
+    final mawb = mawbNo?.trim();
+    if (mawb != null && mawb.isNotEmpty) {
+      body['mawb_no'] = mawb;
+    }
+    return body;
+  }
 
   /// POST bagging mutations — `bag_code` (+ `bag_id` when not a BAG… code).
   static Map<String, String> bagMutationBody(
