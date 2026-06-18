@@ -6,6 +6,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_bag_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
+import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_generator.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
@@ -729,6 +730,45 @@ class OutboundBaggingController extends GetxController {
     return user?.messangerdetail?.name?.trim();
   }
 
+  Future<APIResponse<dynamic>> _fetchBaggingReportForRef(String ref) async {
+    final trimmed = ref.trim();
+    final first = await _repo.baggingReport(bagCode: trimmed);
+    final firstOk = _baggingReportHasContent(first);
+    if (firstOk) return first;
+
+    if (OutboundApiParams.looksLikeBagCode(trimmed)) {
+      return first;
+    }
+
+    final detailR = await _repo.fetchBagDetails(trimmed);
+    BagDetail? detail;
+    detailR.when(
+      success: (data) =>
+          detail = BagDetail.fromDynamic(data, requestedBagCode: trimmed),
+      error: (_) {},
+    );
+    final resolved = detail?.bagCode?.trim();
+    if (resolved != null &&
+        resolved.isNotEmpty &&
+        resolved.toLowerCase() != trimmed.toLowerCase()) {
+      final second = await _repo.baggingReport(bagCode: resolved);
+      if (_baggingReportHasContent(second)) return second;
+    }
+    return first;
+  }
+
+  bool _baggingReportHasContent(APIResponse<dynamic> response) {
+    var ok = false;
+    response.when(
+      success: (data) {
+        final report = BaggingReport.fromDynamic(data);
+        ok = (report.bagCode?.trim().isNotEmpty == true) || report.items.isNotEmpty;
+      },
+      error: (_) => ok = false,
+    );
+    return ok;
+  }
+
   Future<void> printBaggingReport() async {
     final code = reportBagCodeController.text.trim();
     if (code.isEmpty) {
@@ -738,7 +778,7 @@ class OutboundBaggingController extends GetxController {
 
     isBusy.value = true;
     try {
-      final r = await _repo.baggingReport(bagCode: code);
+      final r = await _fetchBaggingReportForRef(code);
       dynamic data;
       var failed = false;
       r.when(

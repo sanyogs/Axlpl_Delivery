@@ -15,6 +15,7 @@ void main() {
       'destination_sector_id': '95',
       'origin_branch_name': 'KOLKATTA',
       'destination_city_name': 'Puttur',
+      'gst_no': '27AAQCA4042D1ZU',
       'items': [
         {
           'shipment_id': '825411779084407',
@@ -29,6 +30,7 @@ void main() {
 
     final report = BaggingReport.fromJson(sample);
     expect(report.bagCode, 'BAG20260518152744831');
+    expect(report.gstNo, '27AAQCA4042D1ZU');
     expect(report.items, hasLength(1));
     expect(report.items.first.shipmentId, '825411779084407');
     expect(report.totalWeightDisplay, '11.00');

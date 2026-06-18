@@ -11,10 +11,6 @@ import 'package:pdf/widgets.dart' as pw;
 class BaggingReportPdfGenerator {
   BaggingReportPdfGenerator._();
 
-  static const _gstn = '27AAQCA4042D1ZU';
-  static const _website = 'www.axlpl.com';
-  static const _email = 'info@axlpl.com';
-
   static String formatPrintDate(DateTime when) =>
       DateFormat('dd-MMM-yyyy HH:mm a').format(when);
 
@@ -32,15 +28,50 @@ class BaggingReportPdfGenerator {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
         build: (context) => [
+          pw.Center(
+            child: pw.Column(
+              children: [
+                pw.Text(
+                  BaggingReport.companyName,
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blue900,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  '...One Step Ahead',
+                  style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 8),
           pw.Text(
-            'GSTN: $_gstn | Website: $_website | Email: $_email',
+            report.companyHeaderLine,
             style: pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            textAlign: pw.TextAlign.center,
           ),
           pw.SizedBox(height: 12),
           pw.Center(
-            child: pw.Text(
-              'BAGGING CHALLAN / REPORT',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            child: pw.Column(
+              children: [
+                pw.Text(
+                  'BAGGING CHALLAN / REPORT',
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Container(
+                  margin: const pw.EdgeInsets.only(top: 2),
+                  height: 1,
+                  width: 220,
+                  color: PdfColors.black,
+                ),
+              ],
             ),
           ),
           pw.SizedBox(height: 16),

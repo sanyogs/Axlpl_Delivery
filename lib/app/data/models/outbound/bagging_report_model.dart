@@ -15,8 +15,15 @@ class BaggingReport {
     this.originBranchName,
     this.destinationCityName,
     this.createdByName,
+    this.gstNo,
     this.items = const [],
   });
+
+  /// Fallback when API omits `gst_no` (legacy responses).
+  static const defaultGstNo = '27AAQCA4042D1ZU';
+  static const companyWebsite = 'www.axlpl.com';
+  static const companyEmail = 'info@axlpl.com';
+  static const companyName = 'AMBE XPRESS LOGISTICS PVT LTD';
 
   final String? id;
   final String? bagCode;
@@ -29,6 +36,7 @@ class BaggingReport {
   final String? originBranchName;
   final String? destinationCityName;
   final String? createdByName;
+  final String? gstNo;
   final List<BaggingReportItem> items;
 
   factory BaggingReport.fromJson(Map<String, dynamic> json) {
@@ -57,6 +65,11 @@ class BaggingReport {
       destinationCityName:
           OutboundDataParse.optionalString(json, 'destination_city_name'),
       createdByName: OutboundDataParse.optionalString(json, 'created_by_name'),
+      gstNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'gst_no',
+        'gstn',
+        'gst_number',
+      ]),
       items: BaggingReportItem.listFromDynamic(json['items']),
     );
   }
@@ -88,6 +101,17 @@ class BaggingReport {
 
   String get totalPcsDisplay => '${totalPcsValue}';
 
+  /// Dynamic GST from API (`gst_no`); static fallback for older payloads.
+  String get gstDisplay {
+    final v = gstNo?.trim();
+    if (v != null && v.isNotEmpty) return v;
+    return defaultGstNo;
+  }
+
+  /// Admin print header: `GSTN: … | Website: … | Email: …`
+  String get companyHeaderLine =>
+      'GSTN: $gstDisplay | Website: $companyWebsite | Email: $companyEmail';
+
   /// Display name for PDF — API `created_by_name` or messenger profile name.
   String createdByLabel(String? messengerName) {
     final api = createdByName?.trim();
@@ -111,6 +135,7 @@ class BaggingReport {
         if (destinationCityName != null)
           'destination_city_name': destinationCityName,
         if (createdByName != null) 'created_by_name': createdByName,
+        if (gstNo != null) 'gst_no': gstNo,
         'items': items.map((e) => e.toJson()).toList(),
       };
 
