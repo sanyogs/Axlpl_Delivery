@@ -1060,6 +1060,16 @@ class ApiServices {
     );
   }
 
+  Future<APIResponse> getAirlines({
+    required String token,
+  }) async {
+    return _api.getOutbound(
+      getAirlinesPoint,
+      token: token,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
   // =========================
   // Outbound — Hub scan
   // =========================

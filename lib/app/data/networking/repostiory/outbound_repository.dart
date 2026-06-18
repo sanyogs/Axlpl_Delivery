@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/models/outbound/bag_detail_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/outbound_airline_option.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_branch_option.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_fetch_shipment_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
@@ -54,6 +55,23 @@ class OutboundRepository {
     final r = await _api.getBranches(token: token);
     return r.when(
       success: OutboundBranchOption.listFromDynamic,
+      error: (e) {
+        lastMessage = e.message;
+        return [];
+      },
+    );
+  }
+
+  Future<List<OutboundAirlineOption>> airlineList() async {
+    _clear();
+    final token = (await _auth()).token;
+    if (token == null || token.isEmpty) {
+      lastMessage = 'Not logged in';
+      return [];
+    }
+    final r = await _api.getAirlines(token: token);
+    return r.when(
+      success: OutboundAirlineOption.listFromDynamic,
       error: (e) {
         lastMessage = e.message;
         return [];
@@ -117,7 +135,8 @@ class OutboundRepository {
   }
 
   /// POST `hubScanFetchShipment` — populate docket details before save (`connote`).
-  Future<APIResponse<HubScanFetchResult>> hubScanFetchShipment(String connote) async {
+  Future<APIResponse<HubScanFetchResult>> hubScanFetchShipment(
+      String connote) async {
     final trimmed = connote.trim();
     final r = await _requireToken(
       (token) async {
@@ -151,8 +170,7 @@ class OutboundRepository {
       },
     );
     return r.when(
-      success: (data) =>
-          APIResponse.success(data as HubScanFetchResult),
+      success: (data) => APIResponse.success(data as HubScanFetchResult),
       error: (e) => APIResponse.error(e),
     );
   }
@@ -246,7 +264,8 @@ class OutboundRepository {
     int batchSize = 200,
     int maxRowsPerBranch = 5000,
   }) async {
-    final ids = branchIds.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final ids =
+        branchIds.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     if (ids.isEmpty) {
       lastMessage = 'No branches available';
       return APIResponse.error(AppException.errorWithMessage(lastMessage));
@@ -524,10 +543,17 @@ class OutboundRepository {
     );
   }
 
-  Future<APIResponse<dynamic>> _fetchManifestDetailsRaw(String manifestRef) async {
-    final ref = manifestRef.trim();
+  Future<APIResponse<dynamic>> _fetchManifestDetailsRawRefs(
+    Iterable<String?> manifestRefs,
+  ) async {
+    final refs = _uniqueNonEmpty(manifestRefs);
+    if (refs.isEmpty) {
+      return APIResponse.error(
+        AppException.errorWithMessage('Manifest number is required'),
+      );
+    }
     return _requireToken((token) {
-      final variants = OutboundApiParams.manifestDetailQueries(ref);
+      final variants = _manifestQueryVariants(refs);
       return outboundFirstSuccess(
         variants
             .map(
@@ -537,6 +563,9 @@ class OutboundRepository {
       );
     });
   }
+
+  Future<APIResponse<dynamic>> _fetchManifestDetailsRaw(String manifestRef) =>
+      _fetchManifestDetailsRawRefs([manifestRef]);
 
   Future<ManifestDetail?> manifestDetails(String manifestId) async {
     final r = await _fetchManifestDetailsRaw(manifestId);
@@ -551,6 +580,11 @@ class OutboundRepository {
 
   Future<APIResponse<dynamic>> fetchManifestDetails(String manifestId) =>
       _fetchManifestDetailsRaw(manifestId);
+
+  Future<APIResponse<dynamic>> fetchManifestDetailsByRefs(
+    Iterable<String?> manifestRefs,
+  ) =>
+      _fetchManifestDetailsRawRefs(manifestRefs);
 
   Future<List<OutboundManifestRow>> listManifests({
     required String branchId,
@@ -586,9 +620,20 @@ class OutboundRepository {
       );
 
   Future<APIResponse<dynamic>> printManifestData(String manifestId) async {
-    final ref = manifestId.trim();
+    return printManifestDataByRefs([manifestId]);
+  }
+
+  Future<APIResponse<dynamic>> printManifestDataByRefs(
+    Iterable<String?> manifestRefs,
+  ) async {
+    final refs = _uniqueNonEmpty(manifestRefs);
+    if (refs.isEmpty) {
+      return APIResponse.error(
+        AppException.errorWithMessage('Manifest number is required'),
+      );
+    }
     return _requireToken((token) {
-      final variants = OutboundApiParams.manifestDetailQueries(ref);
+      final variants = _manifestQueryVariants(refs);
       return outboundFirstSuccess(
         variants
             .map(
@@ -597,6 +642,31 @@ class OutboundRepository {
             .toList(),
       );
     });
+  }
+
+  static List<String> _uniqueNonEmpty(Iterable<String?> values) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final value in values) {
+      final ref = value?.trim();
+      if (ref == null || ref.isEmpty) continue;
+      if (!seen.add(ref)) continue;
+      out.add(ref);
+    }
+    return out;
+  }
+
+  static List<Map<String, String>> _manifestQueryVariants(List<String> refs) {
+    final seen = <String>{};
+    final out = <Map<String, String>>[];
+    for (final ref in refs) {
+      for (final query in OutboundApiParams.manifestDetailQueries(ref)) {
+        final key =
+            query.entries.map((e) => '${e.key}=${e.value}').toList().join('&');
+        if (seen.add(key)) out.add(query);
+      }
+    }
+    return out;
   }
 
   // --- Linehaul ---
@@ -640,7 +710,8 @@ class OutboundRepository {
     );
   }
 
-  Future<APIResponse<dynamic>> _fetchLinehaulDetailsRaw(String linehaulRef) async {
+  Future<APIResponse<dynamic>> _fetchLinehaulDetailsRaw(
+      String linehaulRef) async {
     final ref = linehaulRef.trim();
     return _requireToken((token) {
       final variants = OutboundApiParams.linehaulDetailQueries(ref);

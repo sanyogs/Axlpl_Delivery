@@ -3,6 +3,8 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_manifest/controllers/outbound_manifest_controller.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -43,6 +45,9 @@ class _ManifestListViewState extends State<ManifestListView> {
       final rangeLabel = controller.manifestListRangeLabel;
       final filterNote = controller.selectedDepotSummary;
       final busy = controller.isBusy.value;
+      final selectedDetail = controller.manifestDetail.value;
+      final resultTitle = controller.manifestListResultTitle.value.trim();
+      final responseText = controller.lastResponseText.value.trim();
 
       return OutboundScreen(
         title: OutboundLabels.manifestListTitle,
@@ -84,13 +89,15 @@ class _ManifestListViewState extends State<ManifestListView> {
               if (filterNote.isNotEmpty)
                 Text(
                   filterNote,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
                 ),
               if (loading)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Center(
-                    child: CircularProgressIndicator(color: themes.darkCyanBlue),
+                    child:
+                        CircularProgressIndicator(color: themes.darkCyanBlue),
                   ),
                 )
               else if (err.isNotEmpty)
@@ -99,11 +106,13 @@ class _ManifestListViewState extends State<ManifestListView> {
                   onRetry: controller.loadManifestList,
                 )
               else if (rows.isEmpty)
-                const _ListMessage(text: OutboundLabels.manifestListEmptyMessage)
+                const _ListMessage(
+                    text: OutboundLabels.manifestListEmptyMessage)
               else ...[
                 Text(
                   rangeLabel,
-                  style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
                 ),
                 _ManifestListTable(
                   rows: rows,
@@ -111,23 +120,16 @@ class _ManifestListViewState extends State<ManifestListView> {
                   branchLabel: branchList.displayLabelForId,
                   busy: busy,
                   onOpen: controller.applyManifestFromRow,
-                  onDetails: (row) {
-                    final code = row.manifestNo ?? row.manifestId;
-                    if (code == null || code.isEmpty) return;
-                    controller.getManifestDetails(manifestCode: code);
-                  },
-                  onPrint: (row) {
-                    final code = row.manifestNo ?? row.manifestId;
-                    if (code == null || code.isEmpty) return;
-                    controller.printManifestData(manifestCode: code);
-                  },
+                  onDetails: controller.getManifestDetailsFromRow,
+                  onPrint: controller.printManifestDataFromRow,
                 ),
                 if (totalPages > 1) ...[
                   SizedBox(height: 8.h),
                   Text(
                     'Page $page of $totalPages',
                     textAlign: TextAlign.center,
-                    style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+                    style:
+                        themes.fontSize14_400.copyWith(color: themes.grayColor),
                   ),
                   SizedBox(height: 8.h),
                   OutboundButtonRow(
@@ -147,6 +149,30 @@ class _ManifestListViewState extends State<ManifestListView> {
               ],
             ],
           ),
+          if (selectedDetail != null)
+            OutboundAdminSection(
+              title: resultTitle.isEmpty
+                  ? OutboundLabels.btnViewDetails
+                  : resultTitle,
+              children: [
+                OutboundManifestDetailBody(
+                  detail: selectedDetail,
+                  compact: true,
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutboundSecondaryButton(
+                    label: OutboundLabels.btnFullManifestDetail,
+                    onPressed: busy ? null : controller.openManifestDetailPage,
+                  ),
+                ),
+              ],
+            ),
+          if (responseText.isNotEmpty)
+            OutboundResponsePanel(
+              title: resultTitle.isEmpty ? 'Message' : resultTitle,
+              text: responseText,
+            ),
         ],
       );
     });

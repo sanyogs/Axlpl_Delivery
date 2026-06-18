@@ -58,6 +58,7 @@ const String getBranchesPoint = String.fromEnvironment(
   'OUTBOUND_BRANCH_LIST_PATH',
   defaultValue: 'getbranches',
 );
+const String getAirlinesPoint = 'getairlines';
 const String hubScanPoint = 'hubscan';
 const String hubScanFetchShipmentPoint = 'hubScanFetchShipment';
 const String getHubScanLogsPoint = 'gethubscanlogs';

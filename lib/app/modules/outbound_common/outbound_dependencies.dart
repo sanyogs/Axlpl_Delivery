@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:get/get.dart';
 
@@ -16,6 +17,12 @@ class OutboundDependencies {
     if (!Get.isRegistered<OutboundBranchListController>()) {
       Get.put<OutboundBranchListController>(
         OutboundBranchListController(),
+        permanent: true,
+      );
+    }
+    if (!Get.isRegistered<OutboundAirlineListController>()) {
+      Get.put<OutboundAirlineListController>(
+        OutboundAirlineListController(),
         permanent: true,
       );
     }

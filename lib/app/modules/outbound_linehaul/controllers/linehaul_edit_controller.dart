@@ -1,6 +1,7 @@
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_model.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
@@ -21,6 +22,7 @@ class LinehaulEditController extends GetxController {
   final isLoading = false.obs;
   final lastResponseText = ''.obs;
   final transportMode = OutboundLabels.modeAirway.obs;
+  final selectedAirlineId = RxnString();
 
   late final OutboundLinehaulRow _row;
 
@@ -74,7 +76,20 @@ class LinehaulEditController extends GetxController {
     super.onClose();
   }
 
-  void onTransportModeChanged(String mode) => transportMode.value = mode;
+  void onTransportModeChanged(String mode) {
+    transportMode.value = mode;
+    if (mode != OutboundLabels.modeAirway) {
+      selectedAirlineId.value = null;
+    } else {
+      selectedAirlineId.value = _resolveAirlineId(airlineController.text);
+    }
+  }
+
+  void onAirlineChanged(String? id) {
+    final resolved = _resolveAirlineId(id);
+    selectedAirlineId.value = resolved;
+    airlineController.text = resolved ?? '';
+  }
 
   Future<void> _loadDetail() async {
     final lookup = _row.detailLookupRef ?? linehaulId;
@@ -110,12 +125,15 @@ class LinehaulEditController extends GetxController {
     );
     _setIfEmpty(tripNoController, detail.tripNo);
     _setIfEmpty(flightNoController, detail.flightNo);
-    _setIfEmpty(airlineController, detail.airline);
+    _setAirlineValue(detail.airline);
     _setIfEmpty(ewayBillController, detail.ewayBill);
     _setIfEmpty(remarksController, detail.remarks);
-    _splitDateTime(detail.departureTime, departureDateController, departureTimeController);
-    _splitDateTime(detail.arrivalTime, arrivalDateController, arrivalTimeController);
-    if (detail.transportType != null && detail.transportType!.trim().isNotEmpty) {
+    _splitDateTime(
+        detail.departureTime, departureDateController, departureTimeController);
+    _splitDateTime(
+        detail.arrivalTime, arrivalDateController, arrivalTimeController);
+    if (detail.transportType != null &&
+        detail.transportType!.trim().isNotEmpty) {
       transportMode.value = detail.transportType!.trim();
     }
   }
@@ -124,6 +142,35 @@ class LinehaulEditController extends GetxController {
     if (c.text.trim().isNotEmpty) return;
     final t = value?.trim();
     if (t != null && t.isNotEmpty) c.text = t;
+  }
+
+  void _setAirlineValue(String? value) {
+    final t = value?.trim();
+    if (t == null || t.isEmpty) return;
+    if (airlineController.text.trim().isEmpty) {
+      airlineController.text = t;
+    }
+    selectedAirlineId.value = _resolveAirlineId(t);
+  }
+
+  String? _resolveAirlineId(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    if (Get.isRegistered<OutboundAirlineListController>()) {
+      return Get.find<OutboundAirlineListController>().resolveId(raw);
+    }
+    return raw;
+  }
+
+  String _airlineForApi() {
+    final selected = selectedAirlineId.value?.trim();
+    if (transportMode.value == OutboundLabels.modeAirway &&
+        selected != null &&
+        selected.isNotEmpty) {
+      return _resolveAirlineId(selected) ?? selected;
+    }
+    final raw = airlineController.text.trim();
+    return _resolveAirlineId(raw) ?? raw;
   }
 
   static void _splitDateTime(
@@ -167,7 +214,7 @@ class LinehaulEditController extends GetxController {
         ),
         remarks: remarksController.text,
         flightNo: flightNoController.text,
-        airline: airlineController.text,
+        airline: _airlineForApi(),
         ewayBill: ewayBillController.text,
         transportType: transportMode.value,
       );

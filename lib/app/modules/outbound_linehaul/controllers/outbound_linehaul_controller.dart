@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_mo
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
@@ -61,6 +62,7 @@ class OutboundLinehaulController extends GetxController {
   final selectedDestCityId = RxnString();
   final selectedOriginCityId = RxnString();
   final selectedListLinehaulRef = RxnString();
+  final selectedAirlineId = RxnString();
 
   static const listStatusOptions = [
     'In Transit',
@@ -79,6 +81,7 @@ class OutboundLinehaulController extends GetxController {
   final manifestFocusNode = FocusNode();
   final manifestNoController = TextEditingController();
   final transportController = TextEditingController();
+  final airlineController = TextEditingController();
   final airwayBillController = TextEditingController();
   final ewayBillController = TextEditingController();
   final airwayBillDateController = TextEditingController();
@@ -101,6 +104,9 @@ class OutboundLinehaulController extends GetxController {
   String get transportFieldLabel =>
       isAirwayMode ? OutboundLabels.airline : OutboundLabels.transport;
 
+  String get mawbVehicleFieldLabel =>
+      isAirwayMode ? OutboundLabels.airwayBillNo : OutboundLabels.vehicleNo;
+
   @override
   void onInit() {
     super.onInit();
@@ -119,6 +125,7 @@ class OutboundLinehaulController extends GetxController {
     manifestFocusNode.dispose();
     manifestNoController.dispose();
     transportController.dispose();
+    airlineController.dispose();
     airwayBillController.dispose();
     ewayBillController.dispose();
     airwayBillDateController.dispose();
@@ -140,11 +147,22 @@ class OutboundLinehaulController extends GetxController {
 
   void onTransportModeChanged(String mode) {
     transportMode.value = mode;
+    if (mode != OutboundLabels.modeAirway) {
+      selectedAirlineId.value = null;
+    } else if (airlineController.text.trim().isNotEmpty) {
+      selectedAirlineId.value = _resolveAirlineId(airlineController.text);
+    }
   }
 
   void onDestCityChanged(String? id) => selectedDestCityId.value = id;
 
   void onOriginCityChanged(String? id) => selectedOriginCityId.value = id;
+
+  void onAirlineChanged(String? id) {
+    final resolved = _resolveAirlineId(id);
+    selectedAirlineId.value = resolved;
+    airlineController.text = resolved ?? '';
+  }
 
   Future<void> onManifestFocusLost() async {
     final code = manifestNoController.text.trim();
@@ -175,7 +193,8 @@ class OutboundLinehaulController extends GetxController {
           manifestDetail.value = detail;
           _applyManifestDetail(detail);
           lastResponseText.value = '';
-          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          final msg =
+              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
           if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
@@ -189,6 +208,10 @@ class OutboundLinehaulController extends GetxController {
   }
 
   void _applyManifestDetail(ManifestDetail detail) {
+    final manifestNo = detail.manifestNo?.trim();
+    if (manifestNo != null && manifestNo.isNotEmpty) {
+      manifestNoController.text = manifestNo;
+    }
     if (detail.destinationBranchId != null &&
         detail.destinationBranchId!.isNotEmpty) {
       selectedDestCityId.value = detail.destinationBranchId;
@@ -248,16 +271,33 @@ class OutboundLinehaulController extends GetxController {
 
   /// `assignlinehaul`: `vehicle_no` = MAWB (airway) or vehicle plate (surface).
   String _vehicleNoForAssign() {
-    final airway = airwayBillController.text.trim();
-    final transport = transportController.text.trim();
-    if (isAirwayMode) return airway;
-    if (transport.isNotEmpty) return transport;
-    return airway;
+    return airwayBillController.text.trim();
+  }
+
+  String _airlineForApi() {
+    final selected = selectedAirlineId.value?.trim();
+    if (isAirwayMode && selected != null && selected.isNotEmpty) {
+      return _resolveAirlineId(selected) ?? selected;
+    }
+    if (isAirwayMode) {
+      final raw = airlineController.text.trim();
+      return _resolveAirlineId(raw) ?? raw;
+    }
+    return transportController.text.trim();
+  }
+
+  String? _resolveAirlineId(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    if (Get.isRegistered<OutboundAirlineListController>()) {
+      return Get.find<OutboundAirlineListController>().resolveId(raw);
+    }
+    return raw;
   }
 
   /// `assignlinehaul`: `driver_name` = airline (airway) or driver name (surface).
   String _driverNameForAssign() {
-    final transport = transportController.text.trim();
+    final transport = _airlineForApi();
     final flight = flightNoController.text.trim();
     if (isAirwayMode) {
       if (transport.isNotEmpty) return transport;
@@ -268,7 +308,7 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> submitLinehaulBooking() async {
-    final manifestCode = manifestNoController.text.trim();
+    final manifestCode = _manifestRefForSubmit();
     final airwayBill = airwayBillController.text.trim();
     final vehicleForAssign = _vehicleNoForAssign();
     final driverForAssign = _driverNameForAssign();
@@ -359,9 +399,7 @@ class OutboundLinehaulController extends GetxController {
         flightNo: flightNoController.text.trim().isEmpty
             ? null
             : flightNoController.text.trim(),
-        airline: transportController.text.trim().isEmpty
-            ? null
-            : transportController.text.trim(),
+        airline: _airlineForApi().isEmpty ? null : _airlineForApi(),
         ewayBill: ewayBillController.text.trim().isEmpty
             ? null
             : ewayBillController.text.trim(),
@@ -375,7 +413,8 @@ class OutboundLinehaulController extends GetxController {
       editR.when(
         success: (data) {
           lastResponseText.value = '';
-          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          final msg =
+              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
           if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
@@ -435,7 +474,8 @@ class OutboundLinehaulController extends GetxController {
           linehaulRefController.text =
               detail.tripNo ?? detail.airwayBillNo ?? ref;
           lastResponseText.value = '';
-          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          final msg =
+              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
           if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
@@ -446,6 +486,15 @@ class OutboundLinehaulController extends GetxController {
     } finally {
       isBusy.value = false;
     }
+  }
+
+  String _manifestRefForSubmit() {
+    final detail = manifestDetail.value;
+    final id = detail?.manifestId?.trim();
+    if (id != null && id.isNotEmpty) return id;
+    final code = detail?.manifestNo?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return manifestNoController.text.trim();
   }
 
   Future<void> openLinehaulDetailsFromList(OutboundLinehaulRow row) async {

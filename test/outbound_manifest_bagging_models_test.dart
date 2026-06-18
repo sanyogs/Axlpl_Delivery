@@ -68,6 +68,8 @@ void main() {
 
     final detail = ManifestDetail.fromJson(sample);
     expect(detail.manifestNo, 'MUM094');
+    expect(detail.originBranchId, '37');
+    expect(detail.destinationBranchId, '75');
     expect(detail.bags, hasLength(1));
     expect(detail.shipments.first.id, '825411779084407');
   });

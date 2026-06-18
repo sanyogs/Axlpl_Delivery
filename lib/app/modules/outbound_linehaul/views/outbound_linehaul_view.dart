@@ -1,9 +1,12 @@
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_airline_select.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
@@ -26,6 +29,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
   @override
   Widget build(BuildContext context) {
     final branchList = Get.find<OutboundBranchListController>();
+    final airlineList = Get.find<OutboundAirlineListController>();
     return Obx(() {
       final busy = controller.isBusy.value;
       final _ = controller.transportMode.value;
@@ -33,6 +37,9 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
       final ___ = controller.manifestDetail.value;
       final ____ = controller.selectedDestCityId.value;
       final _____ = controller.selectedOriginCityId.value;
+      final ______ = controller.selectedAirlineId.value;
+      final airlineLoading = airlineList.isLoadingAirlines.value;
+      final airlines = airlineList.airlines.toList(growable: false);
 
       return OutboundScreen(
         title: OutboundLabels.linehaulScreenTitle,
@@ -42,7 +49,9 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed: busy ? null : () => Get.toNamed(Routes.OUTBOUND_LINEHAUL_LIST),
+              onPressed: busy
+                  ? null
+                  : () => Get.toNamed(Routes.OUTBOUND_LINEHAUL_LIST),
             ),
           ),
           OutboundAdminSection(
@@ -72,17 +81,26 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               ),
               OutboundLabeledFieldRow(
                 label: controller.transportFieldLabel,
-                child: OutboundAdminInput(
-                  controller: controller.transportController,
-                  hintText: controller.transportFieldLabel,
-                ),
+                child: controller.isAirwayMode
+                    ? OutboundAirlineSelect(
+                        items: airlines,
+                        selectedId: airlineList
+                            .resolveId(controller.selectedAirlineId.value),
+                        isLoading: airlineLoading,
+                        dropdownHint: OutboundLabels.airline,
+                        onChanged: controller.onAirlineChanged,
+                      )
+                    : OutboundAdminInput(
+                        controller: controller.transportController,
+                        hintText: controller.transportFieldLabel,
+                      ),
               ),
               OutboundLabeledFieldRow(
-                label: OutboundLabels.airwayBillNo,
+                label: controller.mawbVehicleFieldLabel,
                 required: true,
                 child: OutboundAdminInput(
                   controller: controller.airwayBillController,
-                  hintText: OutboundLabels.airwayBillNo,
+                  hintText: controller.mawbVehicleFieldLabel,
                 ),
               ),
               OutboundLabeledFieldRow(
@@ -120,6 +138,11 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                   hintText: OutboundLabels.totalWeight,
                 ),
               ),
+              if (controller.manifestDetail.value != null)
+                OutboundManifestDetailBody(
+                  detail: controller.manifestDetail.value!,
+                  compact: true,
+                ),
             ],
           ),
           OutboundAdminSection(
@@ -159,7 +182,8 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 child: OutboundAdminInput(
                   controller: controller.totalCdWeightController,
                   hintText: OutboundLabels.totalCdWeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
               ),
               OutboundLabeledFieldRow(
@@ -167,7 +191,8 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
                 child: OutboundAdminInput(
                   controller: controller.totalBillingWeightController,
                   hintText: OutboundLabels.totalBillingWeight,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
               ),
             ],

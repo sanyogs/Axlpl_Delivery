@@ -38,6 +38,15 @@ class ManifestDetail {
 
   String? get status => null;
 
+  bool get hasContent {
+    return (id?.trim().isNotEmpty ?? false) ||
+        (manifestNo?.trim().isNotEmpty ?? false) ||
+        (originBranch?.trim().isNotEmpty ?? false) ||
+        (destinationBranch?.trim().isNotEmpty ?? false) ||
+        bags.isNotEmpty ||
+        shipments.isNotEmpty;
+  }
+
   factory ManifestDetail.fromJson(Map<String, dynamic> json) {
     return ManifestDetail(
       id: OutboundDataParse.optionalString(json, 'id'),
@@ -48,10 +57,12 @@ class ManifestDetail {
       ]),
       originBranch: OutboundDataParse.firstNonEmptyString(json, const [
         'origin_branch_id',
+        'origin_branch',
         'origin_branchId',
       ]),
       destinationBranch: OutboundDataParse.firstNonEmptyString(json, const [
         'destination_branch_id',
+        'destination_branch',
         'destination_sector_id',
         'destination_branchId',
       ]),
@@ -79,7 +90,12 @@ class ManifestDetail {
     final map = OutboundDataParse.asStringKeyedMap(data);
     if (map == null) return const ManifestDetail();
     if (_looksLikeManifestDetail(map)) return ManifestDetail.fromJson(map);
-    for (final key in const ['manifest', 'manifest_detail', 'details', 'data']) {
+    for (final key in const [
+      'manifest',
+      'manifest_detail',
+      'details',
+      'data'
+    ]) {
       final nested = OutboundDataParse.asStringKeyedMap(map[key]);
       if (nested != null && _looksLikeManifestDetail(nested)) {
         return ManifestDetail.fromJson(nested);

@@ -4,7 +4,9 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_report_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_session_models.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_manifest_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
+import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
+import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
@@ -35,6 +37,7 @@ class OutboundManifestController extends GetxController {
   final manifestDetail = Rxn<ManifestDetail>();
   final manifestReportData = Rxn<ManifestReport>();
   final printManifestDetail = Rxn<ManifestDetail>();
+  final manifestListResultTitle = ''.obs;
 
   final selectedOriginDepotId = RxnString();
   final selectedDestDepotId = RxnString();
@@ -331,8 +334,7 @@ class OutboundManifestController extends GetxController {
     _refreshSummaryFields();
   }
 
-  String get _sessionBagCodesCsv =>
-      sessionBags.map((b) => b.bagCode).join(',');
+  String get _sessionBagCodesCsv => sessionBags.map((b) => b.bagCode).join(',');
 
   Future<void> createManifest() async {
     final origin = _originId ?? '';
@@ -443,23 +445,52 @@ class OutboundManifestController extends GetxController {
     manifestCodeController.text = code;
     isBusy.value = true;
     manifestDetail.value = null;
+    printManifestDetail.value = null;
+    manifestListResultTitle.value = OutboundLabels.btnViewDetails;
     try {
       final r = await _repo.fetchManifestDetails(code);
-      r.when(
-        success: (data) {
-          final detail = ManifestDetail.fromDynamic(data);
-          manifestDetail.value = detail;
-          lastResponseText.value = '';
-          _snackServerData(data);
-        },
-        error: (e) {
-          lastResponseText.value = e.message;
-          _snackServerError(e);
-        },
-      );
+      _applyManifestDetailResponse(r);
     } finally {
       isBusy.value = false;
     }
+  }
+
+  Future<void> getManifestDetailsFromRow(OutboundManifestRow row) async {
+    final refs = _manifestRefsForRow(row);
+    if (refs.isEmpty) {
+      Get.snackbar('Manifest', 'Manifest number is required.');
+      return;
+    }
+    manifestCodeController.text = refs.first;
+    isBusy.value = true;
+    manifestDetail.value = null;
+    printManifestDetail.value = null;
+    manifestListResultTitle.value = OutboundLabels.btnViewDetails;
+    try {
+      final r = await _repo.fetchManifestDetailsByRefs(refs);
+      _applyManifestDetailResponse(r);
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  void _applyManifestDetailResponse(APIResponse<dynamic> r) {
+    r.when(
+      success: (data) {
+        final detail = ManifestDetail.fromDynamic(data);
+        if (detail.hasContent) {
+          manifestDetail.value = detail;
+          lastResponseText.value = '';
+        } else {
+          lastResponseText.value = OutboundDataParse.pretty(data);
+        }
+        _snackServerData(data);
+      },
+      error: (e) {
+        lastResponseText.value = e.message;
+        _snackServerError(e);
+      },
+    );
   }
 
   Future<void> printManifestData({String? manifestCode}) async {
@@ -470,24 +501,70 @@ class OutboundManifestController extends GetxController {
     }
     manifestCodeController.text = code;
     isBusy.value = true;
+    manifestDetail.value = null;
+    printManifestDetail.value = null;
+    manifestListResultTitle.value = OutboundLabels.btnPrint;
     try {
       final r = await _repo.printManifestData(code);
-      r.when(
-        success: (data) {
-          final detail = ManifestDetail.fromDynamic(data);
-          printManifestDetail.value = detail;
-          manifestDetail.value = detail;
-          lastResponseText.value = '';
-          _snackServerData(data);
-        },
-        error: (e) {
-          lastResponseText.value = e.message;
-          _snackServerError(e);
-        },
-      );
+      _applyPrintManifestResponse(r);
     } finally {
       isBusy.value = false;
     }
+  }
+
+  Future<void> printManifestDataFromRow(OutboundManifestRow row) async {
+    final refs = _manifestRefsForRow(row);
+    if (refs.isEmpty) {
+      Get.snackbar('Manifest', 'Manifest number is required.');
+      return;
+    }
+    manifestCodeController.text = refs.first;
+    isBusy.value = true;
+    manifestDetail.value = null;
+    printManifestDetail.value = null;
+    manifestListResultTitle.value = OutboundLabels.btnPrint;
+    try {
+      final r = await _repo.printManifestDataByRefs(refs);
+      _applyPrintManifestResponse(r);
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  void _applyPrintManifestResponse(APIResponse<dynamic> r) {
+    r.when(
+      success: (data) {
+        final detail = ManifestDetail.fromDynamic(data);
+        if (detail.hasContent) {
+          printManifestDetail.value = detail;
+          manifestDetail.value = detail;
+          lastResponseText.value = '';
+        } else {
+          printManifestDetail.value = null;
+          manifestDetail.value = null;
+          lastResponseText.value = OutboundDataParse.pretty(data);
+        }
+        _snackServerData(data);
+      },
+      error: (e) {
+        lastResponseText.value = e.message;
+        _snackServerError(e);
+      },
+    );
+  }
+
+  List<String> _manifestRefsForRow(OutboundManifestRow row) {
+    final refs = <String>[];
+    void add(String? value) {
+      final ref = value?.trim();
+      if (ref == null || ref.isEmpty) return;
+      if (refs.contains(ref)) return;
+      refs.add(ref);
+    }
+
+    add(row.manifestId);
+    add(row.manifestNo);
+    return refs;
   }
 
   void prefillManifestReport() {

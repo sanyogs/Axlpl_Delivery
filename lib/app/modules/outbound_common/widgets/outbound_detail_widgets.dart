@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_bag_ref_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
@@ -69,6 +70,13 @@ String Function(String? id) _branchLabelResolver() {
     return c.displayLabelForId;
   }
   return (id) => id?.trim().isNotEmpty == true ? id!.trim() : '—';
+}
+
+String _airlineLabel(String? id) {
+  if (Get.isRegistered<OutboundAirlineListController>()) {
+    return Get.find<OutboundAirlineListController>().displayLabelForId(id);
+  }
+  return id?.trim().isNotEmpty == true ? id!.trim() : '—';
 }
 
 /// Full-screen / inline bag detail — header fields + `items[]` table.
@@ -309,7 +317,8 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
           label: 'Transport',
           value: _v(detail.transportType),
         ),
-        OutboundDetailField(label: 'Airline', value: _v(detail.airline)),
+        OutboundDetailField(
+            label: 'Airline', value: _airlineLabel(detail.airline)),
         OutboundDetailField(label: 'Flight', value: _v(detail.flightNo)),
         OutboundDetailField(
           label: OutboundLabels.vehicleNo,
