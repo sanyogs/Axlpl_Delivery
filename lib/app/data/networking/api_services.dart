@@ -1320,7 +1320,6 @@ class ApiServices {
     required String originBranchId,
     required String destinationBranchId,
     required String userId,
-    String? transportMode,
   }) async {
     final body = FormData.fromMap(
       OutboundApiParams.createManifestBody(
@@ -1328,7 +1327,6 @@ class ApiServices {
         originBranchId: originBranchId,
         destinationBranchId: destinationBranchId,
         userId: userId,
-        transportMode: transportMode,
       ),
     );
     return _api.postOutbound(

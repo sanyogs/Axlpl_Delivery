@@ -534,17 +534,33 @@ class OutboundRepository {
     required String bagIdsCommaSeparated,
     required String originBranchId,
     required String destinationBranchId,
-    String? transportMode,
   }) async {
-    return _requireTokenUser(
+    final r = await _requireTokenUser(
       (token, userId) => _api.createManifest(
         token: token,
         bagCodesCsv: bagIdsCommaSeparated.trim(),
         originBranchId: originBranchId.trim(),
         destinationBranchId: destinationBranchId.trim(),
         userId: userId,
-        transportMode: transportMode,
       ),
+    );
+    return r.when(
+      success: (data) {
+        final created = OutboundMutationResult.fromDynamic(data);
+        final ref = created.effectiveManifestRef;
+        if (ref == null || ref.isEmpty) {
+          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim();
+          return APIResponse.error(
+            AppException.errorWithMessage(
+              (msg != null && msg.isNotEmpty)
+                  ? msg
+                  : 'Manifest created but no manifest number returned.',
+            ),
+          );
+        }
+        return APIResponse.success(created.asMap ?? data);
+      },
+      error: (e) => APIResponse.error(e),
     );
   }
 

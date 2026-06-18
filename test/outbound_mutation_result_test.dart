@@ -68,5 +68,28 @@ void main() {
       });
       expect(r.effectiveLinehaulRef, 'LH1778841961');
     });
+
+    test('parses live createmanifest success with int manifest_id', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'status': 'success',
+        'message': 'Manifest created and bags locked successfully',
+        'data': {
+          'manifest_id': 476,
+          'manifest_no': 'MUM262',
+        },
+      });
+      expect(r.manifestId, '476');
+      expect(r.manifestNo, 'MUM262');
+      expect(r.effectiveManifestRef, 'MUM262');
+    });
+
+    test('parses unwrapped createmanifest payload from ApiClient', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'manifest_id': 476,
+        'manifest_no': 'MUM262',
+        '__server_message': 'Manifest created and bags locked successfully',
+      });
+      expect(r.effectiveManifestRef, 'MUM262');
+    });
   });
 }

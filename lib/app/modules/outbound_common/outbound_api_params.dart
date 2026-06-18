@@ -123,27 +123,19 @@ class OutboundApiParams {
     return {'manifest_codes': ids, 'manifest_ids': ids};
   }
 
-  /// POST `createmanifest` — verified: `bag_codes`, branches, `user_id`.
-  /// Optional `transport_mode` (Airway / Surface) — sent when admin mode is set.
+  /// POST `createmanifest` — verified multipart: `bag_codes`, branches, `user_id` only.
   static Map<String, String> createManifestBody({
     required String bagCodesCsv,
     required String originBranchId,
     required String destinationBranchId,
     required String userId,
-    String? transportMode,
   }) {
-    final body = <String, String>{
+    return {
       ...createManifestBagFields(bagCodesCsv),
       'origin_branch_id': originBranchId.trim(),
       'destination_branch_id': destinationBranchId.trim(),
       'user_id': userId,
     };
-    // Sarvesh QA createmanifest: bag_codes + branches + user_id only (no transport_mode).
-    final mode = transportMode?.trim();
-    if (mode != null && mode.isNotEmpty && mode.toLowerCase() != 'surface') {
-      body['transport_mode'] = mode;
-    }
-    return body;
   }
 
   /// GET `baggingreport` — Sarvesh: `bag_code` + `start_date` + `end_date`.

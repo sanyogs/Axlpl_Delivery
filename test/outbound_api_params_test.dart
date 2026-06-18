@@ -87,31 +87,19 @@ void main() {
     expect(body['vehicle_no'], 'UP78AB1234');
   });
 
-  test('createManifestBody matches Sarvesh — no transport_mode for Surface', () {
+  test('createManifestBody matches live curl — bag_codes and branches only', () {
     final body = OutboundApiParams.createManifestBody(
-      bagCodesCsv: 'BAG20260518152744831',
-      originBranchId: '37',
+      bagCodesCsv: 'BAG20260618171826757',
+      originBranchId: '75',
       destinationBranchId: '75',
       userId: '1',
-      transportMode: 'Surface',
     );
     expect(body.containsKey('transport_mode'), isFalse);
-    expect(body['bag_codes'], 'BAG20260518152744831');
-    expect(body['origin_branch_id'], '37');
+    expect(body['bag_codes'], 'BAG20260618171826757');
+    expect(body['origin_branch_id'], '75');
     expect(body['destination_branch_id'], '75');
     expect(body['user_id'], '1');
-  });
-
-  test('createManifestBody includes transport_mode for Airway only', () {
-    final body = OutboundApiParams.createManifestBody(
-      bagCodesCsv: 'BAG20260518152744831',
-      originBranchId: '37',
-      destinationBranchId: '75',
-      userId: '1',
-      transportMode: 'Airway',
-    );
-    expect(body['transport_mode'], 'Airway');
-    expect(body['bag_codes'], 'BAG20260518152744831');
+    expect(body.containsKey('bag_ids'), isFalse);
   });
 
   test('baggingReportQuery matches Sarvesh curl params', () {

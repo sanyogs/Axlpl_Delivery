@@ -73,7 +73,9 @@ class OutboundMutationResult {
         (nested.containsKey('linehaul_id') ||
             nested.containsKey('trip_no') ||
             nested.containsKey('bag_id') ||
-            nested.containsKey('manifest_id'))) {
+            nested.containsKey('bag_code') ||
+            nested.containsKey('manifest_id') ||
+            nested.containsKey('manifest_no'))) {
       return OutboundMutationResult.fromJson(nested);
     }
     return OutboundMutationResult.fromJson(map);

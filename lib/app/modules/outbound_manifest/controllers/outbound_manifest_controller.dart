@@ -381,9 +381,6 @@ class OutboundManifestController extends GetxController {
         bagIdsCommaSeparated: bagCodes,
         originBranchId: origin,
         destinationBranchId: dest,
-        transportMode: selectedTransportMode.value == OutboundLabels.modeAirway
-            ? OutboundLabels.modeAirway
-            : null,
       );
       r.when(
         success: (data) {
@@ -397,7 +394,14 @@ class OutboundManifestController extends GetxController {
           bagScanController.clear();
           fetchStatusMessage.value = '';
           _refreshSummaryFields();
-          _snackServerData(data);
+          final serverMsg =
+              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
+          final snack = code != null && code.isNotEmpty
+              ? (serverMsg.isNotEmpty
+                  ? '$serverMsg\nManifest: $code'
+                  : 'Manifest $code created')
+              : serverMsg;
+          if (snack.isNotEmpty) Get.snackbar('Manifest', snack);
         },
         error: (e) {
           lastResponseText.value = e.message;
