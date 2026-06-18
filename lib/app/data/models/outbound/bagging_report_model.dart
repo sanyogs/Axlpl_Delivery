@@ -63,8 +63,38 @@ class BaggingReport {
 
   factory BaggingReport.fromDynamic(dynamic data) {
     final map = OutboundDataParse.asStringKeyedMap(data);
-    if (map != null) return BaggingReport.fromJson(map);
-    return const BaggingReport();
+    if (map == null) return const BaggingReport();
+    final nested = OutboundDataParse.asStringKeyedMap(map['data']);
+    if (nested != null &&
+        (nested.containsKey('bag_code') ||
+            nested.containsKey('items') ||
+            nested.containsKey('metal_seal_no'))) {
+      return BaggingReport.fromJson(nested);
+    }
+    return BaggingReport.fromJson(map);
+  }
+
+  double get totalWeightValue =>
+      items.fold(0.0, (sum, item) => sum + item.weightValue);
+
+  int get totalPcsValue =>
+      items.fold(0, (sum, item) => sum + item.pcsValue);
+
+  String get totalWeightDisplay {
+    final v = totalWeightValue;
+    if (v == 0 && items.isEmpty) return '0';
+    return v == v.roundToDouble() ? v.toStringAsFixed(2) : v.toStringAsFixed(2);
+  }
+
+  String get totalPcsDisplay => '${totalPcsValue}';
+
+  /// Display name for PDF — API `created_by_name` or messenger profile name.
+  String createdByLabel(String? messengerName) {
+    final api = createdByName?.trim();
+    if (api != null && api.isNotEmpty) return api;
+    final local = messengerName?.trim();
+    if (local != null && local.isNotEmpty) return local;
+    return '—';
   }
 
   Map<String, dynamic> toJson() => {

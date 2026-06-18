@@ -102,13 +102,21 @@ void main() {
     expect(body.containsKey('bag_ids'), isFalse);
   });
 
-  test('baggingReportQuery matches Sarvesh curl params', () {
+  test('baggingReportQuery matches live curl — bag_code only', () {
+    final q = OutboundApiParams.baggingReportQuery(
+      bagCode: 'BAG20260518152744831',
+    );
+    expect(q['bag_code'], 'BAG20260518152744831');
+    expect(q.containsKey('start_date'), isFalse);
+    expect(q.containsKey('end_date'), isFalse);
+  });
+
+  test('baggingReportQuery includes optional date range', () {
     final q = OutboundApiParams.baggingReportQuery(
       bagCode: 'BAG20260518152744831',
       startDate: '2026-03-01',
       endDate: '2026-05-18',
     );
-    expect(q['bag_code'], 'BAG20260518152744831');
     expect(q['start_date'], '2026-03-01');
     expect(q['end_date'], '2026-05-18');
   });

@@ -516,8 +516,8 @@ class OutboundRepository {
 
   Future<APIResponse<dynamic>> baggingReport({
     required String bagCode,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
   }) =>
       _requireToken(
         (token) => _api.baggingReport(

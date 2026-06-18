@@ -1295,8 +1295,8 @@ class ApiServices {
   Future<APIResponse> baggingReport({
     required String token,
     required String bagCode,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
   }) async {
     return _api.getOutbound(
       baggingReportPoint,

@@ -1,3 +1,4 @@
+import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/bag_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/bagging_report_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/bagging_table_row.dart';
@@ -6,11 +7,13 @@ import 'package:axlpl_delivery/app/data/models/outbound/outbound_bag_row_model.d
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_generator.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:open_file/open_file.dart';
 
 /// Bagging — each visible field maps to a Postman / QA parameter (see module validation).
 class OutboundBaggingController extends GetxController {
@@ -713,13 +716,6 @@ class OutboundBaggingController extends GetxController {
   }
 
   void prefillBaggingReport() {
-    final range = OutboundApiParams.defaultReportDateRange();
-    if (reportStartController.text.trim().isEmpty) {
-      reportStartController.text = range['start_date']!;
-    }
-    if (reportEndController.text.trim().isEmpty) {
-      reportEndController.text = range['end_date']!;
-    }
     if (reportBagCodeController.text.trim().isEmpty) {
       final fromDetail = visibleBagCode.trim();
       if (fromDetail.isNotEmpty) {
@@ -728,32 +724,59 @@ class OutboundBaggingController extends GetxController {
     }
   }
 
-  Future<void> baggingReport() async {
+  Future<String?> _messengerDisplayName() async {
+    final user = await LocalStorage().getUserLocalData();
+    return user?.messangerdetail?.name?.trim();
+  }
+
+  Future<void> printBaggingReport() async {
     final code = reportBagCodeController.text.trim();
-    final start = reportStartController.text.trim();
-    final end = reportEndController.text.trim();
     if (code.isEmpty) {
-      Get.snackbar('Bagging', 'Bag code is required for bagging report.');
-      return;
-    }
-    if (start.isEmpty || end.isEmpty) {
-      Get.snackbar('Bagging', 'Start and end date are required');
+      Get.snackbar('Bagging', 'Bagging number is required.');
       return;
     }
 
     isBusy.value = true;
     try {
-      final r = await _repo.baggingReport(
-        bagCode: code,
-        startDate: start,
-        endDate: end,
-      );
+      final r = await _repo.baggingReport(bagCode: code);
+      dynamic data;
+      var failed = false;
       r.when(
-        success: (data) {
-          final report = BaggingReport.fromDynamic(data);
-          baggingReportData.value = report;
+        success: (value) => data = value,
+        error: (e) {
+          failed = true;
+          _snackServerError(e);
         },
-        error: _snackServerError,
+      );
+      if (failed || data == null) return;
+
+      final report = BaggingReport.fromDynamic(data);
+      if ((report.bagCode == null || report.bagCode!.isEmpty) &&
+          report.items.isEmpty) {
+        Get.snackbar('Bagging', 'No bagging report data returned.');
+        return;
+      }
+      baggingReportData.value = report;
+      final messengerName = await _messengerDisplayName();
+      final createdBy = report.createdByLabel(messengerName);
+      final path = await BaggingReportPdfGenerator.save(
+        report: report,
+        createdByDisplay: createdBy,
+      );
+      final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim();
+      final open = await OpenFile.open(path);
+      if (open.type != ResultType.done) {
+        Get.snackbar(
+          'Bagging',
+          msg?.isNotEmpty == true
+              ? '$msg\nSaved: $path'
+              : 'PDF saved: $path',
+        );
+        return;
+      }
+      Get.snackbar(
+        'Bagging',
+        msg?.isNotEmpty == true ? msg! : 'Bagging report PDF generated.',
       );
     } finally {
       isBusy.value = false;

@@ -138,17 +138,19 @@ class OutboundApiParams {
     };
   }
 
-  /// GET `baggingreport` — Sarvesh: `bag_code` + `start_date` + `end_date`.
+  /// GET `baggingreport` — `bag_code` required; dates optional (legacy).
   static Map<String, String> baggingReportQuery({
     required String bagCode,
-    required String startDate,
-    required String endDate,
-  }) =>
-      {
-        'bag_code': bagCode.trim(),
-        'start_date': startDate.trim(),
-        'end_date': endDate.trim(),
-      };
+    String? startDate,
+    String? endDate,
+  }) {
+    final body = <String, String>{'bag_code': bagCode.trim()};
+    final start = startDate?.trim();
+    final end = endDate?.trim();
+    if (start != null && start.isNotEmpty) body['start_date'] = start;
+    if (end != null && end.isNotEmpty) body['end_date'] = end;
+    return body;
+  }
 
   /// GET `manifestreport` — Sarvesh: `manifest_no` + date range.
   static Map<String, String> manifestReportQuery({

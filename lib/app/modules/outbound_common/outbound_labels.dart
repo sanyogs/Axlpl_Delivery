@@ -42,6 +42,7 @@ class OutboundLabels {
   static const btnNewBagging = 'New Bagging';
   static const btnPerformBagging = 'Perform Bagging';
   static const branchHub = 'Branch / hub';
+  static const baggingNo = 'Bagging No';
   static const bagId = 'Bag id';
   static const bagCode = 'Bag code';
   static const workingBagCode = 'Bag code';
@@ -147,7 +148,8 @@ class OutboundLabels {
   static const btnManifestReport = 'Generate report';
   static const manifestCodeOptional = 'Optional manifest number';
   static const subtitleBaggingReport =
-      'Enter bag code to view shipments and weights for that bag.';
+      'Enter valid Bag Number';
+  static const hintBaggingNo = 'Enter valid Bag Number';
 
   // Short button labels
   static const btnShipmentInfo = 'Shipment info';

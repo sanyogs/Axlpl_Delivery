@@ -31,6 +31,21 @@ void main() {
     expect(report.bagCode, 'BAG20260518152744831');
     expect(report.items, hasLength(1));
     expect(report.items.first.shipmentId, '825411779084407');
+    expect(report.totalWeightDisplay, '11.00');
+    expect(report.totalPcsDisplay, '1');
+  });
+
+  test('bagging report totals sum multiple items', () {
+    const sample = {
+      'bag_code': 'BAGTEST',
+      'items': [
+        {'shipment_id': '1', 'total_weight': '11.00', 'no_of_package': '1'},
+        {'shipment_id': '2', 'gross_weight': '9.5', 'number_of_parcel': '2'},
+      ],
+    };
+    final report = BaggingReport.fromJson(sample);
+    expect(report.totalWeightValue, closeTo(20.5, 0.01));
+    expect(report.totalPcsValue, 3);
   });
 
   test('parses live lockbag object', () {

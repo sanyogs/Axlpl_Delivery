@@ -1,3 +1,4 @@
+import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_session_models.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
@@ -31,6 +32,14 @@ class _OutboundSectorPickupViewState extends State<OutboundSectorPickupView> {
   void initState() {
     super.initState();
     controller = Get.find<OutboundSectorPickupController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments;
+      if (args is SectorPickupRow) {
+        controller.openPickupRow(args);
+      } else {
+        controller.prefillPickupDefaults();
+      }
+    });
     _scrollWorker = ever(controller.scrollToScannedTable, (_) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctx = _scannedTableKey.currentContext;

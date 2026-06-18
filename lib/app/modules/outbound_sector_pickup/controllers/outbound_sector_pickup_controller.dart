@@ -1,3 +1,4 @@
+import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/pickup_detail_model.dart';
@@ -7,6 +8,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_session_models.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
@@ -71,8 +73,11 @@ class OutboundSectorPickupController extends GetxController {
           openPickupRow(row);
         } else {
           pickupIdController.text = args.trim();
+          prefillPickupDefaults();
         }
       });
+    } else {
+      prefillPickupDefaults();
     }
   }
 
@@ -171,6 +176,32 @@ class OutboundSectorPickupController extends GetxController {
     _pendingBagSeal = null;
     scannedRows.clear();
     missingRows.clear();
+    prefillPickupDefaults();
+  }
+
+  /// Default pickup date/time to now; picked-by to logged-in messenger name.
+  void prefillPickupDefaults() {
+    final now = DateTime.now();
+    if (pickupDateController.text.trim().isEmpty) {
+      pickupDateController.text = OutboundApiParams.formatReportDate(now);
+    }
+    if (pickupTimeController.text.trim().isEmpty) {
+      pickupTimeController.text = _formatPickupTime(
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      );
+    }
+    if (pickedByController.text.trim().isEmpty) {
+      _prefillPickedByFromProfile();
+    }
+  }
+
+  Future<void> _prefillPickedByFromProfile() async {
+    if (pickedByController.text.trim().isNotEmpty) return;
+    final user = await LocalStorage().getUserLocalData();
+    final name = user?.messangerdetail?.name?.trim();
+    if (name != null && name.isNotEmpty) {
+      pickedByController.text = name;
+    }
   }
 
   void openPickupRow(SectorPickupRow row) {
@@ -198,6 +229,7 @@ class OutboundSectorPickupController extends GetxController {
     if (flight != null && flight.isNotEmpty) {
       flightInfoController.text = flight;
     }
+    prefillPickupDefaults();
   }
 
   String _formatPickupTime(String? raw) {
@@ -296,6 +328,7 @@ class OutboundSectorPickupController extends GetxController {
     if (detail.flightNo?.trim().isNotEmpty == true) {
       flightInfoController.text = detail.flightNo!.trim();
     }
+    prefillPickupDefaults();
   }
 
   Future<void> fetchLinehaulForMawb(String mawb) async {

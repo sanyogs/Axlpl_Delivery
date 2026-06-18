@@ -31,9 +31,19 @@ class BaggingReportItem {
           OutboundDataParse.optionalString(json, 'shipment_invoice_no'),
       senderName: OutboundDataParse.optionalString(json, 'sender_name'),
       receiverName: OutboundDataParse.optionalString(json, 'receiver_name'),
-      destinationCity: OutboundDataParse.optionalString(json, 'destination_city'),
-      totalWeight: OutboundDataParse.optionalString(json, 'total_weight'),
-      noOfPackage: OutboundDataParse.optionalString(json, 'no_of_package'),
+      destinationCity: OutboundDataParse.firstNonEmptyString(json, const [
+        'destination_city',
+        'city_name',
+      ]),
+      totalWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'total_weight',
+        'gross_weight',
+      ]),
+      noOfPackage: OutboundDataParse.firstNonEmptyString(json, const [
+        'no_of_package',
+        'number_of_parcel',
+        'pcs',
+      ]),
     );
   }
 
@@ -49,4 +59,24 @@ class BaggingReportItem {
 
   static List<BaggingReportItem> listFromDynamic(dynamic data) =>
       OutboundDataParse.mapListFromDynamic(data, BaggingReportItem.fromJson);
+}
+
+extension BaggingReportItemTotals on BaggingReportItem {
+  double get weightValue => double.tryParse(totalWeight?.trim() ?? '') ?? 0;
+
+  int get pcsValue => int.tryParse(noOfPackage?.trim() ?? '') ?? 0;
+
+  String get weightDisplay {
+    final w = totalWeight?.trim();
+    if (w != null && w.isNotEmpty) return w;
+    return weightValue == weightValue.roundToDouble()
+        ? weightValue.toStringAsFixed(0)
+        : weightValue.toStringAsFixed(2);
+  }
+
+  String get pcsDisplay {
+    final p = noOfPackage?.trim();
+    if (p != null && p.isNotEmpty) return p;
+    return pcsValue > 0 ? '$pcsValue' : '0';
+  }
 }
