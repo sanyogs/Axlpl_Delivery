@@ -7,7 +7,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_airl
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
@@ -258,25 +257,26 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               ),
             ),
           ),
-          OutboundExpandableSection(
-            title: OutboundLabels.linehaulReportTitle,
-            subtitle: OutboundLabels.subtitleLinehaulReport,
-            initiallyExpanded: false,
-            children: [
-              OutboundDateField(
-                controller: controller.reportStartController,
-                hintText: OutboundLabels.reportStart,
-              ),
-              OutboundDateField(
-                controller: controller.reportEndController,
-                hintText: OutboundLabels.reportEnd,
-              ),
-              OutboundPrimaryButton(
-                title: OutboundLabels.btnLinehaulReport,
-                onPressed: busy ? null : controller.linehaulReport,
-              ),
-            ],
-          ),
+          // Linehaul report UI — disabled for now.
+          // OutboundExpandableSection(
+          //   title: OutboundLabels.linehaulReportTitle,
+          //   subtitle: OutboundLabels.subtitleLinehaulReport,
+          //   initiallyExpanded: false,
+          //   children: [
+          //     OutboundDateField(
+          //       controller: controller.reportStartController,
+          //       hintText: OutboundLabels.reportStart,
+          //     ),
+          //     OutboundDateField(
+          //       controller: controller.reportEndController,
+          //       hintText: OutboundLabels.reportEnd,
+          //     ),
+          //     OutboundPrimaryButton(
+          //       title: OutboundLabels.btnLinehaulReport,
+          //       onPressed: busy ? null : controller.linehaulReport,
+          //     ),
+          //   ],
+          // ),
           if (controller.lastResponseText.value.trim().isNotEmpty)
             OutboundResponsePanel(
               title: 'Message',
