@@ -128,6 +128,13 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
                 ),
               ),
               const _ManifestSummaryGrid(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutboundPrimaryButton(
+                  title: OutboundLabels.btnAddManifest,
+                  onPressed: busy ? null : controller.createManifest,
+                ),
+              ),
             ],
           ),
           OutboundAdminSection(
@@ -141,7 +148,10 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
                   focusNode: controller.bagScanFocusNode,
                   hintText: OutboundLabels.hintScanMBagCode,
                   prefixIcon: const Icon(CupertinoIcons.cube_box),
-                  onSubmitted: (_) => controller.onBagScanFocusLost(),
+                  onSubmitted: (_) {
+                    final code = controller.bagScanController.text.trim();
+                    if (code.isNotEmpty) controller.scanBag(code);
+                  },
                   onScanned: controller.onBagScanned,
                 ),
               ),
@@ -162,10 +172,6 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
             children: [
               _ManifestShipmentTable(rows: controller.shipmentLines),
             ],
-          ),
-          OutboundPrimaryButton(
-            title: OutboundLabels.btnAddManifest,
-            onPressed: busy ? null : controller.createManifest,
           ),
         ],
       );

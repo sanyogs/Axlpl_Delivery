@@ -145,6 +145,62 @@ def run_all():
         f"{BASE}?request=manifestreport&start_date=2026-05-01&end_date=2026-05-18&manifest_no=MUM094",
         curl_display_get(p), b, "Use manifest_no not manifest_code")
 
+    p = {"request": "getmanifestdetails", "manifest_code": "AHM002"}
+    b = curl_get(p)
+    add("getmanifestdetails_AHM002", "getmanifestdetails AHM002 (Agra QA)", "GET",
+        f"{BASE}?request=getmanifestdetails&manifest_code=AHM002",
+        curl_display_get(p), b, "QA manifest — shipments total_weight, created_at")
+
+    p = {"request": "printmanifestdata", "manifest_code": "AHM002"}
+    b = curl_get(p)
+    add("printmanifestdata_AHM002", "printmanifestdata AHM002", "GET",
+        f"{BASE}?request=printmanifestdata&manifest_code=AHM002",
+        curl_display_get(p), b, "Print payload for AHM002")
+
+    p = {"request": "listmanifests", "branch_id": "71"}
+    b = curl_get(p)
+    try:
+        rows = json.loads(b).get("data", [])
+        ahm = any(str(r.get("manifest_no")) == "AHM002" for r in rows if isinstance(r, dict))
+    except Exception:
+        ahm = "?"
+    add("listmanifests_branch_71", "listmanifests branch_id=71 (Agra)", "GET",
+        f"{BASE}?request=listmanifests&branch_id=71",
+        curl_display_get(p), b, f"AHM002 visible when origin is Agra (71): {ahm}")
+
+    fields = {
+        "manifest_codes": "AHM002",
+        "vehicle_no": "MH01AB1234",
+        "driver_name": "API Test",
+        "user_id": "81",
+    }
+    b = curl_post("assignlinehaul", fields)
+    add("assignlinehaul_AHM002", "assignlinehaul AHM002", "POST",
+        f"{BASE}?request=assignlinehaul",
+        curl_display_post("assignlinehaul", fields), b, "Returns linehaul_id + trip_no")
+
+    try:
+        assign = json.loads(b)
+        data = assign.get("data") if isinstance(assign.get("data"), dict) else assign
+        trip = data.get("trip_no")
+        lh_id = data.get("linehaul_id")
+    except Exception:
+        trip = lh_id = None
+
+    if trip:
+        p = {"request": "getlinehauldetails", "trip_no": trip}
+        b = curl_get(p)
+        add("getlinehauldetails_AHM002_trip", "getlinehauldetails trip_no (AHM002 assign)", "GET",
+            f"{BASE}?request=getlinehauldetails&trip_no={trip}",
+            curl_display_get(p), b, "Resolve numeric id before editlinehaul")
+
+    if lh_id:
+        p = {"request": "getlinehauldetails", "linehaul_id": str(lh_id)}
+        b = curl_get(p)
+        add("getlinehauldetails_AHM002_id", "getlinehauldetails linehaul_id (AHM002 assign)", "GET",
+            f"{BASE}?request=getlinehauldetails&linehaul_id={lh_id}",
+            curl_display_get(p), b, "Numeric id lookup after assign")
+
     # --- Open bugs ---
     p = {"request": "getmanifestdetails", "manifest_code": "MUM075"}
     b = curl_get(p)
@@ -266,7 +322,7 @@ def write_verified_md(results):
 
 
 def main():
-    print(f"Running {12} curls against production...")
+    print(f"Running curls against production...")
     results = run_all()
     write_live_json(results)
     merge_curl_verify_live(results)

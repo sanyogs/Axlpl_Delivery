@@ -17,6 +17,7 @@ import 'package:axlpl_delivery/app/data/networking/api_services.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 
 /// Outbound Services V8 — all reads/writes over [ApiServices] with auth from [OutboundAuthContext].
@@ -515,11 +516,15 @@ class OutboundRepository {
 
   Future<APIResponse<dynamic>> baggingReport({
     required String bagCode,
+    required String startDate,
+    required String endDate,
   }) =>
       _requireToken(
         (token) => _api.baggingReport(
           token: token,
           bagCode: bagCode,
+          startDate: startDate,
+          endDate: endDate,
         ),
       );
 
@@ -552,15 +557,17 @@ class OutboundRepository {
         AppException.errorWithMessage('Manifest number is required'),
       );
     }
-    return _requireToken((token) {
+    return _requireToken((token) async {
       final variants = _manifestQueryVariants(refs);
-      return outboundFirstSuccess(
+      final r = await outboundFirstSuccessWhere(
         variants
             .map(
               (q) => () => _api.getManifestDetailsQuery(token: token, query: q),
             )
             .toList(),
+        (data) => ManifestDetail.fromDynamic(data).hasContent,
       );
+      return _manifestResponseOrError(r, 'Manifest details not found');
     });
   }
 
@@ -608,7 +615,7 @@ class OutboundRepository {
   Future<APIResponse<dynamic>> manifestReport({
     required String startDate,
     required String endDate,
-    String? manifestNo,
+    required String manifestNo,
   }) =>
       _requireToken(
         (token) => _api.manifestReport(
@@ -632,15 +639,17 @@ class OutboundRepository {
         AppException.errorWithMessage('Manifest number is required'),
       );
     }
-    return _requireToken((token) {
+    return _requireToken((token) async {
       final variants = _manifestQueryVariants(refs);
-      return outboundFirstSuccess(
+      final r = await outboundFirstSuccessWhere(
         variants
             .map(
               (q) => () => _api.printManifestDataQuery(token: token, query: q),
             )
             .toList(),
+        (data) => ManifestDetail.fromDynamic(data).hasContent,
       );
+      return _manifestResponseOrError(r, 'Print data not found');
     });
   }
 
@@ -667,6 +676,24 @@ class OutboundRepository {
       }
     }
     return out;
+  }
+
+  static APIResponse<dynamic> _manifestResponseOrError(
+    APIResponse<dynamic> response,
+    String fallbackMessage,
+  ) {
+    return response.when(
+      success: (data) {
+        if (ManifestDetail.fromDynamic(data).hasContent) return response;
+        final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim();
+        return APIResponse.error(
+          AppException.errorWithMessage(
+            msg != null && msg.isNotEmpty ? msg : fallbackMessage,
+          ),
+        );
+      },
+      error: (_) => response,
+    );
   }
 
   // --- Linehaul ---

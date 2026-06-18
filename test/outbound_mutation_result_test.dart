@@ -31,5 +31,42 @@ void main() {
       expect(r.manifestId, '153');
       expect(r.linehaulId, '129');
     });
+
+    test('effectiveLinehaulRef uses trip_no when linehaul_id is 0', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'linehaul_id': 0,
+        'trip_no': 'LH1778841961',
+      });
+      expect(r.linehaulId, '0');
+      expect(r.tripNo, 'LH1778841961');
+      expect(r.effectiveLinehaulRef, 'LH1778841961');
+    });
+
+    test('effectiveLinehaulRef prefers trip_no over numeric linehaul_id', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'linehaul_id': 456,
+        'trip_no': 'LH1781776125',
+      });
+      expect(r.effectiveLinehaulRef, 'LH1781776125');
+    });
+
+    test('numericLinehaulIdForEdit returns assign id for editlinehaul', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'linehaul_id': 460,
+        'trip_no': 'LH1781778629',
+      });
+      expect(r.numericLinehaulIdForEdit, '460');
+    });
+
+    test('fromDynamic unwraps nested data object', () {
+      final r = OutboundMutationResult.fromDynamic({
+        'status': 'success',
+        'data': {
+          'linehaul_id': 0,
+          'trip_no': 'LH1778841961',
+        },
+      });
+      expect(r.effectiveLinehaulRef, 'LH1778841961');
+    });
   });
 }

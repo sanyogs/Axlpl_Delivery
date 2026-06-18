@@ -22,7 +22,12 @@ class ManifestBagRef {
         'code',
       ]),
       metalSealNo: OutboundDataParse.optionalString(json, 'metal_seal_no'),
-      grossWeight: OutboundDataParse.optionalString(json, 'gross_weight'),
+      grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'gross_weight',
+        'bag_weight',
+        'total_weight',
+        'weight',
+      ]),
     );
   }
 

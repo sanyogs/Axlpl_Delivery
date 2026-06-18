@@ -1295,13 +1295,17 @@ class ApiServices {
   Future<APIResponse> baggingReport({
     required String token,
     required String bagCode,
+    required String startDate,
+    required String endDate,
   }) async {
     return _api.getOutbound(
       baggingReportPoint,
       token: token,
-      query: {
-        'bag_code': bagCode.trim(),
-      },
+      query: OutboundApiParams.baggingReportQuery(
+        bagCode: bagCode,
+        startDate: startDate,
+        endDate: endDate,
+      ),
       appendPlatform: false,
     );
   }
@@ -1374,19 +1378,16 @@ class ApiServices {
     required String token,
     required String startDate,
     required String endDate,
-    String? manifestNo,
+    required String manifestNo,
   }) async {
-    final query = <String, dynamic>{
-      'start_date': startDate,
-      'end_date': endDate,
-    };
-    if (manifestNo != null && manifestNo.trim().isNotEmpty) {
-      query['manifest_no'] = manifestNo.trim();
-    }
     return _api.getOutbound(
       manifestReportPoint,
       token: token,
-      query: query,
+      query: OutboundApiParams.manifestReportQuery(
+        manifestNo: manifestNo,
+        startDate: startDate,
+        endDate: endDate,
+      ),
       contentType: ContentType.urlEncoded,
     );
   }

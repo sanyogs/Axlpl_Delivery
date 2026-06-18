@@ -23,6 +23,7 @@ class ManifestListView extends StatefulWidget {
 class _ManifestListViewState extends State<ManifestListView> {
   late final OutboundManifestController controller;
   late final OutboundBranchListController branchList;
+  final _detailSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -31,6 +32,22 @@ class _ManifestListViewState extends State<ManifestListView> {
     branchList = Get.find<OutboundBranchListController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.loadManifestList();
+    });
+  }
+
+  void _scrollToDetailIfNeeded() {
+    if (!controller.manifestListScrollToDetail.value) return;
+    controller.manifestListScrollToDetail.value = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _detailSectionKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          alignment: 0.05,
+        );
+      }
     });
   }
 
@@ -48,6 +65,10 @@ class _ManifestListViewState extends State<ManifestListView> {
       final selectedDetail = controller.manifestDetail.value;
       final resultTitle = controller.manifestListResultTitle.value.trim();
       final responseText = controller.lastResponseText.value.trim();
+
+      if (controller.manifestListScrollToDetail.value && selectedDetail != null) {
+        _scrollToDetailIfNeeded();
+      }
 
       return OutboundScreen(
         title: OutboundLabels.manifestListTitle,
@@ -149,12 +170,32 @@ class _ManifestListViewState extends State<ManifestListView> {
               ],
             ],
           ),
-          if (selectedDetail != null)
+          if (busy && selectedDetail == null)
             OutboundAdminSection(
               title: resultTitle.isEmpty
                   ? OutboundLabels.btnViewDetails
                   : resultTitle,
               children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  child: Center(
+                    child: CircularProgressIndicator(color: themes.darkCyanBlue),
+                  ),
+                ),
+              ],
+            ),
+          if (selectedDetail != null)
+            OutboundAdminSection(
+              key: _detailSectionKey,
+              title: resultTitle.isEmpty
+                  ? OutboundLabels.btnViewDetails
+                  : resultTitle,
+              children: [
+                if (busy)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: LinearProgressIndicator(color: themes.darkCyanBlue),
+                  ),
                 OutboundManifestDetailBody(
                   detail: selectedDetail,
                   compact: true,

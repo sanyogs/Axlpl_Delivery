@@ -14,6 +14,7 @@ class ManifestDetail {
     this.updatedAt,
     this.originBranchName,
     this.destinationBranchName,
+    this.totalWeight,
     this.bags = const [],
     this.shipments = const [],
   });
@@ -27,6 +28,7 @@ class ManifestDetail {
   final String? updatedAt;
   final String? originBranchName;
   final String? destinationBranchName;
+  final String? totalWeight;
   final List<ManifestBagRef> bags;
   final List<ManifestShipmentRef> shipments;
 
@@ -39,12 +41,14 @@ class ManifestDetail {
   String? get status => null;
 
   bool get hasContent {
-    return (id?.trim().isNotEmpty ?? false) ||
-        (manifestNo?.trim().isNotEmpty ?? false) ||
-        (originBranch?.trim().isNotEmpty ?? false) ||
-        (destinationBranch?.trim().isNotEmpty ?? false) ||
-        bags.isNotEmpty ||
-        shipments.isNotEmpty;
+    if (manifestNo?.trim().isNotEmpty ?? false) return true;
+    if (bags.isNotEmpty || shipments.isNotEmpty) return true;
+    if (id?.trim().isNotEmpty ?? false) {
+      final hasOrigin = originBranch?.trim().isNotEmpty ?? false;
+      final hasDest = destinationBranch?.trim().isNotEmpty ?? false;
+      return hasOrigin && hasDest;
+    }
+    return false;
   }
 
   factory ManifestDetail.fromJson(Map<String, dynamic> json) {
@@ -80,6 +84,11 @@ class ManifestDetail {
         'destination_sector_name',
         'destination_sector',
         'destinationBranchName',
+      ]),
+      totalWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'total_weight',
+        'gross_weight',
+        'total_gross_weight',
       ]),
       bags: ManifestBagRef.listFromDynamic(json['bags']),
       shipments: ManifestShipmentRef.listFromDynamic(json['shipments']),

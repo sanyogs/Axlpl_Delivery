@@ -8,18 +8,29 @@
       "program": "lib/main.dart"
     },
     {
+      "name": "Flutter (Pixel 7 — network)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "flutterMode": "debug",
+      "preLaunchTask": "adb: wireless connect",
+      "toolArgs": ["--dart-define=API_HTTP_LOG=true"]
+    },
+    {
       "name": "Flutter (Pixel 7)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
-      "deviceId": "33091FDH2006CG",
       "flutterMode": "debug",
+      "preLaunchTask": "adb: wireless connect",
       "toolArgs": ["--dart-define=API_HTTP_LOG=true"]
     },
     {
-      "name": "Flutter (attach)",
+      "name": "Flutter (Pixel 7 — attach)",
       "request": "attach",
-      "type": "dart"
+      "type": "dart",
+      "preLaunchTask": "adb: wireless connect",
+      "toolArgs": ["--dart-define=API_HTTP_LOG=true"]
     }
   ]
 }

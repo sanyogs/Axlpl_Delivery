@@ -43,9 +43,15 @@ class ManifestShipmentRef {
         'number_of_parcel',
         'no_of_package',
       ]),
-      grossWeight: OutboundDataParse.optionalString(json, 'gross_weight'),
-      volumetricWeight:
-          OutboundDataParse.optionalString(json, 'volumetric_weight'),
+      grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'gross_weight',
+        'total_weight',
+        'weight',
+      ]),
+      volumetricWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'volumetric_weight',
+        'vol_weight',
+      ]),
     );
   }
 

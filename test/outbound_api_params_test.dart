@@ -35,16 +35,27 @@ void main() {
     expect(body['user_id'], '148');
   });
 
-  test('updateLinehaulStatusBody includes linehaul_id and trip_no', () {
+  test('updateLinehaulStatusBody uses trip_no for LH refs (Postman)', () {
     final body = OutboundApiParams.updateLinehaulStatusBody(
       linehaulRef: 'LH1779101374',
       status: 'ARRIVED',
       userId: '148',
       branchId: '75',
     );
-    expect(body['linehaul_id'], 'LH1779101374');
+    expect(body.containsKey('linehaul_id'), isFalse);
     expect(body['trip_no'], 'LH1779101374');
     expect(body['status'], 'ARRIVED');
+  });
+
+  test('updateLinehaulStatusBody uses linehaul_id for numeric refs', () {
+    final body = OutboundApiParams.updateLinehaulStatusBody(
+      linehaulRef: '129',
+      status: 'ARRIVED',
+      userId: '148',
+      branchId: '75',
+    );
+    expect(body['linehaul_id'], '129');
+    expect(body.containsKey('trip_no'), isFalse);
   });
 
   test('deleteLinehaulBody includes trip and airway refs when available', () {
@@ -66,7 +77,32 @@ void main() {
     expect(body['trip_no'], 'LH1779101374');
   });
 
-  test('createManifestBody includes transport_mode when set', () {
+  test('editLinehaulBody mirrors LH ref as trip_no', () {
+    final body = OutboundApiParams.editLinehaulBody(
+      linehaulId: 'LH1778841961',
+      vehicleNo: 'UP78AB1234',
+    );
+    expect(body['linehaul_id'], 'LH1778841961');
+    expect(body['trip_no'], 'LH1778841961');
+    expect(body['vehicle_no'], 'UP78AB1234');
+  });
+
+  test('createManifestBody matches Sarvesh — no transport_mode for Surface', () {
+    final body = OutboundApiParams.createManifestBody(
+      bagCodesCsv: 'BAG20260518152744831',
+      originBranchId: '37',
+      destinationBranchId: '75',
+      userId: '1',
+      transportMode: 'Surface',
+    );
+    expect(body.containsKey('transport_mode'), isFalse);
+    expect(body['bag_codes'], 'BAG20260518152744831');
+    expect(body['origin_branch_id'], '37');
+    expect(body['destination_branch_id'], '75');
+    expect(body['user_id'], '1');
+  });
+
+  test('createManifestBody includes transport_mode for Airway only', () {
     final body = OutboundApiParams.createManifestBody(
       bagCodesCsv: 'BAG20260518152744831',
       originBranchId: '37',
@@ -76,6 +112,28 @@ void main() {
     );
     expect(body['transport_mode'], 'Airway');
     expect(body['bag_codes'], 'BAG20260518152744831');
+  });
+
+  test('baggingReportQuery matches Sarvesh curl params', () {
+    final q = OutboundApiParams.baggingReportQuery(
+      bagCode: 'BAG20260518152744831',
+      startDate: '2026-03-01',
+      endDate: '2026-05-18',
+    );
+    expect(q['bag_code'], 'BAG20260518152744831');
+    expect(q['start_date'], '2026-03-01');
+    expect(q['end_date'], '2026-05-18');
+  });
+
+  test('manifestReportQuery uses manifest_no', () {
+    final q = OutboundApiParams.manifestReportQuery(
+      manifestNo: 'MUM094',
+      startDate: '2026-05-01',
+      endDate: '2026-05-18',
+    );
+    expect(q['manifest_no'], 'MUM094');
+    expect(q['start_date'], '2026-05-01');
+    expect(q['end_date'], '2026-05-18');
   });
 
   test('combineDateTime formats editlinehaul datetime', () {

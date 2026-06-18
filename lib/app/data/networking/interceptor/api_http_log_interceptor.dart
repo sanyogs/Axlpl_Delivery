@@ -27,6 +27,7 @@ class ApiHttpLogInterceptor extends Interceptor {
   final int maxResponseChars;
 
   static const String _logName = 'ApiHttp';
+  static const String _urlLogName = 'ApiUrl';
 
   static Map<String, dynamic> _sanitizeHeaders(Map<String, dynamic> h) {
     final out = <String, dynamic>{};
@@ -85,12 +86,59 @@ class ApiHttpLogInterceptor extends Interceptor {
     return data;
   }
 
-  /// Writes to DevTools (`ApiHttp`) and `flutter run` console so every call is visible.
-  static void _emit(String message, {int level = 800}) {
-    developer.log(message, name: _logName, level: level);
+  /// Writes to DevTools (`ApiHttp` / `ApiUrl`) and Debug Console so every call is visible.
+  static void _emit(String message, {int level = 800, String? name}) {
+    final logName = name ?? _logName;
+    developer.log(message, name: logName, level: level);
     if (kDebugMode || _logFromDefine) {
-      debugPrint('[$_logName] $message');
+      debugPrint('[$logName] $message');
     }
+  }
+
+  static void _emitUrl(String method, Uri uri) {
+    final line = '▶ $method $uri';
+    _emit(line, name: _urlLogName);
+  }
+
+  static String _shellQuote(String value) =>
+      "'${value.replaceAll("'", "'\\''")}'";
+
+  /// Reproducible curl for the outbound/debug console (secrets redacted).
+  static String toCurl(RequestOptions options) {
+    final parts = <String>['curl -s -X ${options.method.toUpperCase()}'];
+    final headers = _sanitizeHeaders(
+      options.headers.map((k, v) => MapEntry(k, v?.toString() ?? '')),
+    );
+    headers.forEach((k, v) {
+      parts.add('-H ${_shellQuote('$k: $v')}');
+    });
+
+    final data = options.data;
+    if (data is FormData) {
+      for (final field in data.fields) {
+        final value = _isSensitiveKey(field.key)
+            ? '***(redacted)'
+            : field.value;
+        parts.add("--form ${_shellQuote('${field.key}=$value')}");
+      }
+      for (final file in data.files) {
+        parts.add("--form ${_shellQuote('${file.key}=@<file>')}");
+      }
+    } else if (data is Map) {
+      for (final entry in data.entries) {
+        final key = entry.key.toString();
+        final raw = entry.value;
+        final value = _isSensitiveKey(key)
+            ? '***(redacted)'
+            : raw?.toString() ?? '';
+        parts.add('--data-urlencode ${_shellQuote('$key=$value')}');
+      }
+    } else if (data != null) {
+      parts.add('--data-urlencode ${_shellQuote(data.toString())}');
+    }
+
+    parts.add(_shellQuote(options.uri.toString()));
+    return parts.join(' \\\n  ');
   }
 
   static String _formatPayload(dynamic data, {required int maxChars}) {
@@ -118,11 +166,13 @@ class ApiHttpLogInterceptor extends Interceptor {
       super.onRequest(options, handler);
       return;
     }
+    _emitUrl(options.method, options.uri);
     final buf = StringBuffer()
       ..writeln('── REQUEST ${options.method} ${options.uri}')
       ..writeln('headers: ${_formatPayload(_sanitizeHeaders(options.headers.map((k, v) => MapEntry(k, v?.toString() ?? ''))), maxChars: 8000)}')
       ..writeln('query: ${_formatPayload(options.queryParameters, maxChars: 8000)}')
-      ..writeln('data: ${_formatPayload(_sanitizeData(options.data), maxChars: 16000)}');
+      ..writeln('data: ${_formatPayload(_sanitizeData(options.data), maxChars: 16000)}')
+      ..writeln('curl:\n${toCurl(options)}');
     _emit(buf.toString());
     handler.next(options);
   }

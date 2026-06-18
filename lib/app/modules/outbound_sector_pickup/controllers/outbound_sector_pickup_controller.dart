@@ -319,7 +319,7 @@ class OutboundSectorPickupController extends GetxController {
                 ? manifest.manifestNo!.trim()
                 : manifest.id?.trim();
             if (code == null || code.isEmpty) continue;
-            final mr = await _repo.fetchManifestDetails(code);
+            final mr = await _repo.fetchManifestDetailsByRefs([code]);
             mr.when(
               success: (manifestData) {
                 final md = ManifestDetail.fromDynamic(manifestData);

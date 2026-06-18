@@ -33,3 +33,8 @@ doc/api/
 .idea
 __pycache__/
 .venv_icons/
+.adb_wireless.env
+.adb_wireless_watch.pid
+.adb_wireless_watch.log
+.vscode/pixel7.device.id
+.vscode/flutter_vm_service.uri

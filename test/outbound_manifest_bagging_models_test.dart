@@ -74,19 +74,88 @@ void main() {
     expect(detail.shipments.first.id, '825411779084407');
   });
 
-  test('parses live listmanifests row', () {
-    const sample = {
-      'id': '205',
-      'manifest_no': 'MUM094',
-      'origin_branch': '37',
-      'destination_branch': '75',
-      'created_at': '2026-05-19 14:59:18',
-    };
+    test('parses live listmanifests row', () {
+      const sample = {
+        'id': '205',
+        'manifest_no': 'MUM094',
+        'origin_branch': '37',
+        'destination_branch': '75',
+        'created_at': '2026-05-19 14:59:18',
+      };
 
-    final row = OutboundManifestRow.fromJson(sample);
-    expect(row.manifestNo, 'MUM094');
-    expect(row.originBranch, '37');
-  });
+      final row = OutboundManifestRow.fromJson(sample);
+      expect(row.manifestNo, 'MUM094');
+      expect(row.originBranch, '37');
+    });
+
+    test('parses MUM208 manifest with shipment total_weight (live API)', () {
+      const sample = {
+        'id': '381',
+        'manifest_no': 'MUM208',
+        'origin_branch': '47',
+        'destination_branch': '75',
+        'created_by': '187',
+        'created_at': '2026-06-08 22:45:01',
+        'updated_at': '2026-06-08 22:45:01',
+        'origin_branch_name': 'Vijaywada',
+        'destination_branch_name': 'Mumbai',
+        'bags': [
+          {
+            'id': '379',
+            'bag_code': 'BAG20260608224439',
+            'metal_seal_no': 'VAL0074004 VGA TO MUM',
+          },
+        ],
+        'shipments': [
+          {
+            'id': '188501780927776',
+            'shipment_invoice_no': 'NRLV/KI/2627/029',
+            'total_weight': '1398',
+            'no_of_package': '1',
+          },
+          {
+            'id': '797511780931214',
+            'shipment_invoice_no': 'SAI/123',
+            'total_weight': '100',
+            'no_of_package': '1',
+          },
+        ],
+      };
+
+      final detail = ManifestDetail.fromDynamic(sample);
+      expect(detail.manifestNo, 'MUM208');
+      expect(detail.createdAt, '2026-06-08 22:45:01');
+      expect(detail.bags, hasLength(1));
+      expect(detail.bags.first.grossWeight, isNull);
+      expect(detail.shipments[0].grossWeight, '1398');
+      expect(detail.shipments[1].grossWeight, '100');
+      expect(detail.hasContent, isTrue);
+
+      final totalFromShipments = detail.shipments.fold<double>(
+        0,
+        (sum, s) => sum + (double.tryParse(s.grossWeight ?? '') ?? 0),
+      );
+      expect(totalFromShipments, 1498);
+    });
+
+    test('parses printmanifestdata MUM075 payload', () {
+      const sample = {
+        'id': '171',
+        'manifest_no': 'MUM075',
+        'origin_branch': '75',
+        'destination_branch': '75',
+        'created_by': '81',
+        'created_at': '2026-05-15 15:47:10',
+        'updated_at': '2026-05-15 15:47:10',
+        'origin_branch_name': 'Mumbai',
+        'destination_branch_name': 'Mumbai',
+        'shipments': [],
+      };
+
+      final detail = ManifestDetail.fromDynamic(sample);
+      expect(detail.manifestNo, 'MUM075');
+      expect(detail.hasContent, isTrue);
+    });
 
   test('parses live manifestreport object', () {
     const sample = {

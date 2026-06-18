@@ -78,9 +78,8 @@ class _ManifestReportViewState extends State<ManifestReportView> {
                 label: OutboundLabels.manifestCode,
                 child: OutboundField(
                   controller: controller.reportManifestCodeController,
-                  hintText: OutboundLabels.manifestCodeOptional,
-                  keyboardType: TextInputType.number,
-                  prefixIcon: const Icon(Icons.numbers_outlined),
+                  hintText: OutboundLabels.manifestCode,
+                  prefixIcon: const Icon(Icons.tag_outlined),
                 ),
               ),
               OutboundPrimaryButton(

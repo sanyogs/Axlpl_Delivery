@@ -16,6 +16,7 @@ class BagDetail {
     this.updatedAt,
     this.shipmentCount,
     this.manifestStatus,
+    this.grossWeight,
     this.items = const [],
   });
 
@@ -31,6 +32,7 @@ class BagDetail {
   final String? updatedAt;
   final int? shipmentCount;
   final String? manifestStatus;
+  final String? grossWeight;
   final List<BagDetailItem> items;
 
   /// Alias for numeric `id` when callers expect `bag_id`.
@@ -71,11 +73,18 @@ class BagDetail {
     'id',
   ];
 
-  /// Manifest / bagging scans often use M/Bag values stored as `metal_seal_no`.
+  /// Prefer server `bag_code` (e.g. BAG…) for table display and mutations.
   static String? resolveBagCode(
     Map<String, dynamic> json, {
     String? requestedBagCode,
   }) {
+    final explicit = OutboundDataParse.firstNonEmptyString(json, _bagCodeKeys);
+    if (explicit != null &&
+        explicit.isNotEmpty &&
+        explicit.toUpperCase().startsWith('BAG')) {
+      return explicit;
+    }
+
     final requested = requestedBagCode?.trim();
     if (requested != null && requested.isNotEmpty) {
       final requestedLower = requested.toLowerCase();
@@ -84,13 +93,12 @@ class BagDetail {
         if (value != null &&
             value.isNotEmpty &&
             value.toLowerCase() == requestedLower) {
-          return requested;
+          return explicit ?? requested;
         }
       }
     }
 
-    final bagCode = OutboundDataParse.firstNonEmptyString(json, _bagCodeKeys);
-    if (bagCode != null) return bagCode;
+    if (explicit != null) return explicit;
 
     return OutboundDataParse.firstNonEmptyString(json, _metalSealKeys);
   }
@@ -122,6 +130,7 @@ class BagDetail {
         'destination_sector',
         'destination_branch_name',
         'destination_branch',
+        'destination_city_name',
         'destinationSectorName',
       ]),
       createdBy: OutboundDataParse.optionalString(json, 'created_by'),
@@ -132,6 +141,10 @@ class BagDetail {
       updatedAt: OutboundDataParse.optionalString(json, 'updated_at'),
       shipmentCount: OutboundDataParse.optionalInt(json, 'shipment_count'),
       manifestStatus: OutboundDataParse.optionalString(json, 'manifest_status'),
+      grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'gross_weight',
+        'total_weight',
+      ]),
       items: BagDetailItem.listFromDynamic(json['items']),
     );
   }
@@ -287,6 +300,7 @@ class BagDetail {
         if (updatedAt != null) 'updated_at': updatedAt,
         if (shipmentCount != null) 'shipment_count': shipmentCount,
         if (manifestStatus != null) 'manifest_status': manifestStatus,
+        if (grossWeight != null) 'gross_weight': grossWeight,
         'items': items.map((e) => e.toJson()).toList(),
       };
 
@@ -306,8 +320,9 @@ class BagDetail {
     if (shipmentCount != null) {
       lines.add('Shipments in bag: $shipmentCount');
     }
-    add('Origin branch', originBranchId);
-    add('Destination sector', destinationSectorId);
+    add('Origin branch', originBranchName ?? originBranchId);
+    add('Destination', destinationSectorName ?? destinationSectorId);
+    add('Gross weight', grossWeight);
     add('Created', createdAt);
     add('Updated', updatedAt);
     for (final item in items) {

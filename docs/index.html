@@ -1,36 +1,408 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Outbound API Bugs — services_v8</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outbound API — Not Working (Live Curls)</title>
 <style>
-:root{--bg:#111;--card:#1a1a1a;--text:#e8e8e8;--muted:#999;--red:#e55;--green:#5c5;--border:#333;--code:#0d0d0d}
+:root {
+  --bg:#0f1419; --card:#1a2332; --head:#243044; --text:#e7ecf3; --muted:#8b9cb3;
+  --accent:#3d9eff; --err:#ff6b6b; --warn:#ffb347; --border:#2d3a4f;
+  --mono:ui-monospace,Menlo,Consolas,monospace; --sans:system-ui,sans-serif;
+}
 *{box-sizing:border-box}
-body{margin:0;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg);color:var(--text)}
-.wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
-h1{font:600 18px/1.3 system-ui,sans-serif;margin:0 0 4px}
-h2{font:600 14px/1.3 system-ui,sans-serif;margin:24px 0 12px;color:var(--green)}
-.sub{color:var(--muted);font:12px system-ui,sans-serif;margin-bottom:24px}
-.bug{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);margin:0 0 16px;padding:12px 14px}
-.hdr{margin-bottom:8px;font:600 13px system-ui,sans-serif}
-.num{color:var(--red);margin-right:6px}
-.prob{margin:6px 0;font:13px system-ui,sans-serif}
-.fix{margin:6px 0 10px;color:var(--green);font:13px system-ui,sans-serif}
-pre{margin:6px 0;padding:8px 10px;background:var(--code);border:1px solid var(--border);overflow:auto;font-size:11px;white-space:pre-wrap;word-break:break-all}
-pre.cmd{color:#8cf}
-pre.out{color:#ccc}
-ul.fixed{color:var(--green);font:13px system-ui,sans-serif;padding-left:20px}
-footer{margin-top:32px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);font:11px system-ui,sans-serif}
+body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 60px}
+h1{margin:0 0 6px;font-size:22px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 8px}
+.apis{color:var(--muted);font-size:12px;margin-bottom:28px}
+.apis code{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden}
+.card header{display:flex;gap:14px;padding:16px 18px;background:var(--head);border-bottom:1px solid var(--border);align-items:flex-start}
+.num{font:700 15px var(--mono);color:var(--err);min-width:24px}
+.card h2{margin:0 0 4px;font-size:16px}
+.card h2 code{color:var(--accent);font-family:var(--mono)}
+.summary{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.http{font:600 12px var(--mono)}
+.http.err{color:var(--err)}
+.http.warn{color:var(--warn)}
+.http.ok{color:#3dd68c}
+.note{margin:0;padding:12px 18px;font-size:13px;color:var(--warn);background:#ffb34711;border-bottom:1px solid var(--border)}
+.card h3{margin:14px 18px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+pre{margin:0 18px 12px;padding:12px;background:#0a0e14;border:1px solid var(--border);border-radius:8px;
+  font:11px/1.45 var(--mono);overflow:auto;max-height:220px;white-space:pre-wrap;word-break:break-all}
+pre.req{color:#8ec8ff}
+pre.res{color:#c5d4e8}
+.copy{margin:0 18px 16px;font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);
+  background:var(--head);color:var(--text);cursor:pointer}
+.copy:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.hidden{position:absolute;left:-9999px}
+footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
 </style>
-</head><body><div class="wrap">
-<h1>Outbound API Bugs</h1>
-<p class="sub">services_v8 · api.php?request= · updated 2026-06-09 after Sarvesh reply</p>
-<h2>Fixed (Sarvesh reply — verified)</h2>
-<ul class="fixed"><li>manifestreport — use manifest_no + start_date + end_date (Sarvesh 2026-06-09, HTTP 200)</li><li>getbagdetails items[] — enriched with sender, receiver, city, weight, pcs (HTTP 200)</li><li>getlinehauldetails — mawb_no=58976412530 works (HTTP 200)</li><li>getmanifestdetails — manifest_code=MUM208 returns bags + shipments (HTTP 200)</li><li>editlinehaul — POST urlencoded (HTTP 200)</li><li>deletelinehaul — POST urlencoded linehaul_id (HTTP 200)</li></ul><article class="bug"><div class="hdr"><span class="num">#1</span> <code>getlinehauldetails</code></div><p class="prob"><b>Bug:</b> Only mawb_no works. trip_no and linehaul_id return 400. Use mawb_no from listlinehauls.</p><p class="fix"><b>Fix:</b> Document mawb_no as required param (Sarvesh confirmed mawb_no curl works).</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&trip_no=LH1780998599" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 400
-{"status":"fail","message":"Invalid MAWB No"}</pre><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&mawb_no=58976412530" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 200
-{"status":"success","message":"Linehaul details retrieved successfully"}</pre></article><article class="bug"><div class="hdr"><span class="num">#2</span> <code>getmanifestdetails</code></div><p class="prob"><b>Bug:</b> manifest_code=MUM075: shipments[] empty; bags duplicated 3x.</p><p class="fix"><b>Fix:</b> Populate shipments[]. Deduplicate bags[].</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&manifest_code=MUM075" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 200
-"shipments":[] — bags duplicated</pre></article><article class="bug"><div class="hdr"><span class="num">#3</span> <code>getpickuplist</code></div><p class="prob"><b>Bug:</b> No origin_hub, dest_hub, flight_info — only hub_id.</p><p class="fix"><b>Fix:</b> Add hub names + flight to pickup API or getpickupdetail.</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=getpickuplist" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 200
-row keys: id, mawb_no, hub_id only</pre></article><article class="bug"><div class="hdr"><span class="num">#4</span> <code>createmanifest</code></div><p class="prob"><b>Bug:</b> transport_mode=Airway → HTTP 500.</p><p class="fix"><b>Fix:</b> Add/document transport_mode field.</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest + transport_mode=Airway" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 500
-Failed to insert manifest record</pre></article><article class="bug"><div class="hdr"><span class="num">#5</span> <code>getpickupdetail</code></div><p class="prob"><b>Bug:</b> No pickup detail endpoint. HTTP 404.</p><p class="fix"><b>Fix:</b> Add getpickupdetail?pickup_id=</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=getpickupdetail&pickup_id=286" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 404
-(not found)</pre></article><article class="bug"><div class="hdr"><span class="num">#6</span> <code>listmanifests</code></div><p class="prob"><b>Bug:</b> API returns max 50 rows with no pagination params.</p><p class="fix"><b>Fix:</b> Add page/limit or return total_count.</p><pre class="cmd">curl -sS -G "https://my.axlpl.com/messenger/services_v8/api.php?request=listmanifests (no branch_id)" -H "Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7" -H "X-App-Version: 22.1.0" -H "X-App-Platform: ios"</pre><pre class="out">HTTP 200
-count=50 (hard cap suspected)</pre></article><footer>6 open · editlinehaul + deletelinehaul verified 2026-06-09 · see docs/outbound_sarvesh_qa_verified.md</footer></div></body></html>
+</head>
+<body>
+<div class="wrap">
+  <h1>Outbound APIs — not working</h1>
+  <p class="sub">Live curls against production · verified 2026-06-18 09:59 UTC</p>
+  <p class="apis">APIs with issues: <code>createmanifest</code>, <code>editlinehaul</code>, <code>getlinehauldetails</code>, <code>getmanifestdetails</code>, <code>getpickuplist</code>, <code>listmanifests</code>, <code>manifestreport</code></p>
+  <p class="sub">Below: exact request sent and actual response received. No success or incomplete/error data.</p>
+  
+<article class="card" id="getlinehauldetails_trip_no">
+  <header>
+    <span class="num">1</span>
+    <div>
+      <h2><code>getlinehauldetails</code></h2>
+      <p class="summary">trip_no lookup — error response</p>
+      <span class="http err">HTTP 404</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getlinehauldetails&#x27; \
+  --data-urlencode &#x27;trip_no=LH1780998599&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-1">Copy curl</button>
+  <textarea id="curl-1" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getlinehauldetails&#x27; \
+  --data-urlencode &#x27;trip_no=LH1780998599&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Linehaul not found&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 404
+}</pre>
+</article>
+
+<article class="card" id="editlinehaul_lh_trip">
+  <header>
+    <span class="num">2</span>
+    <div>
+      <h2><code>editlinehaul</code></h2>
+      <p class="summary">linehaul_id=LH… trip code — error response</p>
+      <span class="http err">HTTP 400</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=editlinehaul&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  --data-urlencode &#x27;linehaul_id=LH1781776755&#x27; \
+  --data-urlencode &#x27;vehicle_no=MH01AB1234&#x27; \
+  --data-urlencode &#x27;driver_name=Test&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-2">Copy curl</button>
+  <textarea id="curl-2" class="hidden" readonly>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=editlinehaul&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -H &#x27;Content-Type: application/x-www-form-urlencoded&#x27; \
+  --data-urlencode &#x27;linehaul_id=LH1781776755&#x27; \
+  --data-urlencode &#x27;vehicle_no=MH01AB1234&#x27; \
+  --data-urlencode &#x27;driver_name=Test&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;linehaul_id is required&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 400
+}</pre>
+</article>
+
+<article class="card" id="getmanifestdetails_MUM075">
+  <header>
+    <span class="num">3</span>
+    <div>
+      <h2><code>getmanifestdetails</code></h2>
+      <p class="summary">manifest_code=MUM075 — success but shipments[] empty</p>
+      <span class="http warn">HTTP 200 — incomplete data</span>
+    </div>
+  </header>
+  <p class="note">HTTP 200 / status success — but shipments[] is empty while bags[] has data.</p>
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getmanifestdetails&#x27; \
+  --data-urlencode &#x27;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-3">Copy curl</button>
+  <textarea id="curl-3" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getmanifestdetails&#x27; \
+  --data-urlencode &#x27;manifest_code=MUM075&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;message&quot;: &quot;Manifest details retrieved successfully&quot;,
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;171&quot;,
+    &quot;manifest_no&quot;: &quot;MUM075&quot;,
+    &quot;bags&quot;: [
+      {
+        &quot;bag_code&quot;: &quot;BAG20260515154014&quot;
+      }
+    ],
+    &quot;debug_joined_shipments_count&quot;: &quot;0&quot;,
+    &quot;shipments&quot;: []
+  }
+}</pre>
+</article>
+
+<article class="card" id="manifestreport_dates">
+  <header>
+    <span class="num">4</span>
+    <div>
+      <h2><code>manifestreport</code></h2>
+      <p class="summary">start_date + end_date only — error response</p>
+      <span class="http err">HTTP 400</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-4">Copy curl</button>
+  <textarea id="curl-4" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Manifest ID required&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 400
+}</pre>
+</article>
+
+<article class="card" id="manifestreport_id">
+  <header>
+    <span class="num">5</span>
+    <div>
+      <h2><code>manifestreport</code></h2>
+      <p class="summary">manifest_id + dates — error response</p>
+      <span class="http err">HTTP 400</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;manifest_id=382&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-5">Copy curl</button>
+  <textarea id="curl-5" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;manifest_id=382&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Manifest ID required&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 400
+}</pre>
+</article>
+
+<article class="card" id="manifestreport_code">
+  <header>
+    <span class="num">6</span>
+    <div>
+      <h2><code>manifestreport</code></h2>
+      <p class="summary">manifest_code + dates — error response</p>
+      <span class="http err">HTTP 400</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;manifest_code=HYD010&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-6">Copy curl</button>
+  <textarea id="curl-6" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=manifestreport&#x27; \
+  --data-urlencode &#x27;manifest_code=HYD010&#x27; \
+  --data-urlencode &#x27;start_date=2026-01-01&#x27; \
+  --data-urlencode &#x27;end_date=2026-06-09&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Manifest ID required&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 400
+}</pre>
+</article>
+
+<article class="card" id="listmanifests">
+  <header>
+    <span class="num">7</span>
+    <div>
+      <h2><code>listmanifests</code></h2>
+      <p class="summary">no branch_id — only 50 rows returned</p>
+      <span class="http warn">HTTP 200 — incomplete data</span>
+    </div>
+  </header>
+  <p class="note">HTTP 200 / status success — but response is capped at 50 rows; manifests beyond that are not returned.</p>
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=listmanifests&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-7">Copy curl</button>
+  <textarea id="curl-7" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=listmanifests&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{&quot;status&quot;:&quot;success&quot;,&quot;message&quot;:&quot;Manifests retrieved successfully&quot;,&quot;data&quot;:[...50 items...]}</pre>
+</article>
+
+<article class="card" id="createmanifest">
+  <header>
+    <span class="num">8</span>
+    <div>
+      <h2><code>createmanifest</code></h2>
+      <p class="summary">create manifest — error response</p>
+      <span class="http err">HTTP 500</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -F &#x27;bag_codes=BAG20260529164714292&#x27; \
+  -F &#x27;origin_branch_id=75&#x27; \
+  -F &#x27;destination_branch_id=75&#x27; \
+  -F &#x27;user_id=148&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-8">Copy curl</button>
+  <textarea id="curl-8" class="hidden" readonly>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -F &#x27;bag_codes=BAG20260529164714292&#x27; \
+  -F &#x27;origin_branch_id=75&#x27; \
+  -F &#x27;destination_branch_id=75&#x27; \
+  -F &#x27;user_id=148&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Failed to insert manifest record&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 500
+}</pre>
+</article>
+
+<article class="card" id="createmanifest_mode">
+  <header>
+    <span class="num">9</span>
+    <div>
+      <h2><code>createmanifest</code></h2>
+      <p class="summary">create manifest with transport_mode=Airway — error response</p>
+      <span class="http err">HTTP 500</span>
+    </div>
+  </header>
+  
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -F &#x27;bag_codes=BAG20260529164714292&#x27; \
+  -F &#x27;origin_branch_id=75&#x27; \
+  -F &#x27;destination_branch_id=75&#x27; \
+  -F &#x27;user_id=148&#x27; \
+  -F &#x27;transport_mode=Airway&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-9">Copy curl</button>
+  <textarea id="curl-9" class="hidden" readonly>curl -sS -X POST &#x27;https://my.axlpl.com/messenger/services_v8/api.php?request=createmanifest&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.3.0&#x27; \
+  -F &#x27;bag_codes=BAG20260529164714292&#x27; \
+  -F &#x27;origin_branch_id=75&#x27; \
+  -F &#x27;destination_branch_id=75&#x27; \
+  -F &#x27;user_id=148&#x27; \
+  -F &#x27;transport_mode=Airway&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">{
+  &quot;status&quot;: &quot;fail&quot;,
+  &quot;message&quot;: &quot;Failed to insert manifest record&quot;,
+  &quot;data&quot;: [],
+  &quot;error_code&quot;: 500
+}</pre>
+</article>
+
+<article class="card" id="getpickuplist">
+  <header>
+    <span class="num">10</span>
+    <div>
+      <h2><code>getpickuplist</code></h2>
+      <p class="summary">pickup list — duplicate id in response</p>
+      <span class="http warn">HTTP 200 — incomplete data</span>
+    </div>
+  </header>
+  <p class="note">HTTP 200 / status success — but id=319 appears twice in data[] with different origin_hub.</p>
+  <h3>Request (curl)</h3>
+  <pre class="req">curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getpickuplist&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</pre>
+  <button type="button" class="copy" data-target="curl-10">Copy curl</button>
+  <textarea id="curl-10" class="hidden" readonly>curl -sS -G &#x27;https://my.axlpl.com/messenger/services_v8/api.php&#x27; \
+  --data-urlencode &#x27;request=getpickuplist&#x27; \
+  -H &#x27;Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7&#x27; \
+  -H &#x27;X-App-Version: 22.1.0&#x27; \
+  -H &#x27;X-App-Platform: ios&#x27;</textarea>
+  <h3>Response</h3>
+  <pre class="res">... &quot;id&quot;:&quot;319&quot;,&quot;mawb_no&quot;:&quot;31229565141&quot;,&quot;origin_hub&quot;:&quot;Vijaywada&quot; ...
+... &quot;id&quot;:&quot;319&quot;,&quot;mawb_no&quot;:&quot;31229565141&quot;,&quot;origin_hub&quot;:&quot;Hyderabad&quot; ...</pre>
+</article>
+  <footer>Generated 2026-06-18 10:25 UTC · Regenerate: <code>python3 docs/generate_bug_index.py</code></footer>
+</div>
+<script>
+document.querySelectorAll('.copy').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const ta = document.getElementById(btn.dataset.target);
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(() => {
+      btn.textContent = 'Copied';
+      setTimeout(() => btn.textContent = 'Copy curl', 1200);
+    });
+  });
+});
+</script>
+</body>
+</html>

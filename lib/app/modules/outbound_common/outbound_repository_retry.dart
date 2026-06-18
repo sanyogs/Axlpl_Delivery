@@ -5,11 +5,19 @@ import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 Future<APIResponse<dynamic>> outboundFirstSuccess(
   List<Future<APIResponse<dynamic>> Function()> attempts,
 ) async {
+  return outboundFirstSuccessWhere(attempts, (_) => true);
+}
+
+/// Tries API calls in order; returns first success whose payload passes [accept].
+Future<APIResponse<dynamic>> outboundFirstSuccessWhere(
+  List<Future<APIResponse<dynamic>> Function()> attempts,
+  bool Function(dynamic data) accept,
+) async {
   APIResponse<dynamic>? last;
   for (final attempt in attempts) {
     final r = await attempt();
     last = r;
-    final ok = r.when(success: (_) => true, error: (_) => false);
+    final ok = r.when(success: accept, error: (_) => false);
     if (ok) return r;
   }
   return last ??

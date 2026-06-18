@@ -1,4 +1,5 @@
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 
 /// Parsed inner `data` from outbound POST success payloads (create bag, manifest, etc.).
 class OutboundMutationResult {
@@ -66,8 +67,16 @@ class OutboundMutationResult {
 
   factory OutboundMutationResult.fromDynamic(dynamic data) {
     final map = OutboundDataParse.asStringKeyedMap(data);
-    if (map != null) return OutboundMutationResult.fromJson(map);
-    return OutboundMutationResult(raw: data);
+    if (map == null) return OutboundMutationResult(raw: data);
+    final nested = OutboundDataParse.asStringKeyedMap(map['data']);
+    if (nested != null &&
+        (nested.containsKey('linehaul_id') ||
+            nested.containsKey('trip_no') ||
+            nested.containsKey('bag_id') ||
+            nested.containsKey('manifest_id'))) {
+      return OutboundMutationResult.fromJson(nested);
+    }
+    return OutboundMutationResult.fromJson(map);
   }
 
   Map<String, dynamic>? get asMap => OutboundDataParse.asStringKeyedMap(raw);
@@ -79,10 +88,22 @@ class OutboundMutationResult {
   }
 
   String? get effectiveLinehaulRef {
+    final trip = tripNo?.trim();
+    if (trip != null && trip.isNotEmpty && OutboundApiParams.looksLikeTripNo(trip)) {
+      return trip;
+    }
     if (linehaulId != null && linehaulId!.isNotEmpty && linehaulId != '0') {
       return linehaulId;
     }
     return tripNo;
+  }
+
+  /// Numeric `linehaul_id` from assign/create responses — required for `editlinehaul`.
+  String? get numericLinehaulIdForEdit {
+    final id = linehaulId?.trim();
+    if (id == null || id.isEmpty || id == '0') return null;
+    if (OutboundApiParams.looksLikeTripNo(id)) return null;
+    return id;
   }
 
   /// Prefer manifest code (MUM094); fall back to numeric id.

@@ -123,37 +123,11 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
                 required: true,
                 child: OutboundScanField(
                   controller: controller.metalSealController,
+                  focusNode: controller.metalSealFocusNode,
                   hintText: OutboundLabels.hintMetalSealInput,
                   prefixIcon: const Icon(CupertinoIcons.tag),
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.workingBagCode,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutboundScanField(
-                        controller: controller.bagCodeWorkingController,
-                        focusNode: controller.bagCodeFocusNode,
-                        hintText: OutboundLabels.workingBagCode,
-                        prefixIcon: const Icon(CupertinoIcons.cube_box),
-                        onSubmitted: (_) => controller.loadBagByCode(),
-                        onScanned: controller.onBagCodeScanned,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: OutboundLabels.btnCopy,
-                      onPressed: currentBagCode.isEmpty
-                          ? null
-                          : () => _copyBagCode(currentBagCode),
-                      icon: Icon(
-                        Icons.copy_outlined,
-                        color: currentBagCode.isEmpty
-                            ? themes.grayColor
-                            : themes.darkCyanBlue,
-                      ),
-                    ),
-                  ],
+                  onSubmitted: (_) => controller.loadBagByMetalSeal(),
+                  onScanned: controller.onMetalSealScanned,
                 ),
               ),
               OutboundLabeledFieldRow(

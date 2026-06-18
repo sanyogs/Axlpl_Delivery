@@ -15,6 +15,9 @@ class BagDetailItem {
     this.receiverName,
     this.destinationCity,
     this.totalWeight,
+    this.volumetricWeight,
+    this.invoiceVal,
+    this.consigneeCode,
     this.noOfPackage,
   });
 
@@ -30,6 +33,9 @@ class BagDetailItem {
   final String? receiverName;
   final String? destinationCity;
   final String? totalWeight;
+  final String? volumetricWeight;
+  final String? invoiceVal;
+  final String? consigneeCode;
   final String? noOfPackage;
 
   factory BagDetailItem.fromJson(Map<String, dynamic> json) {
@@ -53,11 +59,21 @@ class BagDetailItem {
       ]),
       senderName: OutboundDataParse.optionalString(json, 'sender_name'),
       receiverName: OutboundDataParse.optionalString(json, 'receiver_name'),
-      destinationCity: OutboundDataParse.optionalString(json, 'destination_city'),
+      destinationCity: OutboundDataParse.firstNonEmptyString(json, const [
+        'destination_city',
+        'city_name',
+      ]),
       totalWeight: OutboundDataParse.firstNonEmptyString(json, const [
         'total_weight',
         'gross_weight',
       ]),
+      volumetricWeight:
+          OutboundDataParse.optionalString(json, 'volumetric_weight'),
+      invoiceVal: OutboundDataParse.firstNonEmptyString(json, const [
+        'invoice_val',
+        'invoice_value',
+      ]),
+      consigneeCode: OutboundDataParse.optionalString(json, 'consignee_code'),
       noOfPackage: OutboundDataParse.firstNonEmptyString(json, const [
         'no_of_package',
         'number_of_parcel',

@@ -38,6 +38,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
       final ____ = controller.selectedDestCityId.value;
       final _____ = controller.selectedOriginCityId.value;
       final ______ = controller.selectedAirlineId.value;
+      final manifestRevision = controller.manifestLoadRevision.value;
       final airlineLoading = airlineList.isLoadingAirlines.value;
       final airlines = airlineList.airlines.toList(growable: false);
 
@@ -113,6 +114,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               OutboundLabeledFieldRow(
                 label: OutboundLabels.airwayBillDate,
                 child: OutboundDateField(
+                  key: ValueKey('awb-date-$manifestRevision'),
                   controller: controller.airwayBillDateController,
                   hintText: OutboundLabels.airwayBillDate,
                 ),
@@ -120,6 +122,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               OutboundLabeledFieldRow(
                 label: OutboundLabels.airwayBillTime,
                 child: OutboundTimeField(
+                  key: ValueKey('awb-time-$manifestRevision'),
                   controller: controller.airwayBillTimeController,
                   hintText: OutboundLabels.airwayBillTime,
                 ),
@@ -134,6 +137,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               OutboundLabeledFieldRow(
                 label: OutboundLabels.totalWeight,
                 child: OutboundReadOnlyInput(
+                  key: ValueKey('total-weight-$manifestRevision'),
                   controller: controller.totalWeightController,
                   hintText: OutboundLabels.totalWeight,
                 ),

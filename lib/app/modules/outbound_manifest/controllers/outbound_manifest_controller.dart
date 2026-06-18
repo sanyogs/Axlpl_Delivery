@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
@@ -38,6 +39,7 @@ class OutboundManifestController extends GetxController {
   final manifestReportData = Rxn<ManifestReport>();
   final printManifestDetail = Rxn<ManifestDetail>();
   final manifestListResultTitle = ''.obs;
+  final manifestListScrollToDetail = false.obs;
 
   final selectedOriginDepotId = RxnString();
   final selectedDestDepotId = RxnString();
@@ -97,7 +99,10 @@ class OutboundManifestController extends GetxController {
   String get selectedDepotSummary {
     final origin = _branchList.displayLabelForId(_originId);
     final dest = _branchList.displayLabelForId(_destId);
-    if (_originId == null && _destId == null) return '';
+    if (_originId == null || _originId!.isEmpty) {
+      return 'List filtered by origin depot — select origin on the manifest screen to see manifests for that branch.';
+    }
+    if (_destId == null) return 'Origin: $origin';
     return 'Origin: $origin → Destination: $dest';
   }
 
@@ -111,7 +116,7 @@ class OutboundManifestController extends GetxController {
         final row = ManifestShipmentSessionRow.fromBagDetailItem(
           item,
           bagCode: bag.bagCode,
-          originLabel: bag.originLabel,
+          originBranchName: bag.detail.originBranchName,
         );
         final key = row.sessionKey;
         if (key.isEmpty || seen.contains(key)) continue;
@@ -199,18 +204,12 @@ class OutboundManifestController extends GetxController {
 
   void _refreshSummaryFields() {
     final lines = shipmentLines;
-    final connotes = <String>{};
-    for (final line in lines) {
-      final id = line.consignmentNo?.trim();
-      if (id != null && id.isNotEmpty) connotes.add(id);
-    }
 
-    var boxCount = 0;
+    var parcelTotal = 0;
     for (final line in lines) {
-      final pcs = int.tryParse(line.pcs?.trim() ?? '') ?? 1;
-      boxCount += pcs > 0 ? pcs : 1;
+      final pcs = int.tryParse(line.pcs?.trim() ?? '') ?? 0;
+      parcelTotal += pcs > 0 ? pcs : 1;
     }
-    if (boxCount == 0 && lines.isNotEmpty) boxCount = lines.length;
 
     double conGross = 0;
     double conVol = 0;
@@ -232,19 +231,41 @@ class OutboundManifestController extends GetxController {
     double bagWt = 0;
     var hasBagWt = false;
     for (final bag in sessionBags) {
-      final w = double.tryParse(bag.weight?.trim() ?? '');
+      final raw = bag.detail.grossWeight?.trim().isNotEmpty == true
+          ? bag.detail.grossWeight
+          : bag.weight;
+      final w = double.tryParse(raw?.trim() ?? '');
       if (w != null) {
         bagWt += w;
         hasBagWt = true;
       }
     }
 
-    connoteCountController.text = '${connotes.length}';
-    boxCountController.text = '$boxCount';
-    bagsSelectedController.text = '${sessionBags.length}';
+    final parcelDisplay = parcelTotal > 0 ? '$parcelTotal' : '0';
+    connoteCountController.text = parcelDisplay;
+    boxCountController.text = parcelDisplay;
+    bagsSelectedController.text = parcelDisplay;
     connoteWeightController.text = hasGross ? _formatWeight(conGross) : '0';
     conVolWeightController.text = hasVol ? _formatWeight(conVol) : '0';
     bagWeightController.text = hasBagWt ? _formatWeight(bagWt) : '0';
+  }
+
+  bool _sessionHasBagRef(String ref) {
+    final needle = ref.trim().toLowerCase();
+    if (needle.isEmpty) return false;
+    for (final bag in sessionBags) {
+      if (bag.bagCode.toLowerCase() == needle) return true;
+      final seal = bag.detail.metalSealNo?.trim().toLowerCase();
+      if (seal != null && seal.isNotEmpty && seal == needle) return true;
+      final id = bag.detail.bagId?.trim().toLowerCase();
+      if (id != null && id.isNotEmpty && id == needle) return true;
+    }
+    return false;
+  }
+
+  void _ignoreDuplicateBagScan() {
+    fetchStatusMessage.value = '';
+    bagScanController.clear();
   }
 
   static String _formatWeight(double value) {
@@ -268,8 +289,8 @@ class OutboundManifestController extends GetxController {
     final bagCode = code.trim();
     if (bagCode.isEmpty) return;
 
-    if (sessionBags.any((b) => b.bagCode == bagCode)) {
-      fetchStatusMessage.value = 'Bag $bagCode is already in this session.';
+    if (_sessionHasBagRef(bagCode)) {
+      _ignoreDuplicateBagScan();
       return;
     }
 
@@ -284,9 +305,10 @@ class OutboundManifestController extends GetxController {
             requestedBagCode: bagCode,
           );
           final resolvedCode = detail.bagCode?.trim() ?? bagCode;
-          if (sessionBags.any((b) => b.bagCode == resolvedCode)) {
-            fetchStatusMessage.value =
-                'Bag $resolvedCode is already in this session.';
+          if (_sessionHasBagRef(resolvedCode) ||
+              (detail.metalSealNo?.trim().isNotEmpty == true &&
+                  _sessionHasBagRef(detail.metalSealNo!))) {
+            _ignoreDuplicateBagScan();
             return;
           }
 
@@ -359,7 +381,9 @@ class OutboundManifestController extends GetxController {
         bagIdsCommaSeparated: bagCodes,
         originBranchId: origin,
         destinationBranchId: dest,
-        transportMode: selectedTransportMode.value,
+        transportMode: selectedTransportMode.value == OutboundLabels.modeAirway
+            ? OutboundLabels.modeAirway
+            : null,
       );
       r.when(
         success: (data) {
@@ -451,7 +475,7 @@ class OutboundManifestController extends GetxController {
     printManifestDetail.value = null;
     manifestListResultTitle.value = OutboundLabels.btnViewDetails;
     try {
-      final r = await _repo.fetchManifestDetails(code);
+      final r = await _repo.fetchManifestDetailsByRefs([code]);
       _applyManifestDetailResponse(r);
     } finally {
       isBusy.value = false;
@@ -464,9 +488,8 @@ class OutboundManifestController extends GetxController {
       Get.snackbar('Manifest', 'Manifest number is required.');
       return;
     }
-    manifestCodeController.text = refs.first;
+    manifestCodeController.text = _manifestDisplayCode(row) ?? refs.first;
     isBusy.value = true;
-    manifestDetail.value = null;
     printManifestDetail.value = null;
     manifestListResultTitle.value = OutboundLabels.btnViewDetails;
     try {
@@ -484,8 +507,11 @@ class OutboundManifestController extends GetxController {
         if (detail.hasContent) {
           manifestDetail.value = detail;
           lastResponseText.value = '';
+          manifestListScrollToDetail.value = true;
         } else {
+          manifestDetail.value = null;
           lastResponseText.value = OutboundDataParse.pretty(data);
+          Get.snackbar('Manifest', 'Manifest details not found');
         }
         _snackServerData(data);
       },
@@ -508,7 +534,7 @@ class OutboundManifestController extends GetxController {
     printManifestDetail.value = null;
     manifestListResultTitle.value = OutboundLabels.btnPrint;
     try {
-      final r = await _repo.printManifestData(code);
+      final r = await _repo.printManifestDataByRefs([code]);
       _applyPrintManifestResponse(r);
     } finally {
       isBusy.value = false;
@@ -521,10 +547,8 @@ class OutboundManifestController extends GetxController {
       Get.snackbar('Manifest', 'Manifest number is required.');
       return;
     }
-    manifestCodeController.text = refs.first;
+    manifestCodeController.text = _manifestDisplayCode(row) ?? refs.first;
     isBusy.value = true;
-    manifestDetail.value = null;
-    printManifestDetail.value = null;
     manifestListResultTitle.value = OutboundLabels.btnPrint;
     try {
       final r = await _repo.printManifestDataByRefs(refs);
@@ -542,10 +566,12 @@ class OutboundManifestController extends GetxController {
           printManifestDetail.value = detail;
           manifestDetail.value = detail;
           lastResponseText.value = '';
+          manifestListScrollToDetail.value = true;
         } else {
           printManifestDetail.value = null;
           manifestDetail.value = null;
           lastResponseText.value = OutboundDataParse.pretty(data);
+          Get.snackbar('Manifest', 'Print data not found');
         }
         _snackServerData(data);
       },
@@ -565,12 +591,25 @@ class OutboundManifestController extends GetxController {
       refs.add(ref);
     }
 
-    add(row.manifestId);
     add(row.manifestNo);
+    add(row.manifestId);
     return refs;
   }
 
+  String? _manifestDisplayCode(OutboundManifestRow row) {
+    final code = row.manifestNo?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return row.manifestId?.trim();
+  }
+
   void prefillManifestReport() {
+    final range = OutboundApiParams.defaultReportDateRange();
+    if (reportStartController.text.trim().isEmpty) {
+      reportStartController.text = range['start_date']!;
+    }
+    if (reportEndController.text.trim().isEmpty) {
+      reportEndController.text = range['end_date']!;
+    }
     if (reportManifestCodeController.text.trim().isEmpty) {
       final working = manifestCodeController.text.trim();
       if (working.isNotEmpty) {
@@ -580,14 +619,24 @@ class OutboundManifestController extends GetxController {
   }
 
   Future<void> manifestReport() async {
+    final manifestNo = reportManifestCodeController.text.trim();
+    final start = reportStartController.text.trim();
+    final end = reportEndController.text.trim();
+    if (manifestNo.isEmpty) {
+      Get.snackbar('Manifest', 'Manifest number is required.');
+      return;
+    }
+    if (start.isEmpty || end.isEmpty) {
+      Get.snackbar('Manifest', 'Start and end date are required.');
+      return;
+    }
+
     isBusy.value = true;
     try {
       final r = await _repo.manifestReport(
-        startDate: reportStartController.text.trim(),
-        endDate: reportEndController.text.trim(),
-        manifestNo: reportManifestCodeController.text.trim().isEmpty
-            ? null
-            : reportManifestCodeController.text.trim(),
+        startDate: start,
+        endDate: end,
+        manifestNo: manifestNo,
       );
       r.when(
         success: (data) {
@@ -607,7 +656,10 @@ class OutboundManifestController extends GetxController {
   }
 
   void openManifestDetailPage() {
-    final code = manifestCodeController.text.trim();
+    final detail = manifestDetail.value;
+    final code = detail?.manifestNo?.trim().isNotEmpty == true
+        ? detail!.manifestNo!.trim()
+        : manifestCodeController.text.trim();
     Get.toNamed(
       Routes.OUTBOUND_REMOTE_DETAIL,
       arguments: {'kind': 'manifest', 'id': code},

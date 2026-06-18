@@ -1,9 +1,9 @@
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
-import 'package:axlpl_delivery/app/data/models/outbound/manifest_bag_ref_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
@@ -26,15 +26,59 @@ class LinehaulBagTableRow {
   final String bagNumber;
   final String weight;
 
-  static List<LinehaulBagTableRow> fromManifestBags(List<ManifestBagRef> bags) {
-    return bags
+  static List<LinehaulBagTableRow> fromManifestDetail(ManifestDetail detail) {
+    final weightByBag = <String, double>{};
+    for (final s in detail.shipments) {
+      final keys = <String>{
+        if (s.bagCode?.trim().isNotEmpty == true) s.bagCode!.trim(),
+        if (s.bagId?.trim().isNotEmpty == true) s.bagId!.trim(),
+      };
+      final w = _parseWeight(s.grossWeight);
+      if (w <= 0) continue;
+      for (final key in keys) {
+        weightByBag[key] = (weightByBag[key] ?? 0) + w;
+      }
+    }
+
+    return detail.bags
         .map(
-          (b) => LinehaulBagTableRow(
-            bagNumber: b.bagCode ?? b.metalSealNo ?? b.id ?? '—',
-            weight: b.grossWeight ?? '—',
-          ),
+          (b) {
+            final bagNumber = b.bagCode ?? b.metalSealNo ?? b.id ?? '—';
+            final keys = <String?>[
+              b.bagCode,
+              b.id,
+              b.metalSealNo,
+            ];
+            var weight = _parseWeight(b.grossWeight);
+            if (weight <= 0) {
+              for (final key in keys) {
+                final k = key?.trim();
+                if (k == null || k.isEmpty) continue;
+                final fromShip = weightByBag[k];
+                if (fromShip != null && fromShip > 0) {
+                  weight = fromShip;
+                  break;
+                }
+              }
+            }
+            return LinehaulBagTableRow(
+              bagNumber: bagNumber,
+              weight: weight > 0 ? _formatWeight(weight) : '—',
+            );
+          },
         )
         .toList();
+  }
+
+  static double _parseWeight(String? raw) {
+    final t = raw?.trim();
+    if (t == null || t.isEmpty) return 0;
+    return double.tryParse(t.replaceAll(',', '')) ?? 0;
+  }
+
+  static String _formatWeight(double value) {
+    if (value == value.roundToDouble()) return value.round().toString();
+    return value.toStringAsFixed(2);
   }
 }
 
@@ -56,6 +100,7 @@ class OutboundLinehaulController extends GetxController {
   final linehaulRows = <OutboundLinehaulRow>[].obs;
   final linehaulDetail = Rxn<LinehaulDetail>();
   final bagTableRows = <LinehaulBagTableRow>[].obs;
+  final manifestLoadRevision = 0.obs;
 
   final listFilterStatus = RxnString();
   final updateStatus = RxnString();
@@ -182,14 +227,24 @@ class OutboundLinehaulController extends GetxController {
     final code = manifestNoController.text.trim();
     if (code.isEmpty) return;
 
+    final existing = manifestDetail.value;
     isBusy.value = true;
     manifestDetail.value = null;
     bagTableRows.clear();
     try {
-      final r = await _repo.fetchManifestDetails(code);
+      final r = await _repo.fetchManifestDetailsByRefs([
+        code,
+        existing?.manifestNo,
+        existing?.manifestId,
+      ]);
       r.when(
         success: (data) {
           final detail = ManifestDetail.fromDynamic(data);
+          if (!detail.hasContent) {
+            lastResponseText.value = OutboundDataParse.pretty(data);
+            Get.snackbar('Linehaul', 'Manifest details not found');
+            return;
+          }
           manifestDetail.value = detail;
           _applyManifestDetail(detail);
           lastResponseText.value = '';
@@ -207,6 +262,21 @@ class OutboundLinehaulController extends GetxController {
     }
   }
 
+  static void _applyDateTimeFromApi(
+    String? raw,
+    TextEditingController date,
+    TextEditingController time,
+  ) {
+    final t = raw?.trim();
+    if (t == null || t.isEmpty) return;
+    final parts = t.split(' ');
+    if (parts.isNotEmpty) date.text = parts[0];
+    if (parts.length > 1) {
+      final hm = parts[1];
+      time.text = hm.length >= 5 ? hm.substring(0, 5) : hm;
+    }
+  }
+
   void _applyManifestDetail(ManifestDetail detail) {
     final manifestNo = detail.manifestNo?.trim();
     if (manifestNo != null && manifestNo.isNotEmpty) {
@@ -220,13 +290,35 @@ class OutboundLinehaulController extends GetxController {
       selectedOriginCityId.value = detail.originBranchId;
     }
 
+    final manifestTimestamp = detail.createdAt?.trim().isNotEmpty == true
+        ? detail.createdAt
+        : detail.updatedAt;
+    _applyDateTimeFromApi(
+      manifestTimestamp,
+      airwayBillDateController,
+      airwayBillTimeController,
+    );
+    _applyDateTimeFromApi(
+      manifestTimestamp,
+      departureDateController,
+      departureTimeController,
+    );
+
     final bags = detail.bags;
-    bagTableRows.assignAll(LinehaulBagTableRow.fromManifestBags(bags));
+    bagTableRows.assignAll(LinehaulBagTableRow.fromManifestDetail(detail));
     noOfBagsController.text = bags.isEmpty ? '' : '${bags.length}';
 
-    final totalBagWeight = _sumWeights(bags.map((b) => b.grossWeight));
-    totalWeightController.text =
-        totalBagWeight > 0 ? _formatWeight(totalBagWeight) : '';
+    var totalWeight = _sumWeights(bags.map((b) => b.grossWeight));
+    if (totalWeight <= 0) {
+      totalWeight = _sumWeights(
+        detail.shipments.map((s) => s.grossWeight),
+      );
+    }
+    if (totalWeight <= 0) {
+      totalWeight = _parseWeight(detail.totalWeight);
+    }
+    final weightText = totalWeight > 0 ? _formatWeight(totalWeight) : '';
+    totalWeightController.text = weightText;
 
     final cdWeight = _sumWeights(
       detail.shipments.map((s) => s.grossWeight),
@@ -234,10 +326,16 @@ class OutboundLinehaulController extends GetxController {
     final billingWeight = _sumBillingWeights(detail.shipments);
     if (cdWeight > 0) {
       totalCdWeightController.text = _formatWeight(cdWeight);
+    } else if (weightText.isNotEmpty) {
+      totalCdWeightController.text = weightText;
     }
     if (billingWeight > 0) {
       totalBillingWeightController.text = _formatWeight(billingWeight);
+    } else if (weightText.isNotEmpty) {
+      totalBillingWeightController.text = weightText;
     }
+
+    manifestLoadRevision.value++;
   }
 
   static double _parseWeight(String? raw) {
@@ -342,16 +440,19 @@ class OutboundLinehaulController extends GetxController {
         driverName: driverForAssign,
       );
 
-      String? linehaulId;
+      var assignSucceeded = false;
       String? tripNo;
+      String? linehaulRef;
+      String? numericLinehaulId;
       assignR.when(
         success: (data) {
+          assignSucceeded = true;
           final result = OutboundMutationResult.fromDynamic(data);
-          linehaulId = result.linehaulId;
           tripNo = result.tripNo;
-          final ref = result.effectiveLinehaulRef;
-          if (ref != null && ref.isNotEmpty) {
-            linehaulRefController.text = ref;
+          numericLinehaulId = result.numericLinehaulIdForEdit;
+          linehaulRef = result.effectiveLinehaulRef;
+          if (linehaulRef != null && linehaulRef!.isNotEmpty) {
+            linehaulRefController.text = linehaulRef!;
           }
         },
         error: (e) {
@@ -360,23 +461,19 @@ class OutboundLinehaulController extends GetxController {
         },
       );
 
-      var id = linehaulId?.trim();
+      if (!assignSucceeded) return;
+
+      final id = await _resolveLinehaulIdForEdit(
+        numericLinehaulId: numericLinehaulId,
+        linehaulRef: linehaulRef,
+        tripNo: tripNo,
+        airwayBill: airwayBill,
+      );
       if (id == null || id.isEmpty) {
-        final lookupRef = airwayBill.isNotEmpty
-            ? airwayBill
-            : (tripNo?.trim().isNotEmpty == true ? tripNo!.trim() : null);
-        if (lookupRef != null) {
-          final detail = await _repo.linehaulDetails(lookupRef);
-          id = detail?.linehaulId?.trim();
-        }
-      }
-      if (id == null || id.isEmpty) {
-        if (lastResponseText.value.trim().isEmpty) {
-          Get.snackbar(
-            'Linehaul',
-            'Assign succeeded but linehaul_id missing — cannot save booking details',
-          );
-        }
+        Get.snackbar(
+          'Linehaul',
+          'Assign succeeded but linehaul id could not be resolved for booking',
+        );
         return;
       }
 
@@ -385,7 +482,7 @@ class OutboundLinehaulController extends GetxController {
         vehicleNo: isAirwayMode ? null : vehicleForAssign,
         driverName: driverForAssign,
         mawbNo: airwayBill.isNotEmpty ? airwayBill : null,
-        tripNo: tripNo?.trim().isNotEmpty == true ? tripNo : null,
+        tripNo: tripNo?.trim().isNotEmpty == true ? tripNo!.trim() : null,
         departureTime: OutboundApiParams.firstCombinedDateTime(
           departureDateController.text,
           departureTimeController.text,
@@ -415,7 +512,10 @@ class OutboundLinehaulController extends GetxController {
           lastResponseText.value = '';
           final msg =
               OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-          if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
+          Get.snackbar(
+            'Linehaul',
+            msg.isNotEmpty ? msg : 'Linehaul booking saved',
+          );
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -490,11 +590,50 @@ class OutboundLinehaulController extends GetxController {
 
   String _manifestRefForSubmit() {
     final detail = manifestDetail.value;
-    final id = detail?.manifestId?.trim();
-    if (id != null && id.isNotEmpty) return id;
     final code = detail?.manifestNo?.trim();
     if (code != null && code.isNotEmpty) return code;
+    final id = detail?.manifestId?.trim();
+    if (id != null && id.isNotEmpty) return id;
     return manifestNoController.text.trim();
+  }
+
+  /// `editlinehaul` requires numeric `linehaul_id`; `LH…` trip refs must be resolved via `getlinehauldetails`.
+  Future<String?> _resolveLinehaulIdForEdit({
+    String? numericLinehaulId,
+    required String? linehaulRef,
+    required String? tripNo,
+    required String airwayBill,
+  }) async {
+    final assignId = numericLinehaulId?.trim();
+    if (assignId != null &&
+        assignId.isNotEmpty &&
+        assignId != '0' &&
+        !OutboundApiParams.looksLikeTripNo(assignId)) {
+      return assignId;
+    }
+
+    var id = linehaulRef?.trim();
+    if (id != null &&
+        id.isNotEmpty &&
+        id != '0' &&
+        !OutboundApiParams.looksLikeTripNo(id)) {
+      return id;
+    }
+
+    final trip = tripNo?.trim();
+    final lookupRef = trip != null && trip.isNotEmpty
+        ? trip
+        : (id != null && OutboundApiParams.looksLikeTripNo(id))
+            ? id
+            : (airwayBill.isNotEmpty ? airwayBill : null);
+    if (lookupRef == null) return null;
+
+    final detail = await _repo.linehaulDetails(lookupRef);
+    final numericId = detail?.linehaulId?.trim();
+    if (numericId != null && numericId.isNotEmpty && numericId != '0') {
+      return numericId;
+    }
+    return null;
   }
 
   Future<void> openLinehaulDetailsFromList(OutboundLinehaulRow row) async {

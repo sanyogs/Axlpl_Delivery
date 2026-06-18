@@ -2,7 +2,7 @@
 
 Gateway: `api.php?request=<action>` · iOS headers · POST urlencoded for edit/delete linehaul.
 
-**Last live refresh:** 2026-06-09 12:46 UTC · Regenerate: `python3 docs/refresh_sarvesh_responses.py`
+**Last live refresh:** 2026-06-18 09:59 UTC · Regenerate: `python3 docs/refresh_sarvesh_responses.py`
 
 ## Summary
 
@@ -16,6 +16,12 @@ Gateway: `api.php?request=<action>` · iOS headers · POST urlencoded for edit/d
 | OK | `getmanifestdetails_MUM208` | 200 |
 | OK | `getbagdetails` | 200 |
 | OK | `manifestreport_MUM094` | 200 |
+| OK | `getmanifestdetails_AHM002` | 200 |
+| OK | `printmanifestdata_AHM002` | 200 |
+| OK | `listmanifests_branch_71` | 200 |
+| OK | `assignlinehaul_AHM002` | 200 |
+| OK | `getlinehauldetails_AHM002_trip` | 200 |
+| OK | `getlinehauldetails_AHM002_id` | 200 |
 | OPEN | `getmanifestdetails_MUM075` | 200 |
 | OPEN | `getlinehauldetails_trip_no` | 404 |
 | OPEN | `listmanifests` | 200 |
@@ -138,7 +144,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
     "arrival_time": "2026-06-10 08:00:00",
     "total_cd_weight": "0.00",
     "created_at": "2026-06-09 15:19:59",
-    "updated_at": "2026-06-09 18:04:42",
+    "updated_at": "2026-06-09 18:16:48",
     "total_billing_weight": "0.00",
     "airway_bill_no": "31229324256",
     "eway_bill": "EWB123456789",
@@ -252,7 +258,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       {
         "shipment_id": "233151780930967",
         "shipment_invoice_no": "AB/019/26-27",
-        "status": "Out for delivery",
+        "status": "Delivered",
         "sender_name": "AAKASH BEGANI",
         "receiver_name": "KANTILAL CHHOTALAL"
       },
@@ -280,7 +286,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       {
         "shipment_id": "859001780933521",
         "shipment_invoice_no": "IRD/61",
-        "status": "Hub in",
+        "status": "Delivered",
         "sender_name": "NYSA JEWELS(A UNIT OF MB ENTERPRISES)",
         "receiver_name": "AVD GLITTER JEWELS LIMITED"
       },
@@ -456,28 +462,34 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
   "status": "success",
   "message": "Bag details retrieved successfully",
   "data": {
-    "id": "200",
-    "bag_code": "BAG20260518152744831",
-    "metal_seal_no": "MSeal825411779084407",
-    "origin_branch_id": "37",
-    "destination_sector_id": "95",
-    "created_by": "1",
-    "created_at": "2026-05-18 15:27:44",
-    "updated_at": null,
-    "shipment_count": 1,
-    "manifest_status": "Not Manifested",
-    "items": [
-      {
-        "shipment_id": "825411779084407",
-        "shipment_invoice_no": "1",
-        "shipment_status": "Hub In",
-        "sender_name": "prajakta rajeshirke",
-        "receiver_name": "receiver_version",
-        "destination_city": "Mumbai",
-        "total_weight": "11.00",
-        "no_of_package": "1"
-      }
-    ]
+    "status": "success",
+    "message": "Bag details fetched successfully",
+    "data": {
+      "bag": {
+        "id": "200",
+        "bag_code": "BAG20260518152744831",
+        "metal_seal_no": "MSeal825411779084407",
+        "origin_branch_id": "37",
+        "destination_sector_id": "95",
+        "origin_branch_name": "KOLKATTA",
+        "destination_city_name": "Puttur",
+        "gross_weight": "11.00"
+      },
+      "items": [
+        {
+          "shipment_id": "825411779084407",
+          "shipment_invoice_no": "1",
+          "sender_name": "prajakta rajeshirke",
+          "receiver_name": "receiver_version",
+          "consignee_code": "10984",
+          "city_name": "Mumbai",
+          "number_of_parcel": "1",
+          "invoice_val": "845.47",
+          "gross_weight": "11.00",
+          "volumetric_weight": "10.00"
+        }
+      ]
+    }
   }
 }
 ```
@@ -543,6 +555,304 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
 
 ---
 
+## getmanifestdetails AHM002 (Agra QA)
+
+**Notes:** QA manifest — shipments total_weight, created_at
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getmanifestdetails&manifest_code=AHM002' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Manifest details retrieved successfully",
+  "data": {
+    "id": "456",
+    "manifest_no": "AHM002",
+    "origin_branch": "71",
+    "destination_branch": "62",
+    "created_by": "148",
+    "created_at": "2026-06-17 18:47:36",
+    "updated_at": "2026-06-17 18:47:36",
+    "origin_branch_name": "Agra",
+    "destination_branch_name": "Ahmedabad crossing",
+    "bags": [
+      {
+        "id": "390",
+        "bag_code": "BAG20260610121223737",
+        "metal_seal_no": "mskb"
+      }
+    ],
+    "debug_raw_bagging_items_count": "1",
+    "debug_joined_shipments_count": "1",
+    "shipments": [
+      {
+        "id": "600421776103388",
+        "shipment_invoice_no": "21102001",
+        "shipment_status": "In Transit",
+        "bag_id": "390",
+        "bag_code": "BAG20260610121223737",
+        "sender_name": "version next",
+        "receiver_name": "tester co",
+        "destination_city": "Mumbai",
+        "total_weight": "200",
+        "no_of_package": "1"
+      }
+    ]
+  }
+}
+```
+
+**HTTP:** 200
+
+---
+
+## printmanifestdata AHM002
+
+**Notes:** Print payload for AHM002
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=printmanifestdata&manifest_code=AHM002' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Print data ready",
+  "data": {
+    "id": "456",
+    "manifest_no": "AHM002",
+    "origin_branch": "71",
+    "destination_branch": "62",
+    "created_by": "148",
+    "created_at": "2026-06-17 18:47:36",
+    "updated_at": "2026-06-17 18:47:36",
+    "origin_branch_name": "Agra",
+    "destination_branch_name": "Ahmedabad crossing",
+    "shipments": [
+      {
+        "id": "600421776103388",
+        "shipment_invoice_no": "21102001",
+        "shipment_status": "In Transit",
+        "bag_code": "BAG20260610121223737"
+      }
+    ]
+  }
+}
+```
+
+**HTTP:** 200
+
+---
+
+## listmanifests branch_id=71 (Agra)
+
+**Notes:** AHM002 visible when origin is Agra (71): True
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=listmanifests&branch_id=71' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Manifests retrieved successfully",
+  "data": [
+    {
+      "id": "456",
+      "manifest_no": "AHM002",
+      "origin_branch": "71",
+      "destination_branch": "62",
+      "created_by": "148",
+      "created_at": "2026-06-17 18:47:36",
+      "updated_at": "2026-06-17 18:47:36"
+    }
+  ]
+}
+```
+
+**HTTP:** 200
+
+---
+
+## assignlinehaul AHM002
+
+**Notes:** Returns linehaul_id + trip_no
+
+**Request curl**
+```bash
+curl --location --request POST 'https://my.axlpl.com/messenger/services_v8/api.php?request=assignlinehaul' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.3.0' \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'manifest_codes=AHM002' \
+  --data-urlencode 'vehicle_no=MH01AB1234' \
+  --data-urlencode 'driver_name=API Test' \
+  --data-urlencode 'user_id=81'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Linehaul assigned successfully",
+  "data": {
+    "linehaul_id": 459,
+    "trip_no": "LH1781776755"
+  }
+}
+```
+
+**HTTP:** 200
+
+---
+
+## getlinehauldetails trip_no (AHM002 assign)
+
+**Notes:** Resolve numeric id before editlinehaul
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&trip_no=LH1781776755' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Linehaul details retrieved successfully",
+  "data": {
+    "id": "459",
+    "origin": "71",
+    "destination": "62",
+    "transport_type": "Surface",
+    "airline": "API Test",
+    "flight_no": "MH01AB1234",
+    "mawb_no": "LH1781776755",
+    "no_of_boxes": "1",
+    "departure_time": "2026-06-18 15:29:15",
+    "arrival_time": null,
+    "total_cd_weight": "0.00",
+    "created_at": "2026-06-18 15:29:15",
+    "updated_at": "2026-06-18 15:29:15",
+    "total_billing_weight": "0.00",
+    "airway_bill_no": "LH1781776755",
+    "eway_bill": "",
+    "no_of_bags": "1",
+    "total_bags": "1",
+    "total_weight": "0.00",
+    "billing_weight": "0.00",
+    "manifests": [
+      {
+        "id": "456",
+        "manifest_no": "AHM002",
+        "origin_branch": "71",
+        "destination_branch": "62",
+        "created_by": "148",
+        "created_at": "2026-06-17 18:47:36",
+        "updated_at": "2026-06-17 18:47:36"
+      }
+    ],
+    "shipment_count": 1,
+    "shipments": [
+      {
+        "id": "600421776103388",
+        "shipment_invoice_no": "21102001",
+        "shipment_status": "In Transit"
+      }
+    ]
+  }
+}
+```
+
+**HTTP:** 200
+
+---
+
+## getlinehauldetails linehaul_id (AHM002 assign)
+
+**Notes:** Numeric id lookup after assign
+
+**Request curl**
+```bash
+curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.php?request=getlinehauldetails&linehaul_id=459' \
+  --header 'Authorization: Bearer ecf2c67fd1b93af39f00ddf0ced734ac1cccc7ea4f51725e0b4a4dfff20ca9e7' \
+  --header 'X-App-Version: 22.1.0' \
+  --header 'X-App-Platform: ios'
+```
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Linehaul details retrieved successfully",
+  "data": {
+    "id": "459",
+    "origin": "71",
+    "destination": "62",
+    "transport_type": "Surface",
+    "airline": "API Test",
+    "flight_no": "MH01AB1234",
+    "mawb_no": "LH1781776755",
+    "no_of_boxes": "1",
+    "departure_time": "2026-06-18 15:29:15",
+    "arrival_time": null,
+    "total_cd_weight": "0.00",
+    "created_at": "2026-06-18 15:29:15",
+    "updated_at": "2026-06-18 15:29:15",
+    "total_billing_weight": "0.00",
+    "airway_bill_no": "LH1781776755",
+    "eway_bill": "",
+    "no_of_bags": "1",
+    "total_bags": "1",
+    "total_weight": "0.00",
+    "billing_weight": "0.00",
+    "manifests": [
+      {
+        "id": "456",
+        "manifest_no": "AHM002",
+        "origin_branch": "71",
+        "destination_branch": "62",
+        "created_by": "148",
+        "created_at": "2026-06-17 18:47:36",
+        "updated_at": "2026-06-17 18:47:36"
+      }
+    ],
+    "shipment_count": 1,
+    "shipments": [
+      {
+        "id": "600421776103388",
+        "shipment_invoice_no": "21102001",
+        "shipment_status": "In Transit"
+      }
+    ]
+  }
+}
+```
+
+**HTTP:** 200
+
+---
+
 ## getmanifestdetails MUM075 (OPEN)
 
 **Notes:** OPEN — shipments[] empty
@@ -590,7 +900,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
 
 ## getlinehauldetails trip_no (OPEN)
 
-**Notes:** OPEN — SQL error trip_no column
+**Notes:** OPEN — trip_no lookup fails (404); use mawb_no or linehaul_id
 
 **Request curl**
 ```bash
@@ -633,454 +943,454 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
   "message": "Manifests retrieved successfully",
   "data": [
     {
-      "id": "385",
-      "manifest_no": "DEL050",
-      "origin_branch": "79",
-      "destination_branch": "27",
-      "created_by": "144",
-      "created_at": "2026-06-09 18:09:52",
-      "updated_at": "2026-06-09 18:09:52"
+      "id": "464",
+      "manifest_no": "VIJ001",
+      "origin_branch": "49",
+      "destination_branch": "47",
+      "created_by": "187",
+      "created_at": "2026-06-17 22:11:17",
+      "updated_at": "2026-06-17 22:11:17"
     },
     {
-      "id": "382",
-      "manifest_no": "HYD010",
-      "origin_branch": "27",
-      "destination_branch": "5",
+      "id": "463",
+      "manifest_no": "MUM261",
+      "origin_branch": "49",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-17 22:05:15",
+      "updated_at": "2026-06-17 22:05:15"
+    },
+    {
+      "id": "462",
+      "manifest_no": "CHE022",
+      "origin_branch": "31",
+      "destination_branch": "29",
+      "created_by": "15",
+      "created_at": "2026-06-17 21:54:00",
+      "updated_at": "2026-06-17 21:54:00"
+    },
+    {
+      "id": "461",
+      "manifest_no": "MUM260",
+      "origin_branch": "31",
+      "destination_branch": "75",
+      "created_by": "15",
+      "created_at": "2026-06-17 20:53:24",
+      "updated_at": "2026-06-17 20:53:24"
+    },
+    {
+      "id": "460",
+      "manifest_no": "MUM259",
+      "origin_branch": "37",
+      "destination_branch": "75",
+      "created_by": "28",
+      "created_at": "2026-06-17 20:24:42",
+      "updated_at": "2026-06-17 20:24:42"
+    },
+    {
+      "id": "459",
+      "manifest_no": "MUM258",
+      "origin_branch": "59",
+      "destination_branch": "75",
+      "created_by": "143",
+      "created_at": "2026-06-17 20:18:26",
+      "updated_at": "2026-06-17 20:18:26"
+    },
+    {
+      "id": "458",
+      "manifest_no": "DEL058",
+      "origin_branch": "59",
+      "destination_branch": "27",
+      "created_by": "143",
+      "created_at": "2026-06-17 20:15:48",
+      "updated_at": "2026-06-17 20:15:48"
+    },
+    {
+      "id": "457",
+      "manifest_no": "MUM257",
+      "origin_branch": "51",
+      "destination_branch": "75",
+      "created_by": "181",
+      "created_at": "2026-06-17 19:58:33",
+      "updated_at": "2026-06-17 19:58:33"
+    },
+    {
+      "id": "456",
+      "manifest_no": "AHM002",
+      "origin_branch": "71",
+      "destination_branch": "62",
       "created_by": "148",
-      "created_at": "2026-06-09 15:19:07",
-      "updated_at": "2026-06-09 15:19:07"
+      "created_at": "2026-06-17 18:47:36",
+      "updated_at": "2026-06-17 18:47:36"
     },
     {
-      "id": "381",
-      "manifest_no": "MUM208",
-      "origin_branch": "47",
-      "destination_branch": "75",
-      "created_by": "187",
-      "created_at": "2026-06-08 22:45:01",
-      "updated_at": "2026-06-08 22:45:01"
-    },
-    {
-      "id": "380",
-      "manifest_no": "MUM207",
+      "id": "455",
+      "manifest_no": "MUM256",
       "origin_branch": "49",
       "destination_branch": "75",
       "created_by": "187",
-      "created_at": "2026-06-08 22:39:24",
-      "updated_at": "2026-06-08 22:39:24"
+      "created_at": "2026-06-16 22:12:07",
+      "updated_at": "2026-06-16 22:12:07"
     },
     {
-      "id": "379",
-      "manifest_no": "MUM206",
-      "origin_branch": "59",
-      "destination_branch": "75",
-      "created_by": "143",
-      "created_at": "2026-06-08 21:09:15",
-      "updated_at": "2026-06-08 21:09:15"
-    },
-    {
-      "id": "378",
-      "manifest_no": "DEL049",
-      "origin_branch": "59",
-      "destination_branch": "27",
-      "created_by": "143",
-      "created_at": "2026-06-08 21:06:43",
-      "updated_at": "2026-06-08 21:06:43"
-    },
-    {
-      "id": "377",
-      "manifest_no": "MUM205",
-      "origin_branch": "41",
-      "destination_branch": "75",
-      "created_by": "147",
-      "created_at": "2026-06-08 21:04:07",
-      "updated_at": "2026-06-08 21:04:07"
-    },
-    {
-      "id": "376",
-      "manifest_no": "MUM204",
-      "origin_branch": "83",
-      "destination_branch": "75",
-      "created_by": "84",
-      "created_at": "2026-06-08 20:51:36",
-      "updated_at": "2026-06-08 20:51:36"
-    },
-    {
-      "id": "375",
-      "manifest_no": "MUM203",
-      "origin_branch": "31",
-      "destination_branch": "75",
-      "created_by": "15",
-      "created_at": "2026-06-08 20:44:51",
-      "updated_at": "2026-06-08 20:44:51"
-    },
-    {
-      "id": "374",
-      "manifest_no": "MUM202",
-      "origin_branch": "57",
-      "destination_branch": "75",
-      "created_by": "84",
-      "created_at": "2026-06-08 20:36:27",
-      "updated_at": "2026-06-08 20:36:27"
-    },
-    {
-      "id": "373",
-      "manifest_no": "MUM201",
-      "origin_branch": "37",
-      "destination_branch": "75",
-      "created_by": "28",
-      "created_at": "2026-06-08 20:32:01",
-      "updated_at": "2026-06-08 20:32:01"
-    },
-    {
-      "id": "372",
-      "manifest_no": "MUM200",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-08 19:19:04",
-      "updated_at": "2026-06-08 19:19:04"
-    },
-    {
-      "id": "371",
-      "manifest_no": "JAI003",
-      "origin_branch": "41",
-      "destination_branch": "41",
-      "created_by": "147",
-      "created_at": "2026-06-08 18:25:41",
-      "updated_at": "2026-06-08 18:25:41"
-    },
-    {
-      "id": "370",
-      "manifest_no": "MUM199",
-      "origin_branch": "79",
-      "destination_branch": "75",
-      "created_by": "144",
-      "created_at": "2026-06-08 16:21:13",
-      "updated_at": "2026-06-08 16:21:13"
-    },
-    {
-      "id": "369",
-      "manifest_no": "MUM198",
+      "id": "454",
+      "manifest_no": "CHE021",
       "origin_branch": "49",
-      "destination_branch": "75",
+      "destination_branch": "29",
       "created_by": "187",
-      "created_at": "2026-06-07 07:01:39",
-      "updated_at": "2026-06-07 07:01:39"
+      "created_at": "2026-06-16 22:05:45",
+      "updated_at": "2026-06-16 22:05:45"
     },
     {
-      "id": "368",
-      "manifest_no": "MUM197",
+      "id": "453",
+      "manifest_no": "MUM255",
+      "origin_branch": "59",
+      "destination_branch": "75",
+      "created_by": "143",
+      "created_at": "2026-06-16 21:01:40",
+      "updated_at": "2026-06-16 21:01:40"
+    },
+    {
+      "id": "452",
+      "manifest_no": "DEL057",
+      "origin_branch": "59",
+      "destination_branch": "27",
+      "created_by": "143",
+      "created_at": "2026-06-16 20:58:50",
+      "updated_at": "2026-06-16 20:58:50"
+    },
+    {
+      "id": "451",
+      "manifest_no": "MUM254",
       "origin_branch": "31",
       "destination_branch": "75",
       "created_by": "15",
-      "created_at": "2026-06-06 21:20:53",
-      "updated_at": "2026-06-06 21:20:53"
+      "created_at": "2026-06-16 20:46:11",
+      "updated_at": "2026-06-16 20:46:11"
     },
     {
-      "id": "367",
-      "manifest_no": "MUM196",
-      "origin_branch": "59",
-      "destination_branch": "75",
-      "created_by": "143",
-      "created_at": "2026-06-06 20:49:31",
-      "updated_at": "2026-06-06 20:49:31"
-    },
-    {
-      "id": "366",
-      "manifest_no": "DEL048",
-      "origin_branch": "59",
-      "destination_branch": "27",
-      "created_by": "143",
-      "created_at": "2026-06-06 20:46:57",
-      "updated_at": "2026-06-06 20:46:57"
-    },
-    {
-      "id": "365",
-      "manifest_no": "IND002",
-      "origin_branch": "59",
-      "destination_branch": "79",
-      "created_by": "143",
-      "created_at": "2026-06-06 20:43:11",
-      "updated_at": "2026-06-06 20:43:11"
-    },
-    {
-      "id": "364",
-      "manifest_no": "MUM195",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-06 20:38:55",
-      "updated_at": "2026-06-06 20:38:55"
-    },
-    {
-      "id": "363",
-      "manifest_no": "DEL047",
-      "origin_branch": "41",
-      "destination_branch": "27",
-      "created_by": "147",
-      "created_at": "2026-06-06 20:25:35",
-      "updated_at": "2026-06-06 20:25:35"
-    },
-    {
-      "id": "362",
-      "manifest_no": "MUM194",
-      "origin_branch": "41",
-      "destination_branch": "75",
-      "created_by": "147",
-      "created_at": "2026-06-06 20:04:56",
-      "updated_at": "2026-06-06 20:04:56"
-    },
-    {
-      "id": "361",
-      "manifest_no": "MUM193",
-      "origin_branch": "37",
-      "destination_branch": "75",
-      "created_by": "28",
-      "created_at": "2026-06-06 19:40:50",
-      "updated_at": "2026-06-06 19:40:50"
-    },
-    {
-      "id": "360",
-      "manifest_no": "MUM192",
-      "origin_branch": "47",
-      "destination_branch": "75",
-      "created_by": "187",
-      "created_at": "2026-06-05 23:01:06",
-      "updated_at": "2026-06-05 23:01:06"
-    },
-    {
-      "id": "359",
-      "manifest_no": "MUM191",
-      "origin_branch": "45",
-      "destination_branch": "75",
-      "created_by": "40",
-      "created_at": "2026-06-05 22:58:44",
-      "updated_at": "2026-06-05 22:58:44"
-    },
-    {
-      "id": "358",
-      "manifest_no": "MUM190",
-      "origin_branch": "49",
-      "destination_branch": "75",
-      "created_by": "187",
-      "created_at": "2026-06-05 22:48:10",
-      "updated_at": "2026-06-05 22:48:10"
-    },
-    {
-      "id": "357",
-      "manifest_no": "MUM189",
-      "origin_branch": "41",
-      "destination_branch": "75",
-      "created_by": "147",
-      "created_at": "2026-06-05 21:03:02",
-      "updated_at": "2026-06-05 21:03:02"
-    },
-    {
-      "id": "356",
-      "manifest_no": "DEL046",
-      "origin_branch": "41",
-      "destination_branch": "27",
-      "created_by": "147",
-      "created_at": "2026-06-05 20:53:10",
-      "updated_at": "2026-06-05 20:53:10"
-    },
-    {
-      "id": "355",
-      "manifest_no": "MUM188",
-      "origin_branch": "31",
-      "destination_branch": "75",
-      "created_by": "15",
-      "created_at": "2026-06-05 20:48:29",
-      "updated_at": "2026-06-05 20:48:29"
-    },
-    {
-      "id": "354",
-      "manifest_no": "DEL045",
-      "origin_branch": "59",
-      "destination_branch": "27",
-      "created_by": "143",
-      "created_at": "2026-06-05 20:46:32",
-      "updated_at": "2026-06-05 20:46:32"
-    },
-    {
-      "id": "353",
-      "manifest_no": "MUM187",
-      "origin_branch": "59",
-      "destination_branch": "75",
-      "created_by": "143",
-      "created_at": "2026-06-05 20:41:55",
-      "updated_at": "2026-06-05 20:41:55"
-    },
-    {
-      "id": "352",
-      "manifest_no": "MUM186",
-      "origin_branch": "37",
-      "destination_branch": "75",
-      "created_by": "28",
-      "created_at": "2026-06-05 20:12:50",
-      "updated_at": "2026-06-05 20:12:50"
-    },
-    {
-      "id": "351",
-      "manifest_no": "MUM185",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-05 20:01:16",
-      "updated_at": "2026-06-05 20:01:16"
-    },
-    {
-      "id": "350",
-      "manifest_no": "MUM184",
-      "origin_branch": "79",
-      "destination_branch": "75",
-      "created_by": "144",
-      "created_at": "2026-06-05 18:31:10",
-      "updated_at": "2026-06-05 18:31:10"
-    },
-    {
-      "id": "349",
-      "manifest_no": "MUM183",
-      "origin_branch": "49",
-      "destination_branch": "75",
-      "created_by": "187",
-      "created_at": "2026-06-05 06:29:42",
-      "updated_at": "2026-06-05 06:29:42"
-    },
-    {
-      "id": "348",
-      "manifest_no": "MUM182",
-      "origin_branch": "31",
-      "destination_branch": "75",
-      "created_by": "15",
-      "created_at": "2026-06-04 21:31:40",
-      "updated_at": "2026-06-04 21:31:40"
-    },
-    {
-      "id": "347",
-      "manifest_no": "MUM181",
-      "origin_branch": "59",
-      "destination_branch": "75",
-      "created_by": "143",
-      "created_at": "2026-06-04 20:23:11",
-      "updated_at": "2026-06-04 20:23:11"
-    },
-    {
-      "id": "346",
-      "manifest_no": "MUM180",
-      "origin_branch": "37",
-      "destination_branch": "75",
-      "created_by": "28",
-      "created_at": "2026-06-04 20:21:07",
-      "updated_at": "2026-06-04 20:21:07"
-    },
-    {
-      "id": "345",
-      "manifest_no": "DEL044",
-      "origin_branch": "59",
-      "destination_branch": "27",
-      "created_by": "143",
-      "created_at": "2026-06-04 20:20:06",
-      "updated_at": "2026-06-04 20:20:06"
-    },
-    {
-      "id": "344",
-      "manifest_no": "MUM179",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-04 19:21:29",
-      "updated_at": "2026-06-04 19:21:29"
-    },
-    {
-      "id": "343",
-      "manifest_no": "MUM178",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-04 15:44:45",
-      "updated_at": "2026-06-04 15:44:45"
-    },
-    {
-      "id": "342",
-      "manifest_no": "MUM177",
-      "origin_branch": "49",
-      "destination_branch": "75",
-      "created_by": "187",
-      "created_at": "2026-06-03 22:02:27",
-      "updated_at": "2026-06-03 22:02:27"
-    },
-    {
-      "id": "341",
-      "manifest_no": "MUM176",
-      "origin_branch": "59",
-      "destination_branch": "75",
-      "created_by": "143",
-      "created_at": "2026-06-03 20:33:41",
-      "updated_at": "2026-06-03 20:33:41"
-    },
-    {
-      "id": "340",
-      "manifest_no": "MUM175",
-      "origin_branch": "31",
-      "destination_branch": "75",
-      "created_by": "15",
-      "created_at": "2026-06-03 20:33:04",
-      "updated_at": "2026-06-03 20:33:04"
-    },
-    {
-      "id": "339",
-      "manifest_no": "MUM174",
-      "origin_branch": "41",
-      "destination_branch": "75",
-      "created_by": "147",
-      "created_at": "2026-06-03 20:31:52",
-      "updated_at": "2026-06-03 20:31:52"
-    },
-    {
-      "id": "338",
-      "manifest_no": "DEL043",
-      "origin_branch": "59",
-      "destination_branch": "27",
-      "created_by": "143",
-      "created_at": "2026-06-03 20:31:33",
-      "updated_at": "2026-06-03 20:31:33"
-    },
-    {
-      "id": "337",
-      "manifest_no": "HYD009",
-      "origin_branch": "41",
-      "destination_branch": "49",
-      "created_by": "147",
-      "created_at": "2026-06-03 20:26:43",
-      "updated_at": "2026-06-03 20:26:43"
-    },
-    {
-      "id": "336",
-      "manifest_no": "CHE012",
+      "id": "450",
+      "manifest_no": "CHE020",
       "origin_branch": "51",
       "destination_branch": "29",
       "created_by": "181",
-      "created_at": "2026-06-03 20:26:01",
-      "updated_at": "2026-06-03 20:26:01"
+      "created_at": "2026-06-16 20:16:35",
+      "updated_at": "2026-06-16 20:16:35"
     },
     {
-      "id": "335",
-      "manifest_no": "MUM173",
-      "origin_branch": "51",
-      "destination_branch": "75",
-      "created_by": "181",
-      "created_at": "2026-06-03 20:12:00",
-      "updated_at": "2026-06-03 20:12:00"
-    },
-    {
-      "id": "334",
-      "manifest_no": "MUM172",
+      "id": "449",
+      "manifest_no": "MUM253",
       "origin_branch": "37",
       "destination_branch": "75",
       "created_by": "28",
-      "created_at": "2026-06-03 19:57:41",
-      "updated_at": "2026-06-03 19:57:41"
+      "created_at": "2026-06-16 20:15:47",
+      "updated_at": "2026-06-16 20:15:47"
+    },
+    {
+      "id": "448",
+      "manifest_no": "MUM252",
+      "origin_branch": "57",
+      "destination_branch": "75",
+      "created_by": "84",
+      "created_at": "2026-06-16 20:15:35",
+      "updated_at": "2026-06-16 20:15:35"
+    },
+    {
+      "id": "447",
+      "manifest_no": "MUM251",
+      "origin_branch": "51",
+      "destination_branch": "75",
+      "created_by": "181",
+      "created_at": "2026-06-16 19:43:21",
+      "updated_at": "2026-06-16 19:43:21"
+    },
+    {
+      "id": "446",
+      "manifest_no": "MUM250",
+      "origin_branch": "49",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-16 06:58:41",
+      "updated_at": "2026-06-16 06:58:41"
+    },
+    {
+      "id": "445",
+      "manifest_no": "BAN011",
+      "origin_branch": "49",
+      "destination_branch": "31",
+      "created_by": "187",
+      "created_at": "2026-06-16 06:51:32",
+      "updated_at": "2026-06-16 06:51:32"
+    },
+    {
+      "id": "444",
+      "manifest_no": "MUM249",
+      "origin_branch": "41",
+      "destination_branch": "75",
+      "created_by": "147",
+      "created_at": "2026-06-15 23:31:11",
+      "updated_at": "2026-06-15 23:31:11"
+    },
+    {
+      "id": "443",
+      "manifest_no": "MUM248",
+      "origin_branch": "31",
+      "destination_branch": "75",
+      "created_by": "15",
+      "created_at": "2026-06-15 20:30:33",
+      "updated_at": "2026-06-15 20:30:33"
+    },
+    {
+      "id": "442",
+      "manifest_no": "MUM247",
+      "origin_branch": "79",
+      "destination_branch": "75",
+      "created_by": "144",
+      "created_at": "2026-06-15 20:24:24",
+      "updated_at": "2026-06-15 20:24:24"
+    },
+    {
+      "id": "441",
+      "manifest_no": "MUM246",
+      "origin_branch": "37",
+      "destination_branch": "75",
+      "created_by": "28",
+      "created_at": "2026-06-15 20:20:27",
+      "updated_at": "2026-06-15 20:20:27"
+    },
+    {
+      "id": "440",
+      "manifest_no": "MUM245",
+      "origin_branch": "59",
+      "destination_branch": "75",
+      "created_by": "143",
+      "created_at": "2026-06-15 20:09:47",
+      "updated_at": "2026-06-15 20:09:47"
+    },
+    {
+      "id": "439",
+      "manifest_no": "MUM244",
+      "origin_branch": "51",
+      "destination_branch": "75",
+      "created_by": "181",
+      "created_at": "2026-06-15 19:28:29",
+      "updated_at": "2026-06-15 19:28:29"
+    },
+    {
+      "id": "438",
+      "manifest_no": "MUM243",
+      "origin_branch": "49",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-14 21:46:52",
+      "updated_at": "2026-06-14 21:46:52"
+    },
+    {
+      "id": "437",
+      "manifest_no": "MUM242",
+      "origin_branch": "57",
+      "destination_branch": "75",
+      "created_by": "84",
+      "created_at": "2026-06-14 11:34:12",
+      "updated_at": "2026-06-14 11:34:12"
+    },
+    {
+      "id": "436",
+      "manifest_no": "MUM241",
+      "origin_branch": "31",
+      "destination_branch": "75",
+      "created_by": "15",
+      "created_at": "2026-06-13 21:05:53",
+      "updated_at": "2026-06-13 21:05:53"
+    },
+    {
+      "id": "435",
+      "manifest_no": "MUM240",
+      "origin_branch": "59",
+      "destination_branch": "75",
+      "created_by": "143",
+      "created_at": "2026-06-13 20:38:25",
+      "updated_at": "2026-06-13 20:38:25"
+    },
+    {
+      "id": "434",
+      "manifest_no": "DEL056",
+      "origin_branch": "59",
+      "destination_branch": "27",
+      "created_by": "143",
+      "created_at": "2026-06-13 20:35:18",
+      "updated_at": "2026-06-13 20:35:18"
+    },
+    {
+      "id": "433",
+      "manifest_no": "MUM239",
+      "origin_branch": "51",
+      "destination_branch": "75",
+      "created_by": "181",
+      "created_at": "2026-06-13 20:29:04",
+      "updated_at": "2026-06-13 20:29:04"
+    },
+    {
+      "id": "432",
+      "manifest_no": "MUM238",
+      "origin_branch": "37",
+      "destination_branch": "75",
+      "created_by": "28",
+      "created_at": "2026-06-13 20:27:30",
+      "updated_at": "2026-06-13 20:27:30"
+    },
+    {
+      "id": "431",
+      "manifest_no": "MUM237",
+      "origin_branch": "49",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-13 07:18:48",
+      "updated_at": "2026-06-13 07:18:48"
+    },
+    {
+      "id": "430",
+      "manifest_no": "MUM236",
+      "origin_branch": "47",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-13 07:13:26",
+      "updated_at": "2026-06-13 07:13:26"
+    },
+    {
+      "id": "429",
+      "manifest_no": "COI009",
+      "origin_branch": "49",
+      "destination_branch": "51",
+      "created_by": "187",
+      "created_at": "2026-06-13 07:03:01",
+      "updated_at": "2026-06-13 07:03:01"
+    },
+    {
+      "id": "428",
+      "manifest_no": "CHE019",
+      "origin_branch": "47",
+      "destination_branch": "29",
+      "created_by": "187",
+      "created_at": "2026-06-13 06:55:18",
+      "updated_at": "2026-06-13 06:55:18"
+    },
+    {
+      "id": "427",
+      "manifest_no": "MUM235",
+      "origin_branch": "31",
+      "destination_branch": "75",
+      "created_by": "15",
+      "created_at": "2026-06-12 21:13:22",
+      "updated_at": "2026-06-12 21:13:22"
+    },
+    {
+      "id": "426",
+      "manifest_no": "MUM234",
+      "origin_branch": "59",
+      "destination_branch": "75",
+      "created_by": "143",
+      "created_at": "2026-06-12 20:29:04",
+      "updated_at": "2026-06-12 20:29:04"
+    },
+    {
+      "id": "425",
+      "manifest_no": "DEL055",
+      "origin_branch": "59",
+      "destination_branch": "27",
+      "created_by": "143",
+      "created_at": "2026-06-12 20:24:58",
+      "updated_at": "2026-06-12 20:24:58"
+    },
+    {
+      "id": "424",
+      "manifest_no": "MUM233",
+      "origin_branch": "37",
+      "destination_branch": "75",
+      "created_by": "28",
+      "created_at": "2026-06-12 20:16:46",
+      "updated_at": "2026-06-12 20:16:46"
+    },
+    {
+      "id": "423",
+      "manifest_no": "MUM232",
+      "origin_branch": "51",
+      "destination_branch": "75",
+      "created_by": "181",
+      "created_at": "2026-06-12 19:18:46",
+      "updated_at": "2026-06-12 19:18:46"
+    },
+    {
+      "id": "422",
+      "manifest_no": "MUM231",
+      "origin_branch": "47",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-12 07:29:31",
+      "updated_at": "2026-06-12 07:29:31"
+    },
+    {
+      "id": "421",
+      "manifest_no": "CHE018",
+      "origin_branch": "47",
+      "destination_branch": "29",
+      "created_by": "187",
+      "created_at": "2026-06-12 07:24:36",
+      "updated_at": "2026-06-12 07:24:36"
+    },
+    {
+      "id": "420",
+      "manifest_no": "KOC001",
+      "origin_branch": "47",
+      "destination_branch": "33",
+      "created_by": "187",
+      "created_at": "2026-06-12 07:17:03",
+      "updated_at": "2026-06-12 07:17:03"
+    },
+    {
+      "id": "419",
+      "manifest_no": "MUM230",
+      "origin_branch": "49",
+      "destination_branch": "75",
+      "created_by": "187",
+      "created_at": "2026-06-12 06:49:18",
+      "updated_at": "2026-06-12 06:49:18"
+    },
+    {
+      "id": "418",
+      "manifest_no": "MUM229",
+      "origin_branch": "41",
+      "destination_branch": "75",
+      "created_by": "147",
+      "created_at": "2026-06-11 21:24:22",
+      "updated_at": "2026-06-11 21:24:22"
+    },
+    {
+      "id": "417",
+      "manifest_no": "DEL054",
+      "origin_branch": "41",
+      "destination_branch": "27",
+      "created_by": "147",
+      "created_at": "2026-06-11 21:20:10",
+      "updated_at": "2026-06-11 21:20:10"
+    },
+    {
+      "id": "416",
+      "manifest_no": "MUM228",
+      "origin_branch": "31",
+      "destination_branch": "75",
+      "created_by": "15",
+      "created_at": "2026-06-11 21:00:59",
+      "updated_at": "2026-06-11 21:00:59"
+    },
+    {
+      "id": "415",
+      "manifest_no": "MUM227",
+      "origin_branch": "57",
+      "destination_branch": "75",
+      "created_by": "84",
+      "created_at": "2026-06-11 20:55:52",
+      "updated_at": "2026-06-11 20:55:52"
     }
   ]
 }
@@ -1092,7 +1402,7 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
 
 ## getpickuplist (OPEN dup)
 
-**Notes:** OPEN — 9 duplicate ids in response
+**Notes:** OPEN — 1 duplicate ids in response
 
 **Request curl**
 ```bash
@@ -1109,134 +1419,44 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
   "message": "Pickup list retrieved successfully",
   "data": [
     {
-      "id": "287",
-      "mawb_no": "312-29239943",
+      "id": "352",
+      "mawb_no": "31229825062",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "16:02:00",
-      "created_at": "2026-06-09 16:02:51",
-      "updated_at": "2026-06-09 16:02:51",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5262"
-    },
-    {
-      "id": "286",
-      "mawb_no": "31229324256",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "13:24:00",
-      "created_at": "2026-06-09 13:18:32",
-      "updated_at": "2026-06-09 13:24:23",
-      "destination_hub": "Mumbai",
+      "pickup_date": "2026-06-18",
+      "pickup_time": "13:51:00",
+      "created_at": "2026-06-18 13:28:48",
+      "updated_at": "2026-06-18 13:51:20",
+      "destination_hub": "Vijaywada",
       "origin_hub": "Hyderabad",
       "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5213"
+      "destination_branch_name": "Vijaywada",
+      "flight_no": "6E7201"
     },
     {
-      "id": "286",
-      "mawb_no": "31229324256",
+      "id": "351",
+      "mawb_no": "TN04AU52841781713640",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "13:24:00",
-      "created_at": "2026-06-09 13:18:32",
-      "updated_at": "2026-06-09 13:24:23",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Hyderabad",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5213"
-    },
-    {
-      "id": "286",
-      "mawb_no": "31229324256",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "13:24:00",
-      "created_at": "2026-06-09 13:18:32",
-      "updated_at": "2026-06-09 13:24:23",
-      "destination_hub": "SURAT",
-      "origin_hub": "Delhi",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": null,
-      "flight_no": "AI101"
-    },
-    {
-      "id": "285",
-      "mawb_no": "312-29319983",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:47:00",
-      "created_at": "2026-06-09 11:48:04",
-      "updated_at": "2026-06-09 11:48:04",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Lucknow",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E2058"
-    },
-    {
-      "id": "284",
-      "mawb_no": "312-29316803",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:46:00",
-      "created_at": "2026-06-09 11:46:53",
-      "updated_at": "2026-06-09 11:46:53",
-      "destination_hub": "Mumbai",
+      "pickup_date": "2026-06-18",
+      "pickup_time": "12:42:00",
+      "created_at": "2026-06-18 12:42:34",
+      "updated_at": "2026-06-18 12:42:34",
+      "destination_hub": "Chennai",
       "origin_hub": "Bangalore",
       "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5205"
+      "destination_branch_name": "Chennai",
+      "flight_no": "VIA SALEM"
     },
     {
-      "id": "283",
-      "mawb_no": "312-29311273",
+      "id": "350",
+      "mawb_no": "312-2981515586",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:44:00",
-      "created_at": "2026-06-09 11:44:19",
-      "updated_at": "2026-06-09 11:44:19",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E2409 / 6E353"
-    },
-    {
-      "id": "282",
-      "mawb_no": "MH02FG43141780933201",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:43:00",
-      "created_at": "2026-06-09 11:43:47",
-      "updated_at": "2026-06-09 11:43:47",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Surat",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "BAY ROAD"
-    },
-    {
-      "id": "281",
-      "mawb_no": "312-29307132",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:38:00",
-      "created_at": "2026-06-09 11:39:04",
-      "updated_at": "2026-06-09 11:39:04",
+      "pickup_date": "2026-06-18",
+      "pickup_time": "11:50:00",
+      "created_at": "2026-06-18 11:50:04",
+      "updated_at": "2026-06-18 11:50:20",
       "destination_hub": "Mumbai",
       "origin_hub": "Kolkatta",
       "origin_branch_name": "SURAT",
@@ -1244,434 +1464,14 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "6E6366"
     },
     {
-      "id": "280",
-      "mawb_no": "BY BUS1780757824",
+      "id": "349",
+      "mawb_no": "31229824970",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "12:16:00",
-      "created_at": "2026-06-08 12:16:07",
-      "updated_at": "2026-06-08 12:16:07",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "279",
-      "mawb_no": ":312-29239943",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:40:00",
-      "created_at": "2026-06-08 11:40:12",
-      "updated_at": "2026-06-08 11:40:12",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5262"
-    },
-    {
-      "id": "278",
-      "mawb_no": "312-29177481",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:36:00",
-      "created_at": "2026-06-08 11:36:38",
-      "updated_at": "2026-06-08 11:36:38",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E2409"
-    },
-    {
-      "id": "277",
-      "mawb_no": "31229241984",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:32:00",
-      "created_at": "2026-06-08 11:32:52",
-      "updated_at": "2026-06-08 11:32:52",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Hyderabad",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5213"
-    },
-    {
-      "id": "276",
-      "mawb_no": "098-05483553",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:35:00",
-      "created_at": "2026-06-07 11:49:28",
-      "updated_at": "2026-06-08 11:35:58",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Kolkatta",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "AI 2410"
-    },
-    {
-      "id": "275",
-      "mawb_no": "MH02FG43141780759224",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:33:00",
-      "created_at": "2026-06-07 11:46:59",
-      "updated_at": "2026-06-08 11:33:55",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Surat",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "BAY ROAD"
-    },
-    {
-      "id": "274",
-      "mawb_no": "312-29241855",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "11:35:00",
-      "created_at": "2026-06-07 11:43:49",
-      "updated_at": "2026-06-08 11:35:26",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Bangalore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5205"
-    },
-    {
-      "id": "273",
-      "mawb_no": "312-29108321",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "15:30:00",
-      "created_at": "2026-06-06 12:39:11",
-      "updated_at": "2026-06-06 15:30:38",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Vishakapatnam",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6e883"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "272",
-      "mawb_no": "BY BUS",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "12:26:00",
-      "created_at": "2026-06-06 12:27:01",
-      "updated_at": "2026-06-06 12:27:01",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "BY BUS"
-    },
-    {
-      "id": "271",
-      "mawb_no": "31229182591",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "11:54:00",
-      "created_at": "2026-06-06 11:55:02",
-      "updated_at": "2026-06-06 11:55:02",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Bangalore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5205"
-    },
-    {
-      "id": "270",
-      "mawb_no": "31229187211",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "12:28:00",
-      "created_at": "2026-06-06 11:54:07",
-      "updated_at": "2026-06-08 12:28:35",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Hyderabad",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5143"
-    },
-    {
-      "id": "270",
-      "mawb_no": "31229187211",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-08",
-      "pickup_time": "12:28:00",
-      "created_at": "2026-06-06 11:54:07",
-      "updated_at": "2026-06-08 12:28:35",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Vijaywada",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5143"
-    },
-    {
-      "id": "269",
-      "mawb_no": ":312-29186356",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "11:52:00",
-      "created_at": "2026-06-06 11:52:20",
-      "updated_at": "2026-06-06 11:52:20",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5262"
-    },
-    {
-      "id": "268",
-      "mawb_no": "29180152",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:52:00",
-      "created_at": "2026-06-06 11:51:05",
-      "updated_at": "2026-06-09 11:52:43",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Indore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E-6598/AIR"
-    },
-    {
-      "id": "268",
-      "mawb_no": "29180152",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-09",
-      "pickup_time": "11:52:00",
-      "created_at": "2026-06-06 11:51:05",
-      "updated_at": "2026-06-09 11:52:43",
-      "destination_hub": "Indore",
-      "origin_hub": "Surat",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Indore",
-      "flight_no": "6E-6598/AIR"
-    },
-    {
-      "id": "267",
-      "mawb_no": "MH02FG43141780672363",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
+      "pickup_date": "2026-06-18",
       "pickup_time": "11:49:00",
-      "created_at": "2026-06-06 11:50:13",
-      "updated_at": "2026-06-06 11:50:13",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Surat",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "BAY ROAD"
-    },
-    {
-      "id": "266",
-      "mawb_no": "312-29180970",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "11:45:00",
-      "created_at": "2026-06-06 11:45:47",
-      "updated_at": "2026-06-06 11:45:47",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E2409 / 6E353"
-    },
-    {
-      "id": "265",
-      "mawb_no": "312-29177256",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-06",
-      "pickup_time": "11:44:00",
-      "created_at": "2026-06-06 11:44:43",
-      "updated_at": "2026-06-06 11:45:06",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Kolkatta",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E6366"
-    },
-    {
-      "id": "264",
-      "mawb_no": "312-29111445",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:32:00",
-      "created_at": "2026-06-05 12:29:50",
-      "updated_at": "2026-06-05 12:34:16",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Kolkatta",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E6366"
-    },
-    {
-      "id": "263",
-      "mawb_no": "312-259121525",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:32:00",
-      "created_at": "2026-06-05 12:23:38",
-      "updated_at": "2026-06-05 12:33:36",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Bangalore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5205"
-    },
-    {
-      "id": "262",
-      "mawb_no": "MH02FG43141780584851",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:32:00",
-      "created_at": "2026-06-05 12:23:30",
-      "updated_at": "2026-06-05 12:34:38",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Surat",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "BAY ROAD"
-    },
-    {
-      "id": "261",
-      "mawb_no": "312-29117104",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:32:00",
-      "created_at": "2026-06-05 12:22:26",
-      "updated_at": "2026-06-05 12:33:58",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E2409 / 6E675"
-    },
-    {
-      "id": "260",
-      "mawb_no": "312-29105554",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:32:00",
-      "created_at": "2026-06-05 12:22:06",
-      "updated_at": "2026-06-05 12:32:31",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E697"
-    },
-    {
-      "id": "259",
-      "mawb_no": "31229129586",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-05",
-      "pickup_time": "12:14:00",
-      "created_at": "2026-06-05 12:14:37",
-      "updated_at": "2026-06-05 12:21:35",
+      "created_at": "2026-06-18 11:49:19",
+      "updated_at": "2026-06-18 11:49:19",
       "destination_hub": "Mumbai",
       "origin_hub": "Hyderabad",
       "origin_branch_name": "SURAT",
@@ -1679,14 +1479,59 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "6E5213"
     },
     {
-      "id": "258",
-      "mawb_no": "TN04BC22191780498884",
+      "id": "348",
+      "mawb_no": "MH02FG43141781707755",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "13:43:00",
-      "created_at": "2026-06-04 13:43:58",
-      "updated_at": "2026-06-04 13:45:32",
+      "pickup_date": "2026-06-18",
+      "pickup_time": "11:48:00",
+      "created_at": "2026-06-18 11:48:32",
+      "updated_at": "2026-06-18 11:48:32",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Surat",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "BAY ROAD"
+    },
+    {
+      "id": "347",
+      "mawb_no": "312-29816485",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-18",
+      "pickup_time": "11:47:00",
+      "created_at": "2026-06-18 11:47:55",
+      "updated_at": "2026-06-18 11:48:11",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2409 / 6E353"
+    },
+    {
+      "id": "346",
+      "mawb_no": "31229818386",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-18",
+      "pickup_time": "11:46:00",
+      "created_at": "2026-06-18 11:47:00",
+      "updated_at": "2026-06-18 11:47:13",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Bangalore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5205"
+    },
+    {
+      "id": "345",
+      "mawb_no": "TN04BC22191781621266",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-17",
+      "pickup_time": "14:29:00",
+      "created_at": "2026-06-17 14:29:27",
+      "updated_at": "2026-06-17 14:30:11",
       "destination_hub": "Chennai",
       "origin_hub": "Coimbatore",
       "origin_branch_name": "SURAT",
@@ -1694,59 +1539,44 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "TN04BC2219"
     },
     {
-      "id": "257",
-      "mawb_no": "312-29060286",
+      "id": "344",
+      "mawb_no": "31229765234",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "12:37:00",
-      "created_at": "2026-06-04 12:33:54",
-      "updated_at": "2026-06-04 12:37:28",
-      "destination_hub": "Hyderabad",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Hyderabad",
-      "flight_no": "6E 816"
-    },
-    {
-      "id": "256",
-      "mawb_no": "312-29060216",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "13:06:00",
-      "created_at": "2026-06-04 12:26:38",
-      "updated_at": "2026-06-04 13:06:56",
-      "destination_hub": "Mumbai",
-      "origin_hub": "Jaipur",
-      "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E5262"
-    },
-    {
-      "id": "255",
-      "mawb_no": "31229062924",
-      "hub_id": "1",
-      "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "16:40:00",
-      "created_at": "2026-06-04 12:26:11",
-      "updated_at": "2026-06-04 16:40:32",
-      "destination_hub": "Mumbai",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "14:05:00",
+      "created_at": "2026-06-17 12:59:42",
+      "updated_at": "2026-06-17 14:05:51",
+      "destination_hub": "Chennai",
       "origin_hub": "Hyderabad",
       "origin_branch_name": "SURAT",
-      "destination_branch_name": "Mumbai",
-      "flight_no": "6E 5213"
+      "destination_branch_name": "Chennai",
+      "flight_no": "6E243"
     },
     {
-      "id": "254",
-      "mawb_no": "MH02FG43141780499063",
+      "id": "343",
+      "mawb_no": "312-29753290",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:36:00",
-      "created_at": "2026-06-04 11:36:23",
-      "updated_at": "2026-06-04 11:36:23",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "12:11:00",
+      "created_at": "2026-06-17 12:00:18",
+      "updated_at": "2026-06-17 12:11:35",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2409 / 6E353"
+    },
+    {
+      "id": "342",
+      "mawb_no": "MH02FG43141781623938",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-17",
+      "pickup_time": "11:56:00",
+      "created_at": "2026-06-17 11:55:42",
+      "updated_at": "2026-06-17 11:57:05",
       "destination_hub": "Mumbai",
       "origin_hub": "Surat",
       "origin_branch_name": "SURAT",
@@ -1754,14 +1584,14 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "BAY ROAD"
     },
     {
-      "id": "253",
-      "mawb_no": "31229058142",
+      "id": "341",
+      "mawb_no": "31229756576",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:34:00",
-      "created_at": "2026-06-04 11:34:51",
-      "updated_at": "2026-06-04 11:34:51",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "11:53:00",
+      "created_at": "2026-06-17 11:54:02",
+      "updated_at": "2026-06-17 11:54:22",
       "destination_hub": "Mumbai",
       "origin_hub": "Bangalore",
       "origin_branch_name": "SURAT",
@@ -1769,29 +1599,29 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "6E5205"
     },
     {
-      "id": "252",
-      "mawb_no": "312-29056064",
+      "id": "340",
+      "mawb_no": "312-29748202",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:32:00",
-      "created_at": "2026-06-04 11:32:52",
-      "updated_at": "2026-06-04 11:34:03",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "11:53:00",
+      "created_at": "2026-06-17 11:53:20",
+      "updated_at": "2026-06-17 11:53:20",
       "destination_hub": "Mumbai",
-      "origin_hub": "Coimbatore",
+      "origin_hub": "Lucknow",
       "origin_branch_name": "SURAT",
       "destination_branch_name": "Mumbai",
-      "flight_no": "6E2409 / 6E675"
+      "flight_no": "6E2058"
     },
     {
-      "id": "251",
-      "mawb_no": "312-28931895",
+      "id": "339",
+      "mawb_no": "312-29753216",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:30:00",
-      "created_at": "2026-06-04 11:30:14",
-      "updated_at": "2026-06-04 11:30:14",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "11:52:00",
+      "created_at": "2026-06-17 11:52:45",
+      "updated_at": "2026-06-17 11:52:45",
       "destination_hub": "Mumbai",
       "origin_hub": "Kolkatta",
       "origin_branch_name": "SURAT",
@@ -1799,14 +1629,74 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "6E6366"
     },
     {
-      "id": "250",
-      "mawb_no": "29059446",
+      "id": "338",
+      "mawb_no": "31229765363",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:27:00",
-      "created_at": "2026-06-04 11:28:24",
-      "updated_at": "2026-06-04 11:28:24",
+      "pickup_date": "2026-06-17",
+      "pickup_time": "11:50:00",
+      "created_at": "2026-06-17 11:51:05",
+      "updated_at": "2026-06-17 11:52:20",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5213"
+    },
+    {
+      "id": "337",
+      "mawb_no": "31229704975",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "14:07:00",
+      "created_at": "2026-06-16 14:08:16",
+      "updated_at": "2026-06-16 14:08:16",
+      "destination_hub": "Bangalore",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Bangalore",
+      "flight_no": "6E151"
+    },
+    {
+      "id": "336",
+      "mawb_no": "31229704920",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:43:00",
+      "created_at": "2026-06-16 11:43:02",
+      "updated_at": "2026-06-16 11:43:02",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5213"
+    },
+    {
+      "id": "335",
+      "mawb_no": "312-29707322",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:41:00",
+      "created_at": "2026-06-16 11:42:03",
+      "updated_at": "2026-06-16 11:42:03",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Jaipur",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5262"
+    },
+    {
+      "id": "334",
+      "mawb_no": "31229703612",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:41:00",
+      "created_at": "2026-06-16 11:41:30",
+      "updated_at": "2026-06-16 11:41:30",
       "destination_hub": "Mumbai",
       "origin_hub": "Indore",
       "origin_branch_name": "SURAT",
@@ -1814,29 +1704,254 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "6e-6598"
     },
     {
-      "id": "249",
-      "mawb_no": "312-29001055",
+      "id": "333",
+      "mawb_no": "31229700602",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-03",
-      "pickup_time": "13:36:00",
-      "created_at": "2026-06-03 13:10:10",
-      "updated_at": "2026-06-03 13:41:21",
-      "destination_hub": "Delhi",
-      "origin_hub": "Jaipur",
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:40:00",
+      "created_at": "2026-06-16 11:40:15",
+      "updated_at": "2026-06-16 11:40:15",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Bangalore",
       "origin_branch_name": "SURAT",
-      "destination_branch_name": "Delhi",
-      "flight_no": "6E2165"
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5205"
     },
     {
-      "id": "248",
-      "mawb_no": "98-05325924",
+      "id": "332",
+      "mawb_no": "MH02FG43141781534452",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-04",
-      "pickup_time": "11:43:00",
-      "created_at": "2026-06-03 12:18:09",
-      "updated_at": "2026-06-04 11:43:11",
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:39:00",
+      "created_at": "2026-06-16 11:39:39",
+      "updated_at": "2026-06-16 11:39:39",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Surat",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "BAY ROAD"
+    },
+    {
+      "id": "331",
+      "mawb_no": "312-29697500",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:38:00",
+      "created_at": "2026-06-16 11:39:07",
+      "updated_at": "2026-06-16 11:39:07",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2409 / 6E353"
+    },
+    {
+      "id": "330",
+      "mawb_no": "312-29694195",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-16",
+      "pickup_time": "11:38:00",
+      "created_at": "2026-06-16 11:38:08",
+      "updated_at": "2026-06-16 11:38:08",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Kolkatta",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E6366"
+    },
+    {
+      "id": "329",
+      "mawb_no": "312-29618665",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:57:00",
+      "created_at": "2026-06-15 11:57:54",
+      "updated_at": "2026-06-15 11:57:54",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Lucknow",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2058"
+    },
+    {
+      "id": "328",
+      "mawb_no": "31229627382",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:56:00",
+      "created_at": "2026-06-15 11:56:22",
+      "updated_at": "2026-06-15 11:56:34",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E6106"
+    },
+    {
+      "id": "327",
+      "mawb_no": "312-29643865",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:26:00",
+      "created_at": "2026-06-15 11:26:08",
+      "updated_at": "2026-06-15 11:26:08",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E248"
+    },
+    {
+      "id": "326",
+      "mawb_no": "312-29622832",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:23:00",
+      "created_at": "2026-06-15 11:21:50",
+      "updated_at": "2026-06-15 11:24:25",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Bangalore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5205"
+    },
+    {
+      "id": "325",
+      "mawb_no": "MH02FG43141781363347",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:21:00",
+      "created_at": "2026-06-15 11:21:07",
+      "updated_at": "2026-06-15 11:21:07",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Surat",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "BAY ROAD"
+    },
+    {
+      "id": "324",
+      "mawb_no": "312-29612376",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-15",
+      "pickup_time": "11:20:00",
+      "created_at": "2026-06-15 11:20:17",
+      "updated_at": "2026-06-15 11:20:17",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Kolkatta",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E6366"
+    },
+    {
+      "id": "323",
+      "mawb_no": "31229567860",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "16:08:00",
+      "created_at": "2026-06-13 16:09:16",
+      "updated_at": "2026-06-13 16:09:16",
+      "destination_hub": "Chennai",
+      "origin_hub": "Vijaywada",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Chennai",
+      "flight_no": "6E6151"
+    },
+    {
+      "id": "322",
+      "mawb_no": "31229567753",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "14:24:00",
+      "created_at": "2026-06-13 14:24:48",
+      "updated_at": "2026-06-13 14:24:48",
+      "destination_hub": "Coimbatore",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Coimbatore",
+      "flight_no": "29567753"
+    },
+    {
+      "id": "321",
+      "mawb_no": "312-29555330",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "12:53:00",
+      "created_at": "2026-06-13 12:53:36",
+      "updated_at": "2026-06-13 12:54:27",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2409 / 6E353"
+    },
+    {
+      "id": "320",
+      "mawb_no": "312-29565443",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "11:53:00",
+      "created_at": "2026-06-13 11:53:50",
+      "updated_at": "2026-06-13 11:54:11",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Bangalore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5205"
+    },
+    {
+      "id": "319",
+      "mawb_no": "31229565141",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "11:52:00",
+      "created_at": "2026-06-13 11:52:18",
+      "updated_at": "2026-06-13 11:52:18",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Vijaywada",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5213"
+    },
+    {
+      "id": "319",
+      "mawb_no": "31229565141",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "11:52:00",
+      "created_at": "2026-06-13 11:52:18",
+      "updated_at": "2026-06-13 11:52:18",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Hyderabad",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5213"
+    },
+    {
+      "id": "318",
+      "mawb_no": "098-05897824",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "11:50:00",
+      "created_at": "2026-06-13 11:50:42",
+      "updated_at": "2026-06-13 11:50:42",
       "destination_hub": "Mumbai",
       "origin_hub": "Kolkatta",
       "origin_branch_name": "SURAT",
@@ -1844,19 +1959,214 @@ curl --location --request GET 'https://my.axlpl.com/messenger/services_v8/api.ph
       "flight_no": "AI 2410"
     },
     {
-      "id": "247",
-      "mawb_no": "31229001243",
+      "id": "317",
+      "mawb_no": "MH02FG43141781276427",
       "hub_id": "1",
       "picked_by": null,
-      "pickup_date": "2026-06-03",
-      "pickup_time": "13:09:00",
-      "created_at": "2026-06-03 11:50:47",
-      "updated_at": "2026-06-03 13:09:22",
+      "pickup_date": "2026-06-13",
+      "pickup_time": "11:49:00",
+      "created_at": "2026-06-13 10:26:43",
+      "updated_at": "2026-06-13 11:49:31",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Surat",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "BAY ROAD"
+    },
+    {
+      "id": "316",
+      "mawb_no": "312-294422571",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-13",
+      "pickup_time": "07:23:00",
+      "created_at": "2026-06-13 07:27:38",
+      "updated_at": "2026-06-13 07:27:38",
+      "destination_hub": "Hyderabad",
+      "origin_hub": "Bangalore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Hyderabad",
+      "flight_no": "6E6178"
+    },
+    {
+      "id": "315",
+      "mawb_no": "31229509782",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "20:32:00",
+      "created_at": "2026-06-12 20:33:21",
+      "updated_at": "2026-06-12 20:33:21",
+      "destination_hub": "Kochin",
+      "origin_hub": "Vijaywada",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Kochin",
+      "flight_no": "6E752"
+    },
+    {
+      "id": "314",
+      "mawb_no": "31229507936",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "16:35:00",
+      "created_at": "2026-06-12 16:35:42",
+      "updated_at": "2026-06-12 16:35:42",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Vijaywada",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5174"
+    },
+    {
+      "id": "313",
+      "mawb_no": "31229509874",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "16:01:00",
+      "created_at": "2026-06-12 16:01:35",
+      "updated_at": "2026-06-12 16:01:35",
+      "destination_hub": "Chennai",
+      "origin_hub": "Vijaywada",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Chennai",
+      "flight_no": "6E243"
+    },
+    {
+      "id": "312",
+      "mawb_no": "TN04BC22191781190636",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "12:32:00",
+      "created_at": "2026-06-12 12:32:31",
+      "updated_at": "2026-06-12 12:32:31",
+      "destination_hub": "Chennai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Chennai",
+      "flight_no": "TN04BC2219"
+    },
+    {
+      "id": "311",
+      "mawb_no": "31229508264",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:49:00",
+      "created_at": "2026-06-12 11:49:21",
+      "updated_at": "2026-06-12 11:49:21",
       "destination_hub": "Mumbai",
       "origin_hub": "Hyderabad",
       "origin_branch_name": "SURAT",
       "destination_branch_name": "Mumbai",
-      "flight_no": "6E5213"
+      "flight_no": "6E6106"
+    },
+    {
+      "id": "310",
+      "mawb_no": "312-29505405",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:48:00",
+      "created_at": "2026-06-12 11:48:46",
+      "updated_at": "2026-06-12 11:48:46",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Jaipur",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5262"
+    },
+    {
+      "id": "309",
+      "mawb_no": "312-29505265",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:47:00",
+      "created_at": "2026-06-12 11:47:22",
+      "updated_at": "2026-06-12 11:47:22",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Bangalore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E5205"
+    },
+    {
+      "id": "308",
+      "mawb_no": "312-29493041",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:46:00",
+      "created_at": "2026-06-12 11:46:08",
+      "updated_at": "2026-06-12 11:46:08",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Lucknow",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2058"
+    },
+    {
+      "id": "307",
+      "mawb_no": "MH02FG43141781190443",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:45:00",
+      "created_at": "2026-06-12 11:45:12",
+      "updated_at": "2026-06-12 11:45:19",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Surat",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "BAY ROAD"
+    },
+    {
+      "id": "306",
+      "mawb_no": "312-29500041",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:43:00",
+      "created_at": "2026-06-12 11:44:13",
+      "updated_at": "2026-06-12 11:44:31",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Coimbatore",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "6E2409 / 6E353"
+    },
+    {
+      "id": "305",
+      "mawb_no": "09806065640",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-12",
+      "pickup_time": "11:42:00",
+      "created_at": "2026-06-12 11:43:07",
+      "updated_at": "2026-06-12 11:43:07",
+      "destination_hub": "Mumbai",
+      "origin_hub": "Kolkatta",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Mumbai",
+      "flight_no": "AI 2410"
+    },
+    {
+      "id": "304",
+      "mawb_no": "BY BUS1781022598",
+      "hub_id": "1",
+      "picked_by": null,
+      "pickup_date": "2026-06-11",
+      "pickup_time": "14:48:00",
+      "created_at": "2026-06-11 14:50:08",
+      "updated_at": "2026-06-11 14:50:08",
+      "destination_hub": "Delhi",
+      "origin_hub": "Jaipur",
+      "origin_branch_name": "SURAT",
+      "destination_branch_name": "Delhi",
+      "flight_no": "BY BUS"
     }
   ]
 }

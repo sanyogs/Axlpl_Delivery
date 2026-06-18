@@ -111,20 +111,73 @@ void main() {
     expect(detail.shipmentCount, 2);
   });
 
-  test('prefers scanned G code when response also includes BAG bag_code', () {
+  test('prefers server bag_code over scanned M/Bag ref', () {
     const sample = {
       'bag_code': 'BAG20260610121223737',
-      'metal_seal_no': 'G20260610121223737',
-      'origin_branch_id': '27',
-      'destination_sector_id': '39',
+      'metal_seal_no': 'mskb',
+      'origin_branch_id': '71',
+      'destination_sector_id': '62',
     };
 
     final detail = BagDetail.fromDynamic(
       sample,
-      requestedBagCode: 'G20260610121223737',
+      requestedBagCode: 'mskb',
     );
 
-    expect(detail.bagCode, 'G20260610121223737');
+    expect(detail.bagCode, 'BAG20260610121223737');
+    expect(detail.metalSealNo, 'mskb');
+  });
+
+  test('parses double-nested getbagdetails wrapper from live API', () {
+    const sample = {
+      'status': 'success',
+      'message': 'Bag details retrieved successfully',
+      'data': {
+        'status': 'success',
+        'message': 'Bag details fetched successfully',
+        'data': {
+          'bag': {
+            'id': '390',
+            'bag_code': 'BAG20260610121223737',
+            'metal_seal_no': 'mskb',
+            'origin_branch_id': '71',
+            'destination_sector_id': '62',
+            'origin_branch_name': 'AGRA',
+            'destination_city_name': 'Ahmedabad crossing',
+            'gross_weight': '200.00',
+          },
+          'items': [
+            {
+              'shipment_id': '600421776103388',
+              'shipment_invoice_no': '21102001',
+              'sender_name': 'version next',
+              'receiver_name': 'tester co',
+              'consignee_code': '3305',
+              'city_name': 'Mumbai',
+              'number_of_parcel': '1',
+              'invoice_val': '354.00',
+              'gross_weight': '200.00',
+              'volumetric_weight': '100.00',
+            },
+          ],
+        },
+      },
+    };
+
+    final detail = BagDetail.fromDynamic(sample, requestedBagCode: 'mskb');
+
+    expect(detail.id, '390');
+    expect(detail.bagCode, 'BAG20260610121223737');
+    expect(detail.metalSealNo, 'mskb');
+    expect(detail.originBranchName, 'AGRA');
+    expect(detail.destinationSectorName, 'Ahmedabad crossing');
+    expect(detail.grossWeight, '200.00');
+    expect(detail.items, hasLength(1));
+    expect(detail.items.first.shipmentId, '600421776103388');
+    expect(detail.items.first.destinationCity, 'Mumbai');
+    expect(detail.items.first.consigneeCode, '3305');
+    expect(detail.items.first.invoiceVal, '354.00');
+    expect(detail.items.first.volumetricWeight, '100.00');
   });
 
   test('parses live getbagdetails nested data.bag wrapper from curl', () {

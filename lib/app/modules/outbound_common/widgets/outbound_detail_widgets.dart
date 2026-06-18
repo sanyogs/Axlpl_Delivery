@@ -194,6 +194,11 @@ class OutboundManifestDetailBody extends StatelessWidget {
         label: OutboundLabels.created,
         value: detail.createdAt ?? '—',
       ),
+      if (detail.totalWeight?.trim().isNotEmpty ?? false)
+        OutboundDetailField(
+          label: OutboundLabels.totalWeight,
+          value: detail.totalWeight!,
+        ),
       if (!compact && (detail.updatedAt?.isNotEmpty ?? false))
         OutboundDetailField(
           label: OutboundLabels.updated,
@@ -459,6 +464,7 @@ class OutboundManifestBagsTable extends StatelessWidget {
           columns: const [
             DataColumn(label: Text('Bag code')),
             DataColumn(label: Text('Metal seal')),
+            DataColumn(label: Text('Weight')),
           ],
           rows: bags
               .map(
@@ -466,6 +472,7 @@ class OutboundManifestBagsTable extends StatelessWidget {
                   cells: [
                     DataCell(Text(e.bagCode ?? '—')),
                     DataCell(Text(e.metalSealNo ?? '—')),
+                    DataCell(Text(e.grossWeight ?? '—')),
                   ],
                 ),
               )
@@ -500,6 +507,8 @@ class OutboundManifestShipmentsTable extends StatelessWidget {
             DataColumn(label: Text('Invoice')),
             DataColumn(label: Text('Status')),
             DataColumn(label: Text('Bag')),
+            DataColumn(label: Text('Weight')),
+            DataColumn(label: Text('Pcs')),
           ],
           rows: shipments
               .map(
@@ -509,6 +518,8 @@ class OutboundManifestShipmentsTable extends StatelessWidget {
                     DataCell(Text(e.shipmentInvoiceNo ?? '—')),
                     DataCell(Text(e.shipmentStatus ?? '—')),
                     DataCell(Text(e.bagCode ?? e.bagId ?? '—')),
+                    DataCell(Text(e.grossWeight ?? '—')),
+                    DataCell(Text(e.numberOfParcel ?? '—')),
                   ],
                 ),
               )

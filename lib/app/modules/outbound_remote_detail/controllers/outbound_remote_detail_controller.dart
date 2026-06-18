@@ -77,18 +77,26 @@ class OutboundRemoteDetailController extends GetxController {
           }
           break;
         case 'manifest':
-          final data = await _repo.manifestDetails(_id);
-          if (data == null) {
-            errorMessage.value = _repo.lastMessage.isNotEmpty
-                ? _repo.lastMessage
-                : 'Could not load manifest details.';
-          } else {
-            manifestDetail.value = data;
-            final ref = data.manifestNo ?? data.id;
-            if (ref != null && ref.isNotEmpty) {
-              title.value = 'Manifest $ref';
-            }
-          }
+          final r = await _repo.fetchManifestDetailsByRefs([_id]);
+          r.when(
+            success: (data) {
+              final detail = ManifestDetail.fromDynamic(data);
+              if (!detail.hasContent) {
+                errorMessage.value = 'Could not load manifest details.';
+                return;
+              }
+              manifestDetail.value = detail;
+              final ref = detail.manifestNo ?? detail.id;
+              if (ref != null && ref.isNotEmpty) {
+                title.value = 'Manifest $ref';
+              }
+            },
+            error: (e) {
+              errorMessage.value = e.message.isNotEmpty
+                  ? e.message
+                  : 'Could not load manifest details.';
+            },
+          );
           break;
         case 'linehaul':
           final data = await _repo.linehaulDetails(_id);

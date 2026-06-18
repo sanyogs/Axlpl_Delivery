@@ -194,10 +194,12 @@ class AppPages {
     GetPage(
       name: _Paths.OUTBOUND_MANIFEST_LIST,
       page: () => const ManifestListView(),
+      binding: OutboundManifestBinding(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_MANIFEST_REPORT,
       page: () => const ManifestReportView(),
+      binding: OutboundManifestBinding(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_LINEHAUL,

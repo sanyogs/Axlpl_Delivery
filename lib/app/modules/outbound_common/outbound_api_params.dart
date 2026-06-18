@@ -46,15 +46,27 @@ class OutboundApiParams {
 
   static List<Map<String, String>> manifestDetailQueries(String manifestRef) {
     final ref = manifestRef.trim();
+    if (looksLikeManifestCode(ref)) {
+      return [
+        {'manifest_code': ref},
+        {'code': ref},
+      ];
+    }
     return [
-      if (looksLikeManifestCode(ref)) {'manifest_code': ref},
       {'manifest_id': ref},
-      if (looksLikeManifestCode(ref)) {'code': ref},
+      {'manifest_code': ref},
     ];
   }
 
   static List<Map<String, String>> linehaulDetailQueries(String linehaulRef) {
     final ref = linehaulRef.trim();
+    if (looksLikeTripNo(ref)) {
+      return [
+        {'trip_no': ref},
+        {'mawb_no': ref},
+        {'linehaul_id': ref},
+      ];
+    }
     return [
       {'mawb_no': ref},
       {'linehaul_id': ref},
@@ -105,6 +117,9 @@ class OutboundApiParams {
     if (looksLikeManifestCode(first)) {
       return {'manifest_codes': ids};
     }
+    if (int.tryParse(first) != null) {
+      return {'manifest_ids': ids};
+    }
     return {'manifest_codes': ids, 'manifest_ids': ids};
   }
 
@@ -123,11 +138,52 @@ class OutboundApiParams {
       'destination_branch_id': destinationBranchId.trim(),
       'user_id': userId,
     };
+    // Sarvesh QA createmanifest: bag_codes + branches + user_id only (no transport_mode).
     final mode = transportMode?.trim();
-    if (mode != null && mode.isNotEmpty) {
+    if (mode != null && mode.isNotEmpty && mode.toLowerCase() != 'surface') {
       body['transport_mode'] = mode;
     }
     return body;
+  }
+
+  /// GET `baggingreport` — Sarvesh: `bag_code` + `start_date` + `end_date`.
+  static Map<String, String> baggingReportQuery({
+    required String bagCode,
+    required String startDate,
+    required String endDate,
+  }) =>
+      {
+        'bag_code': bagCode.trim(),
+        'start_date': startDate.trim(),
+        'end_date': endDate.trim(),
+      };
+
+  /// GET `manifestreport` — Sarvesh: `manifest_no` + date range.
+  static Map<String, String> manifestReportQuery({
+    required String manifestNo,
+    required String startDate,
+    required String endDate,
+  }) =>
+      {
+        'manifest_no': manifestNo.trim(),
+        'start_date': startDate.trim(),
+        'end_date': endDate.trim(),
+      };
+
+  static String formatReportDate(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  /// Default report window for bagging/manifest report screens.
+  static Map<String, String> defaultReportDateRange({int days = 90}) {
+    final now = DateTime.now();
+    return {
+      'start_date': formatReportDate(now.subtract(Duration(days: days))),
+      'end_date': formatReportDate(now),
+    };
   }
 
   /// Combine date + time for `editlinehaul` / linehaul booking POST fields.
@@ -166,7 +222,7 @@ class OutboundApiParams {
         'user_id': userId,
       };
 
-  /// POST `updatelinehaulstatus` — send `linehaul_id` and `trip_no` when LH-prefixed.
+  /// POST `updatelinehaulstatus` — Postman sends `trip_no` for LH refs; numeric id otherwise.
   static Map<String, String> updateLinehaulStatusBody({
     required String linehaulRef,
     required String status,
@@ -175,13 +231,14 @@ class OutboundApiParams {
   }) {
     final ref = linehaulRef.trim();
     final body = <String, String>{
-      'linehaul_id': ref,
       'status': status.trim(),
       'user_id': userId,
       'branch_id': branchId.trim(),
     };
     if (looksLikeTripNo(ref)) {
       body['trip_no'] = ref;
+    } else {
+      body['linehaul_id'] = ref;
     }
     return body;
   }
@@ -202,7 +259,8 @@ class OutboundApiParams {
     String? ewayBill,
     String? transportType,
   }) {
-    final body = <String, String>{'linehaul_id': linehaulId.trim()};
+    final ref = linehaulId.trim();
+    final body = <String, String>{'linehaul_id': ref};
     void add(String key, String? value) {
       final t = value?.trim();
       if (t != null && t.isNotEmpty) body[key] = t;
@@ -212,7 +270,11 @@ class OutboundApiParams {
     add('driver_name', driverName);
     add('driver_mobile', driverMobile);
     add('mawb_no', mawbNo);
-    add('trip_no', tripNo);
+    if (looksLikeTripNo(ref)) {
+      body['trip_no'] = ref;
+    } else {
+      add('trip_no', tripNo);
+    }
     add('departure_time', departureTime);
     add('arrival_time', arrivalTime);
     add('remarks', remarks);

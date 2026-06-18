@@ -6,7 +6,13 @@
   "dart.devToolsReuseWindows": true,
   "dart.devToolsBrowser": "chrome",
   "dart.shareDevToolsWithFlutter": true,
+  "dart.flutterHotReloadOnSave": "all",
 
   "debug.internalConsoleOptions": "openOnSessionStart",
-  "debug.console.focusOnDebugSessionStart": true
+  "debug.console.focusOnDebugSessionStart": true,
+  "debug.console.wordWrap": false,
+
+  "dart.showDartDeveloperLogs": true,
+  "dart.debugExternalPackageLibraries": false,
+  "dart.debugSdkLibraries": false
 }

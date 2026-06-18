@@ -37,14 +37,28 @@ class ManifestBagSessionRow {
       id: detail.destinationSectorId,
       branchLabel: branchLabel,
     );
-    String? weight;
-    final map = OutboundDataParse.asStringKeyedMap(rawData);
-    if (map != null) {
-      weight = OutboundDataParse.firstNonEmptyString(map, const [
-        'gross_weight',
-        'bag_weight',
-        'total_weight',
-      ]);
+    String? weight = detail.grossWeight?.trim();
+    if (weight == null || weight.isEmpty) {
+      final map = OutboundDataParse.asStringKeyedMap(rawData);
+      if (map != null) {
+        for (final level in _nestedMaps(map)) {
+          weight = OutboundDataParse.firstNonEmptyString(level, const [
+            'gross_weight',
+            'bag_weight',
+            'total_weight',
+          ]);
+          if (weight != null) break;
+          final bag = OutboundDataParse.asStringKeyedMap(level['bag']);
+          if (bag != null) {
+            weight = OutboundDataParse.firstNonEmptyString(bag, const [
+              'gross_weight',
+              'bag_weight',
+              'total_weight',
+            ]);
+            if (weight != null) break;
+          }
+        }
+      }
     }
     return ManifestBagSessionRow(
       bagCode: code,
@@ -64,6 +78,17 @@ class ManifestBagSessionRow {
     if (n != null && n.isNotEmpty) return n;
     if (id != null && id.trim().isNotEmpty) return branchLabel(id.trim());
     return '—';
+  }
+
+  static List<Map<String, dynamic>> _nestedMaps(Map<String, dynamic> root) {
+    final levels = <Map<String, dynamic>>[root];
+    final data = OutboundDataParse.asStringKeyedMap(root['data']);
+    if (data != null) {
+      levels.add(data);
+      final inner = OutboundDataParse.asStringKeyedMap(data['data']);
+      if (inner != null) levels.add(inner);
+    }
+    return levels;
   }
 }
 
@@ -103,55 +128,53 @@ class ManifestShipmentSessionRow {
   factory ManifestShipmentSessionRow.fromBagDetailItem(
     BagDetailItem item, {
     required String bagCode,
-    String? originLabel,
+    String? originBranchName,
     Map<String, dynamic>? rawJson,
   }) {
     final json = rawJson ?? const <String, dynamic>{};
+    final parcelCount = item.noOfPackage ??
+        OutboundDataParse.firstNonEmptyString(json, const [
+          'number_of_parcel',
+          'no_of_package',
+          'pcs',
+        ]);
+
     return ManifestShipmentSessionRow(
       bagNumber: bagCode,
-      boxNo: OutboundDataParse.firstNonEmptyString(json, const [
-            'box_no',
-            'box_number',
-          ]) ??
-          item.boxNo ??
-          item.shipmentInvoiceNo,
-      consignmentNo: item.shipmentId,
-      origin: originLabel,
-      consigneeCode: OutboundDataParse.firstNonEmptyString(json, const [
-        'consignee_code',
-        'client_code',
-        'receiver_code',
-      ]),
-      consigneeName: OutboundDataParse.firstNonEmptyString(json, const [
-        'consignee_name',
-        'receiver_name',
-      ]) ??
-          item.receiverName,
-      cityName: OutboundDataParse.optionalString(json, 'destination_city') ??
-          item.destinationCity,
-      pcs: OutboundDataParse.firstNonEmptyString(json, const [
-            'number_of_parcel',
-            'no_of_package',
-            'pcs',
-          ]) ??
-          item.noOfPackage ??
-          '1',
+      boxNo: parcelCount,
+      consignmentNo: item.shipmentId ??
+          OutboundDataParse.firstNonEmptyString(json, const [
+            'shipment_id',
+            'docket_no',
+          ]),
+      origin: originBranchName,
+      consigneeCode: item.consigneeCode ??
+          OutboundDataParse.optionalString(json, 'consignee_code'),
+      consigneeName: item.receiverName ??
+          OutboundDataParse.optionalString(json, 'receiver_name'),
+      cityName: item.destinationCity ??
+          OutboundDataParse.optionalString(json, 'city_name'),
+      pcs: parcelCount,
       description: OutboundDataParse.firstNonEmptyString(json, const [
-            'description',
-            'goods_description',
-          ]) ??
-          item.shipmentStatus,
-      invVal: OutboundDataParse.firstNonEmptyString(json, const [
-        'invoice_value',
-        'inv_val',
-        'actual_value',
+        'description',
+        'goods_description',
       ]),
-      grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
+      invVal: item.invoiceVal ??
+          OutboundDataParse.firstNonEmptyString(json, const [
+            'invoice_val',
+            'invoice_value',
+            'inv_val',
+          ]),
+      grossWeight: item.totalWeight ??
+          OutboundDataParse.firstNonEmptyString(json, const [
             'gross_weight',
             'total_weight',
-          ]) ??
-          item.totalWeight,
-      volumetricWeight: OutboundDataParse.optionalString(json, 'volumetric_weight'),
+          ]),
+      volumetricWeight: item.volumetricWeight ??
+          OutboundDataParse.firstNonEmptyString(json, const [
+            'volumetric_weight',
+            'vol_weight',
+          ]),
     );
   }
 }

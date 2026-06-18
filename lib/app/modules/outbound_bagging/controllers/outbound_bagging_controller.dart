@@ -39,11 +39,12 @@ class OutboundBaggingController extends GetxController {
   static const bagListPageSize = 25;
 
   final shipmentFocusNode = FocusNode();
-  final bagCodeFocusNode = FocusNode();
+  final metalSealFocusNode = FocusNode();
   final metalSealController = TextEditingController();
-  final bagCodeWorkingController = TextEditingController();
   final shipmentController = TextEditingController();
   final reportBagCodeController = TextEditingController();
+  final reportStartController = TextEditingController();
+  final reportEndController = TextEditingController();
 
   final selectedOriginDepotId = RxnString();
   final selectedDestDepotId = RxnString();
@@ -51,6 +52,7 @@ class OutboundBaggingController extends GetxController {
   String? _lastFetchedShipmentId;
   String? _depotContextKey;
   String? _loadedBagCode;
+  String? _lastBagDetailsFetchRef;
 
   int get bagListTotalCount => bagListAllRows.length;
 
@@ -89,26 +91,27 @@ class OutboundBaggingController extends GetxController {
     return 'Origin: $origin → Destination: $dest';
   }
 
-  /// True when `bag_code` came from server — field stays read-only.
-  bool get isBagCodeFromServer =>
-      _loadedBagCode != null && _loadedBagCode!.isNotEmpty;
-
+  /// `bag_code` from last successful `getbagdetails` / create — never numeric `bag_id`.
   String get visibleBagCode {
     final detailCode = bagDetail.value?.bagCode?.trim();
     if (detailCode != null && detailCode.isNotEmpty) return detailCode;
-    final working = bagCodeWorkingController.text.trim();
-    return working;
+    return _loadedBagCode?.trim() ?? '';
   }
 
   List<BaggingTableRow> get scannedBoxRows {
     final rows = <BaggingTableRow>[];
     final pendingKeys = <String>{};
     final destLabel = _destinationLabel();
+    final tableBagCode = visibleBagCode.isEmpty ? null : visibleBagCode;
 
     for (final r in sessionScannedRows) {
       if (r.sessionKey.isEmpty) continue;
       pendingKeys.add(r.sessionKey);
-      rows.add(r);
+      rows.add(
+        r.bagCode?.trim().isNotEmpty == true
+            ? r
+            : r.copyWith(bagCode: tableBagCode),
+      );
     }
 
     final detail = bagDetail.value;
@@ -121,13 +124,16 @@ class OutboundBaggingController extends GetxController {
           );
 
     if (detail != null) {
+      final codeForRows = detail.bagCode?.trim().isNotEmpty == true
+          ? detail.bagCode
+          : tableBagCode;
       for (final item in detail.items) {
         final key = item.shipmentId?.trim() ?? '';
         if (key.isNotEmpty && pendingKeys.contains(key)) continue;
         rows.add(
           BaggingTableRow.fromBagDetailItem(
             item,
-            bagCode: detail.bagCode,
+            bagCode: codeForRows,
             destination: savedDestLabel,
             mode: _statusForScannedBoxRow(
               shipmentStatus: item.shipmentStatus,
@@ -146,7 +152,7 @@ class OutboundBaggingController extends GetxController {
   void onInit() {
     super.onInit();
     shipmentFocusNode.addListener(_onShipmentFocusChanged);
-    bagCodeFocusNode.addListener(_onBagCodeFocusChanged);
+    metalSealFocusNode.addListener(_onMetalSealFocusChanged);
     ever(_branchList.isLoadingBranches, (loading) {
       if (loading == false && _originId != null && _workingBagCode != null) {
         refreshBagDetailsQuiet();
@@ -161,22 +167,23 @@ class OutboundBaggingController extends GetxController {
     }
   }
 
-  void _onBagCodeFocusChanged() {
-    if (!bagCodeFocusNode.hasFocus) {
-      onBagCodeFocusLost();
+  void _onMetalSealFocusChanged() {
+    if (!metalSealFocusNode.hasFocus) {
+      onMetalSealFocusLost();
     }
   }
 
   @override
   void onClose() {
     shipmentFocusNode.removeListener(_onShipmentFocusChanged);
-    bagCodeFocusNode.removeListener(_onBagCodeFocusChanged);
+    metalSealFocusNode.removeListener(_onMetalSealFocusChanged);
     shipmentFocusNode.dispose();
-    bagCodeFocusNode.dispose();
+    metalSealFocusNode.dispose();
     metalSealController.dispose();
-    bagCodeWorkingController.dispose();
     shipmentController.dispose();
     reportBagCodeController.dispose();
+    reportStartController.dispose();
+    reportEndController.dispose();
     super.onClose();
   }
 
@@ -184,9 +191,9 @@ class OutboundBaggingController extends GetxController {
   String? get _destId => selectedDestDepotId.value?.trim();
 
   String? get _workingBagCode {
-    final code = bagCodeWorkingController.text.trim();
-    if (code.isEmpty) return null;
-    return code;
+    final code = _loadedBagCode?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    return bagDetail.value?.bagCode?.trim();
   }
 
   String _destinationLabel() =>
@@ -220,12 +227,8 @@ class OutboundBaggingController extends GetxController {
     return null;
   }
 
-  static String? _destinationIdForRow(OutboundBagRow row) =>
-      row.destinationSectorId ?? row.destinationBranchId;
-
   String _buildDepotContextKey() => '${_originId ?? ''}|${_destId ?? ''}';
 
-  /// Snackbar text from API `message` / `__server_message` only — never client copy.
   void _snackServerData(dynamic data) {
     final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
     if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
@@ -253,8 +256,8 @@ class OutboundBaggingController extends GetxController {
     _depotContextKey = next;
     sessionScannedRows.clear();
     bagDetail.value = null;
-    bagCodeWorkingController.clear();
     _loadedBagCode = null;
+    _lastBagDetailsFetchRef = null;
     bagListAllRows.clear();
     bagListPage.value = 1;
     bagListError.value = '';
@@ -264,29 +267,24 @@ class OutboundBaggingController extends GetxController {
     shipmentController.clear();
   }
 
-  void _applyBagDetailToSelection(BagDetail detail) {
-    if (detail.originBranchId != null && detail.originBranchId!.isNotEmpty) {
-      selectedOriginDepotId.value = detail.originBranchId;
+  /// Store parsed bag details only — never backfill origin/destination/M-Bag form fields.
+  void _storeBagDetail(BagDetail detail, {String? fetchRef}) {
+    bagDetail.value = detail;
+    final code = detail.bagCode?.trim();
+    if (code != null && code.isNotEmpty) {
+      _loadedBagCode = code;
     }
-    if (detail.destinationSectorId != null &&
-        detail.destinationSectorId!.isNotEmpty) {
-      selectedDestDepotId.value = detail.destinationSectorId;
+    if (fetchRef != null && fetchRef.trim().isNotEmpty) {
+      _lastBagDetailsFetchRef = fetchRef.trim();
     }
-    if (detail.metalSealNo != null && detail.metalSealNo!.isNotEmpty) {
-      metalSealController.text = detail.metalSealNo!;
-    }
-    if (detail.bagCode != null && detail.bagCode!.isNotEmpty) {
-      bagCodeWorkingController.text = detail.bagCode!;
-      _loadedBagCode = detail.bagCode;
-    }
-    _depotContextKey = _buildDepotContextKey();
   }
 
   void _stageCurrentShipment(HubScanFetchedShipment shipment) {
+    final tableBagCode = visibleBagCode.isEmpty ? null : visibleBagCode;
     final row = BaggingTableRow.fromFetchedShipment(
       shipment: shipment,
       scanTyped: shipmentController.text.trim(),
-      bagCode: visibleBagCode.isEmpty ? null : visibleBagCode,
+      bagCode: tableBagCode,
       destination: _destinationLabel(),
       saved: false,
     );
@@ -310,29 +308,30 @@ class OutboundBaggingController extends GetxController {
     await fetchShipment(shipmentOverride: id);
   }
 
-  Future<void> onBagCodeFocusLost() async {
-    await loadBagByCode();
+  Future<void> onMetalSealFocusLost() async {
+    await loadBagByMetalSeal();
   }
 
-  /// `getbagdetails` — uses Bag Code field → `bag_code` query param.
-  Future<void> loadBagByCode() async {
-    final code = bagCodeWorkingController.text.trim();
-    if (code.isEmpty) {
+  /// `getbagdetails` — M/Bag No field → `bag_code` query param.
+  Future<void> loadBagByMetalSeal() async {
+    final ref = metalSealController.text.trim();
+    if (ref.isEmpty) {
       _loadedBagCode = null;
+      _lastBagDetailsFetchRef = null;
       bagDetail.value = null;
       return;
     }
     isBusy.value = true;
+    fetchStatusMessage.value = '';
     try {
-      final r = await _repo.fetchBagDetails(code);
+      final r = await _repo.fetchBagDetails(ref);
       r.when(
         success: (data) {
           final detail = BagDetail.fromDynamic(
             data,
-            requestedBagCode: code,
+            requestedBagCode: ref,
           );
-          bagDetail.value = detail;
-          _applyBagDetailToSelection(detail);
+          _storeBagDetail(detail, fetchRef: ref);
           sessionScannedRows.clear();
           _snackServerData(data);
         },
@@ -350,8 +349,8 @@ class OutboundBaggingController extends GetxController {
     final connote = (shipmentOverride ?? shipmentController.text).trim();
     if (connote.isEmpty) return;
     if (_looksLikeBagReference(connote)) {
-      bagCodeWorkingController.text = connote;
-      await loadBagByCode();
+      metalSealController.text = connote;
+      await loadBagByMetalSeal();
       if (bagDetail.value != null) {
         shipmentController.clear();
         fetchStatusMessage.value = 'Bag loaded. Scan shipment ID to add boxes.';
@@ -398,10 +397,10 @@ class OutboundBaggingController extends GetxController {
     await fetchShipment(shipmentOverride: value.trim());
   }
 
-  Future<void> onBagCodeScanned(String value) async {
+  Future<void> onMetalSealScanned(String value) async {
     if (value.trim().isEmpty || value == '-1') return;
-    bagCodeWorkingController.text = value.trim();
-    await loadBagByCode();
+    metalSealController.text = value.trim();
+    await loadBagByMetalSeal();
   }
 
   bool _looksLikeBagReference(String value) {
@@ -479,7 +478,7 @@ class OutboundBaggingController extends GetxController {
       if (_isExistingBagSession()) {
         final bagCode = _workingBagCode!;
         if (bagDetail.value == null) {
-          await loadBagByCode();
+          await loadBagByMetalSeal();
           if (bagDetail.value == null) return false;
         }
 
@@ -523,18 +522,12 @@ class OutboundBaggingController extends GetxController {
             .map((r) => r.docketForApi)
             .where((s) => s.isNotEmpty)
             .toList();
-        final customBagCode = _workingBagCode;
-        String? createBagCode;
-        if (customBagCode != null && customBagCode.isNotEmpty) {
-          createBagCode = customBagCode;
-        }
 
         final r = await _repo.createBag(
           originBranchId: origin,
           destinationBranchId: dest,
           metalSealNo: metalSeal,
           shipmentIdsCsv: OutboundApiParams.shipmentIdsCsv(ids),
-          bagCode: createBagCode,
         );
         var created = false;
         r.when(
@@ -544,12 +537,7 @@ class OutboundBaggingController extends GetxController {
             final result = OutboundMutationResult.fromDynamic(data);
             final ref = result.effectiveBagRef;
             if (ref != null && ref.isNotEmpty) {
-              bagCodeWorkingController.text = ref;
               _loadedBagCode = ref;
-            }
-            final seal = result.metalSealNo?.trim();
-            if (seal != null && seal.isNotEmpty) {
-              metalSealController.text = seal;
             }
             _snackServerData(data);
           },
@@ -595,18 +583,25 @@ class OutboundBaggingController extends GetxController {
     );
   }
 
+  String? get _bagDetailsFetchRef {
+    final code = _workingBagCode?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    final seal = metalSealController.text.trim();
+    if (seal.isNotEmpty) return seal;
+    return _lastBagDetailsFetchRef;
+  }
+
   Future<bool> refreshBagDetailsQuiet() async {
-    final code = _workingBagCode;
-    if (code == null) return false;
-    final r = await _repo.fetchBagDetails(code);
+    final ref = _bagDetailsFetchRef;
+    if (ref == null || ref.isEmpty) return false;
+    final r = await _repo.fetchBagDetails(ref);
     return r.when(
       success: (data) {
         final detail = BagDetail.fromDynamic(
           data,
-          requestedBagCode: code,
+          requestedBagCode: ref,
         );
-        bagDetail.value = detail;
-        _applyBagDetailToSelection(detail);
+        _storeBagDetail(detail, fetchRef: ref);
         return true;
       },
       error: (_) => false,
@@ -690,7 +685,6 @@ class OutboundBaggingController extends GetxController {
       bagListAllRows.assignAll(rows);
       final msg = _repo.lastMessage.trim();
       if (msg.isNotEmpty) {
-        // Auth / network / API error — not an empty list.
         bagListError.value = msg;
         return false;
       }
@@ -704,45 +698,46 @@ class OutboundBaggingController extends GetxController {
   }
 
   void applyBagFromList(OutboundBagRow row) {
-    if (row.originBranchId != null && row.originBranchId!.isNotEmpty) {
-      selectedOriginDepotId.value = row.originBranchId;
+    final fetchRef = row.bagCode?.trim().isNotEmpty == true
+        ? row.bagCode!.trim()
+        : row.metalSealNo?.trim();
+    if (fetchRef != null && fetchRef.isNotEmpty) {
+      _lastBagDetailsFetchRef = fetchRef;
+      if (row.bagCode?.trim().isNotEmpty == true) {
+        _loadedBagCode = row.bagCode!.trim();
+      }
     }
-    final destId = _destinationIdForRow(row);
-    if (destId != null && destId.isNotEmpty) {
-      selectedDestDepotId.value = destId;
-    }
-    if (row.metalSealNo != null && row.metalSealNo!.isNotEmpty) {
-      metalSealController.text = row.metalSealNo!;
-    }
-    final code = row.bagCode ?? row.bagId;
-    if (code != null && code.isNotEmpty) {
-      bagCodeWorkingController.text = code;
-      _loadedBagCode = row.bagCode ?? code;
-    }
-    _depotContextKey = _buildDepotContextKey();
     sessionScannedRows.clear();
     refreshBagDetailsQuiet();
     Get.back();
   }
 
   void prefillBaggingReport() {
+    final range = OutboundApiParams.defaultReportDateRange();
+    if (reportStartController.text.trim().isEmpty) {
+      reportStartController.text = range['start_date']!;
+    }
+    if (reportEndController.text.trim().isEmpty) {
+      reportEndController.text = range['end_date']!;
+    }
     if (reportBagCodeController.text.trim().isEmpty) {
-      final working = bagCodeWorkingController.text.trim();
-      if (working.isNotEmpty) {
-        reportBagCodeController.text = working;
-      } else {
-        final fromDetail = bagDetail.value?.bagCode?.trim();
-        if (fromDetail != null && fromDetail.isNotEmpty) {
-          reportBagCodeController.text = fromDetail;
-        }
+      final fromDetail = visibleBagCode.trim();
+      if (fromDetail.isNotEmpty) {
+        reportBagCodeController.text = fromDetail;
       }
     }
   }
 
   Future<void> baggingReport() async {
     final code = reportBagCodeController.text.trim();
+    final start = reportStartController.text.trim();
+    final end = reportEndController.text.trim();
     if (code.isEmpty) {
-      Get.snackbar('Bagging', 'Bag id is required');
+      Get.snackbar('Bagging', 'Bag code is required for bagging report.');
+      return;
+    }
+    if (start.isEmpty || end.isEmpty) {
+      Get.snackbar('Bagging', 'Start and end date are required');
       return;
     }
 
@@ -750,6 +745,8 @@ class OutboundBaggingController extends GetxController {
     try {
       final r = await _repo.baggingReport(
         bagCode: code,
+        startDate: start,
+        endDate: end,
       );
       r.when(
         success: (data) {
@@ -763,7 +760,6 @@ class OutboundBaggingController extends GetxController {
     }
   }
 
-  /// `rebagshipment` — `new_bag_code`, `docket_no`, `user_id` (Postman).
   Future<void> rebagShipment({
     required String newBagCode,
     required String docketNo,
