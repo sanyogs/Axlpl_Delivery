@@ -47,14 +47,26 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
                 await controller.loadPickupList();
               },
         children: [
-          OutboundButtonRow(
-            start: OutboundSecondaryButton(
-              label: OutboundLabels.btnSectorPickupStatusReport,
-              onPressed: busy
-                  ? null
-                  : () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT),
-            ),
-            end: OutboundPrimaryButtonCompact(
+          OutboundAdminSection(
+            title: OutboundLabels.sectorPickupStatusReportTitle,
+            children: [
+              Text(
+                OutboundLabels.subtitleSectorPickupStatusReport,
+                style: themes.fontSize14_400.copyWith(color: themes.grayColor),
+              ),
+              OutboundPrimaryButton(
+                title: OutboundLabels.btnOpenPickupReport,
+                onPressed: busy
+                    ? null
+                    : () => Get.toNamed(
+                          Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT,
+                        ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnNewSectorPickup,
               onPressed: busy ? null : _openNewPickup,
             ),

@@ -294,9 +294,6 @@ class OutboundHubScanController extends GetxController {
           _stageCurrentForm(shipment);
           final msg = result.serverMessage?.trim() ?? '';
           fetchStatusMessage.value = msg;
-          if (msg.isNotEmpty) {
-            Get.snackbar('Hub scan', msg);
-          }
         },
         error: (e) {
           fetchedShipment.value = null;
@@ -304,9 +301,6 @@ class OutboundHubScanController extends GetxController {
           _applyShipmentToFields(null);
           final msg = e.message.trim();
           fetchStatusMessage.value = msg;
-          if (msg.isNotEmpty) {
-            Get.snackbar('Hub scan', msg);
-          }
         },
       );
     } finally {
@@ -385,7 +379,9 @@ class OutboundHubScanController extends GetxController {
       shipmentScanHistoryRows.assignAll(rows);
       if (rows.isEmpty) {
         final msg = _repo.lastMessage.trim();
-        if (msg.isNotEmpty) Get.snackbar('Hub scan', msg);
+        if (msg.isNotEmpty) {
+          hubScanListError.value = msg;
+        }
       }
     } finally {
       isScanHistoryLoading.value = false;

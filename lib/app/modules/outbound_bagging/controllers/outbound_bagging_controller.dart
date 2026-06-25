@@ -235,14 +235,14 @@ class OutboundBaggingController extends GetxController {
 
   String _buildDepotContextKey() => '${_originId ?? ''}|${_destId ?? ''}';
 
-  void _snackServerData(dynamic data) {
+  void _snackServerData(dynamic data, {bool showSnackbar = true}) {
     final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-    if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
+    if (showSnackbar && msg.isNotEmpty) Get.snackbar('Bagging', msg);
   }
 
-  void _snackServerError(AppException e) {
+  void _snackServerError(AppException e, {bool showSnackbar = true}) {
     final msg = e.message.trim();
-    if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
+    if (showSnackbar && msg.isNotEmpty) Get.snackbar('Bagging', msg);
   }
 
   void onOriginDepotChanged(String? id) {
@@ -364,11 +364,11 @@ class OutboundBaggingController extends GetxController {
           );
           _storeBagDetail(detail, fetchRef: ref);
           sessionScannedRows.clear();
-          _snackServerData(data);
+          _snackServerData(data, showSnackbar: false);
         },
         error: (e) {
           fetchStatusMessage.value = e.message.trim();
-          _snackServerError(e);
+          _snackServerError(e, showSnackbar: false);
         },
       );
     } finally {
@@ -407,14 +407,12 @@ class OutboundBaggingController extends GetxController {
           _stageCurrentShipment(shipment);
           final msg = result.serverMessage?.trim() ?? '';
           fetchStatusMessage.value = msg;
-          if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
         },
         error: (e) {
           fetchedShipment.value = null;
           _lastFetchedShipmentId = null;
           final msg = e.message.trim();
           fetchStatusMessage.value = msg;
-          if (msg.isNotEmpty) Get.snackbar('Bagging', msg);
         },
       );
     } finally {

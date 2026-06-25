@@ -23,4 +23,7 @@ abstract final class OutboundMenuIcons {
 
   /// Module E — sector pickup scans.
   static const IconData sectorPickup = Icons.pin_drop_outlined;
+
+  /// Sector pickup status report (`pickupreport`).
+  static const IconData sectorPickupReport = Icons.assessment_outlined;
 }

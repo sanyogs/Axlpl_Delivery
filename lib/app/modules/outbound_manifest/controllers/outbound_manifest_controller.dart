@@ -164,14 +164,14 @@ class OutboundManifestController extends GetxController {
 
   String _buildDepotContextKey() => '${_originId ?? ''}|${_destId ?? ''}';
 
-  void _snackServerData(dynamic data) {
+  void _snackServerData(dynamic data, {bool showSnackbar = true}) {
     final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-    if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
+    if (showSnackbar && msg.isNotEmpty) Get.snackbar('Manifest', msg);
   }
 
-  void _snackServerError(AppException e) {
+  void _snackServerError(AppException e, {bool showSnackbar = true}) {
     final msg = e.message.trim();
-    if (msg.isNotEmpty) Get.snackbar('Manifest', msg);
+    if (showSnackbar && msg.isNotEmpty) Get.snackbar('Manifest', msg);
   }
 
   void onOriginDepotChanged(String? id) {
@@ -342,11 +342,11 @@ class OutboundManifestController extends GetxController {
           sessionBags.add(row);
           _refreshSummaryFields();
           bagScanController.clear();
-          _snackServerData(data);
+          _snackServerData(data, showSnackbar: false);
         },
         error: (e) {
           fetchStatusMessage.value = e.message.trim();
-          _snackServerError(e);
+          _snackServerError(e, showSnackbar: false);
         },
       );
     } finally {
@@ -517,11 +517,11 @@ class OutboundManifestController extends GetxController {
           lastResponseText.value = OutboundDataParse.pretty(data);
           Get.snackbar('Manifest', 'Manifest details not found');
         }
-        _snackServerData(data);
+        _snackServerData(data, showSnackbar: false);
       },
       error: (e) {
         lastResponseText.value = e.message;
-        _snackServerError(e);
+        _snackServerError(e, showSnackbar: false);
       },
     );
   }
@@ -577,11 +577,11 @@ class OutboundManifestController extends GetxController {
           lastResponseText.value = OutboundDataParse.pretty(data);
           Get.snackbar('Manifest', 'Print data not found');
         }
-        _snackServerData(data);
+        _snackServerData(data, showSnackbar: false);
       },
       error: (e) {
         lastResponseText.value = e.message;
-        _snackServerError(e);
+        _snackServerError(e, showSnackbar: false);
       },
     );
   }
@@ -647,11 +647,11 @@ class OutboundManifestController extends GetxController {
           final report = ManifestReport.fromDynamic(data);
           manifestReportData.value = report;
           lastResponseText.value = '';
-          _snackServerData(data);
+          _snackServerData(data, showSnackbar: false);
         },
         error: (e) {
           lastResponseText.value = e.message;
-          _snackServerError(e);
+          _snackServerError(e, showSnackbar: false);
         },
       );
     } finally {

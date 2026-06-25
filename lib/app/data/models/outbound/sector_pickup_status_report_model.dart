@@ -37,6 +37,17 @@ class SectorPickupStatusReportPage {
       rowsSource['data'] ?? rowsSource['rows'] ?? rowsSource['list'],
     );
 
+    final legacySummary = _legacySummaryFromList(
+      rowsSource['data'] ?? rowsSource['rows'] ?? rowsSource['list'] ?? data,
+    );
+    if (rows.isEmpty && legacySummary != null) {
+      return SectorPickupStatusReportPage(
+        total: legacySummary.total,
+        pickupDone: legacySummary.done,
+        pickupPending: legacySummary.pending,
+      );
+    }
+
     if (rows.isEmpty &&
         map.containsKey('status') &&
         map.containsKey('count')) {
@@ -87,6 +98,40 @@ class SectorPickupStatusReportPage {
     }
     return null;
   }
+
+  static _LegacySummary? _legacySummaryFromList(dynamic raw) {
+    if (raw is! List || raw.isEmpty) return null;
+    final first = OutboundDataParse.asStringKeyedMap(raw.first);
+    if (first == null || !first.containsKey('count')) return null;
+    if (first.containsKey('shipment_id') ||
+        first.containsKey('shipment_no') ||
+        first.containsKey('linehaul_no')) {
+      return null;
+    }
+    var total = 0;
+    int? done;
+    int? pending;
+    for (final item in raw) {
+      final row = OutboundDataParse.asStringKeyedMap(item);
+      if (row == null) continue;
+      final count = OutboundDataParse.optionalInt(row, 'count') ?? 0;
+      total += count;
+      final status = row['status']?.toString().toLowerCase() ?? '';
+      if (status.contains('picked') && !status.contains('not')) {
+        done = (done ?? 0) + count;
+      } else if (status.contains('miss') || status.contains('pending')) {
+        pending = (pending ?? 0) + count;
+      }
+    }
+    return _LegacySummary(total: total, done: done, pending: pending);
+  }
+}
+
+class _LegacySummary {
+  const _LegacySummary({required this.total, this.done, this.pending});
+  final int total;
+  final int? done;
+  final int? pending;
 }
 
 class SectorPickupStatusReportRow {

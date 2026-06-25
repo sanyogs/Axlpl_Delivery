@@ -296,13 +296,9 @@ class OutboundLinehaulController extends GetxController {
           manifestDetail.value = detail;
           _applyManifestDetail(detail);
           lastResponseText.value = '';
-          final msg =
-              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-          if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
-          Get.snackbar('Linehaul', e.message);
         },
       );
     } finally {
@@ -505,7 +501,6 @@ class OutboundLinehaulController extends GetxController {
         },
         error: (e) {
           lastResponseText.value = e.message;
-          Get.snackbar('Linehaul', e.message);
         },
       );
 
@@ -567,7 +562,6 @@ class OutboundLinehaulController extends GetxController {
         },
         error: (e) {
           lastResponseText.value = e.message;
-          Get.snackbar('Linehaul', e.message);
         },
       );
     } finally {
@@ -623,13 +617,9 @@ class OutboundLinehaulController extends GetxController {
           linehaulRefController.text =
               detail.tripNo ?? detail.airwayBillNo ?? ref;
           lastResponseText.value = '';
-          final msg =
-              OutboundUiFeedback.serverMessageFromData(data)?.trim() ?? '';
-          if (msg.isNotEmpty) Get.snackbar('Linehaul', msg);
         },
         error: (e) {
           lastResponseText.value = e.message;
-          Get.snackbar('Linehaul', e.message);
         },
       );
     } finally {
@@ -740,6 +730,7 @@ class OutboundLinehaulController extends GetxController {
         target: lastResponseText,
         response: r,
         feature: 'Linehaul',
+        showSnackbar: false,
       );
     } finally {
       isBusy.value = false;

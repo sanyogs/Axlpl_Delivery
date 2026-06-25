@@ -1680,7 +1680,7 @@ class ApiServices {
     if (start != null && start.isNotEmpty) query['start_date'] = start;
     final end = endDate?.trim();
     if (end != null && end.isNotEmpty) query['end_date'] = end;
-    if (page != null && page > 0) query['page'] = '$page';
+    if (page != null && (page > 0 || page == -1)) query['page'] = '$page';
     final origin = originBranch?.trim();
     if (origin != null && origin.isNotEmpty) query['origin_branch'] = origin;
     final dest = destinationBranch?.trim();

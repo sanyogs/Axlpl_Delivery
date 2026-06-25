@@ -4,7 +4,6 @@ import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_status_rep
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
@@ -66,7 +65,6 @@ class SectorPickupStatusReportController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    prefillDates();
     loadReport(page: 1);
   }
 
@@ -82,12 +80,8 @@ class SectorPickupStatusReportController extends GetxController {
   void prefillDates() {
     final now = DateTime.now();
     final monthStart = DateTime(now.year, now.month, 1);
-    if (startDateController.text.trim().isEmpty) {
-      startDateController.text = OutboundApiParams.formatReportDate(monthStart);
-    }
-    if (endDateController.text.trim().isEmpty) {
-      endDateController.text = OutboundApiParams.formatReportDate(now);
-    }
+    startDateController.text = OutboundApiParams.formatReportDate(monthStart);
+    endDateController.text = OutboundApiParams.formatReportDate(now);
   }
 
   void resetFilters() {
@@ -98,7 +92,6 @@ class SectorPickupStatusReportController extends GetxController {
     filterOriginBranchId.value = null;
     filterDestBranchId.value = null;
     filterStatus.value = null;
-    prefillDates();
     loadReport(page: 1);
   }
 
@@ -121,35 +114,12 @@ class SectorPickupStatusReportController extends GetxController {
     isLoading.value = true;
     loadError.value = '';
     try {
-      final r = await _repo.pickupReport(
-        startDate: startDateController.text.trim(),
-        endDate: endDateController.text.trim(),
-        page: nextPage,
-        originBranch: _branchQueryValue(filterOriginBranchId.value),
-        destinationBranch: _branchQueryValue(filterDestBranchId.value),
-        docketNo: docketController.text.trim(),
-        status: _statusQueryValue(filterStatus.value),
-        linehaulNo: linehaulController.text.trim(),
-      );
+      final parsed = await _fetchReportPage(nextPage);
 
-      var ok = false;
-      r.when(
-        success: (data) {
-          final parsed = SectorPickupStatusReportPage.fromDynamic(data);
-          reportPage.value = parsed;
-          currentPage.value = parsed.page.clamp(1, parsed.totalPages);
-          ok = true;
-          final msg = OutboundUiFeedback.serverMessageFromData(data)?.trim();
-          if (msg != null && msg.isNotEmpty) {
-            Get.snackbar('Sector pickup', msg);
-          }
-        },
-        error: (e) {
-          loadError.value = e.message;
-          Get.snackbar('Sector pickup', e.message, duration: const Duration(seconds: 4));
-        },
-      );
-      if (!ok && loadError.value.isEmpty) {
+      if (parsed != null) {
+        reportPage.value = parsed;
+        currentPage.value = parsed.page.clamp(1, parsed.totalPages);
+      } else if (loadError.value.isEmpty) {
         loadError.value = 'No report data returned.';
       }
     } finally {
@@ -167,15 +137,50 @@ class SectorPickupStatusReportController extends GetxController {
     await loadReport(page: currentPage.value - 1);
   }
 
-  Future<void> exportCsv() async {
-    final page = reportPage.value;
-    if (page == null || page.rows.isEmpty) {
-      Get.snackbar('Sector pickup', 'No rows to export.');
-      return;
-    }
+  Future<SectorPickupStatusReportPage?> _fetchReportPage(
+    int page, {
+    bool recordLoadError = true,
+  }) async {
+    final r = await _repo.pickupReport(
+      startDate: startDateController.text.trim(),
+      endDate: endDateController.text.trim(),
+      page: page,
+      originBranch: _branchQueryValue(filterOriginBranchId.value),
+      destinationBranch: _branchQueryValue(filterDestBranchId.value),
+      docketNo: docketController.text.trim(),
+      status: _statusQueryValue(filterStatus.value),
+      linehaulNo: linehaulController.text.trim(),
+    );
 
+    SectorPickupStatusReportPage? parsed;
+    r.when(
+      success: (data) {
+        parsed = SectorPickupStatusReportPage.fromDynamic(data);
+      },
+      error: (e) {
+        if (recordLoadError) {
+          loadError.value = e.message;
+        }
+      },
+    );
+    return parsed;
+  }
+
+  Future<void> exportCsv() async {
     isExporting.value = true;
     try {
+      final exportPage = await _fetchReportPage(
+        -1,
+        recordLoadError: false,
+      );
+      if (exportPage == null) return;
+
+      final allRows = exportPage.rows;
+      if (allRows.isEmpty) {
+        Get.snackbar('Sector pickup', 'No rows to export.');
+        return;
+      }
+
       final header = [
         'Shipment No',
         'Origin',
@@ -188,7 +193,7 @@ class SectorPickupStatusReportController extends GetxController {
       ];
       final buffer = StringBuffer()
         ..writeln(header.map(_csvEscape).join(','));
-      for (final row in page.rows) {
+      for (final row in allRows) {
         buffer.writeln(row.csvCells().map(_csvEscape).join(','));
       }
 
@@ -199,16 +204,14 @@ class SectorPickupStatusReportController extends GetxController {
       } else {
         dir = await getApplicationDocumentsDirectory();
       }
-      final fileName =
-          'Sector Pickup Status Report - page ${currentPage.value}.csv';
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsString(buffer.toString(), flush: true);
-      final open = await OpenFile.open(file.path);
-      if (open.type != ResultType.done) {
-        Get.snackbar('Sector pickup', 'CSV saved: ${file.path}');
-        return;
+      final fileName = 'sector_pickup_status_report_${allRows.length}_rows.csv';
+      final exportDir = Directory('${dir.path}/exports');
+      if (!await exportDir.exists()) {
+        await exportDir.create(recursive: true);
       }
-      Get.snackbar('Sector pickup', OutboundLabels.msgCsvExported);
+      final file = File('${exportDir.path}/$fileName');
+      await file.writeAsString(buffer.toString(), flush: true);
+      await _openExportedCsv(file.path);
     } finally {
       isExporting.value = false;
     }
@@ -219,5 +222,37 @@ class SectorPickupStatusReportController extends GetxController {
         value.contains(',') || value.contains('"') || value.contains('\n');
     if (!needsQuotes) return value;
     return '"${value.replaceAll('"', '""')}"';
+  }
+
+  Future<void> _openExportedCsv(String path) async {
+    const mimeTypes = <String>[
+      'text/csv',
+      'text/comma-separated-values',
+      'application/vnd.ms-excel',
+      'text/plain',
+    ];
+
+    for (final mime in mimeTypes) {
+      final result = await OpenFile.open(
+        path,
+        type: mime,
+      );
+      if (result.type == ResultType.done) {
+        Get.snackbar('Sector pickup', OutboundLabels.msgCsvExported);
+        return;
+      }
+    }
+
+    final fallback = await OpenFile.open(path);
+    if (fallback.type == ResultType.done) {
+      Get.snackbar('Sector pickup', OutboundLabels.msgCsvExported);
+      return;
+    }
+
+    Get.snackbar(
+      'Sector pickup',
+      'CSV saved: $path',
+      duration: const Duration(seconds: 4),
+    );
   }
 }

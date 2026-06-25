@@ -1,6 +1,5 @@
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
 import 'package:get/get.dart';
 
 /// Shared snackbar + response text for outbound submodule screens.
@@ -24,18 +23,21 @@ class OutboundUiFeedback {
     required String feature,
     /// When true: only show API `message` (snackbar + panel). No client "Success" or pretty JSON.
     bool serverMessageOnly = false,
+    /// Table/report reads should keep messages inline — no snackbar popups.
+    bool showSnackbar = true,
   }) {
     response.when(
       success: (data) {
         if (serverMessageOnly) {
           final msg = serverMessageFromData(data) ?? '';
           target.value = msg;
-          if (msg.isNotEmpty) {
+          if (showSnackbar && msg.isNotEmpty) {
             Get.snackbar(feature, msg);
           }
           return;
         }
         target.value = OutboundDataParse.pretty(data);
+        if (!showSnackbar) return;
         if (OutboundDataParse.isNonJsonBody(data)) {
           Get.snackbar(
             feature,
@@ -49,13 +51,13 @@ class OutboundUiFeedback {
         final msg = e.message.trim();
         if (serverMessageOnly) {
           target.value = msg;
-          if (msg.isNotEmpty) {
+          if (showSnackbar && msg.isNotEmpty) {
             Get.snackbar(feature, msg);
           }
           return;
         }
         target.value = msg;
-        if (msg.isNotEmpty) {
+        if (showSnackbar && msg.isNotEmpty) {
           Get.snackbar(feature, msg);
         }
       },

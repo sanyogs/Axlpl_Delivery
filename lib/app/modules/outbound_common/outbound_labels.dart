@@ -303,11 +303,12 @@ class OutboundLabels {
   static const statScanned = 'SCANNED';
   static const statMissing = 'MISSING';
   static const subtitleSectorPickupList =
-      'Tap Report for pickup PDF, Scan to continue shipments.';
+      'Tap Report for pickup PDF, Scan to continue, or open Pickup report below.';
   static const sectorPickupReportTitle = 'Sector Pickup Report';
   static const sectorPickupStatusReportTitle = 'Sector Pickup Status Report';
   static const subtitleSectorPickupStatusReport =
-      'Filter and browse sector pickup shipment status from pickupreport API.';
+      'Shipment pickup status from pickupreport API — filter, paginate, export.';
+  static const btnOpenPickupReport = 'Open Pickup Report';
   static const sectorPickupStatusReportEmpty =
       'No shipments match the current filters.';
   static const sectorPickupReportEmpty = 'No shipment rows in this pickup.';

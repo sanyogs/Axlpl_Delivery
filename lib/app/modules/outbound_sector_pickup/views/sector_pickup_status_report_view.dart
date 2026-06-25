@@ -69,21 +69,16 @@ class SectorPickupStatusReportView
         busy: busy,
         onRefresh: loading ? null : () => controller.loadReport(),
         children: [
-          _SummaryCards(
-            total: controller.totalCount,
-            done: controller.pickupDoneCount,
-            pending: controller.pickupPendingCount,
-          ),
           OutboundAdminSection(
             title: OutboundLabels.sectionReportFilters,
             children: [
               OutboundDateField(
                 controller: controller.startDateController,
-                hintText: OutboundLabels.reportStart,
+                hintText: '${OutboundLabels.reportStart} (optional)',
               ),
               OutboundDateField(
                 controller: controller.endDateController,
-                hintText: OutboundLabels.reportEnd,
+                hintText: '${OutboundLabels.reportEnd} (optional)',
               ),
               OutboundSelectField(
                 label: OutboundLabels.colOriginHub,
@@ -164,7 +159,9 @@ class SectorPickupStatusReportView
                 )
               else if (rows.isEmpty)
                 Text(
-                  OutboundLabels.sectorPickupStatusReportEmpty,
+                  controller.totalCount > 0
+                      ? 'Summary counts loaded. Clear filters or adjust dates, then tap Filter to load shipment rows.'
+                      : OutboundLabels.sectorPickupStatusReportEmpty,
                   style:
                       themes.fontSize14_400.copyWith(color: themes.grayColor),
                 )
@@ -205,109 +202,6 @@ class SectorPickupStatusReportView
         ],
       );
     });
-  }
-}
-
-class _SummaryCards extends StatelessWidget {
-  const _SummaryCards({
-    required this.total,
-    required this.done,
-    required this.pending,
-  });
-
-  final int total;
-  final int? done;
-  final int? pending;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _SummaryCard(
-          title: OutboundLabels.statTotalShipmentsLinehaul,
-          value: '$total',
-          color: themes.darkCyanBlue,
-          icon: Icons.inventory_2_outlined,
-        ),
-        SizedBox(height: 8.h),
-        _SummaryCard(
-          title: OutboundLabels.statSectorPickupDone,
-          value: done?.toString() ?? '—',
-          color: themes.greenColor,
-          icon: Icons.check_circle_outline,
-        ),
-        SizedBox(height: 8.h),
-        _SummaryCard(
-          title: OutboundLabels.statSectorPickupPending,
-          value: pending?.toString() ?? '—',
-          color: themes.redColor,
-          icon: Icons.schedule_outlined,
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.title,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-
-  final String title;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        side: BorderSide(color: themes.grayColor.withValues(alpha: 0.2)),
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Icon(icon, color: color, size: 22.sp),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: themes.fontSize14_400.copyWith(
-                      fontSize: 11.sp,
-                      color: themes.grayColor,
-                    ),
-                  ),
-                  Text(
-                    value,
-                    style: themes.fontSize14_500.copyWith(
-                      fontSize: 18.sp,
-                      color: themes.darkCyanBlue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

@@ -272,9 +272,6 @@ class OutboundSectorPickupController extends GetxController {
     try {
       final detail = await _repo.pickupDetail(id);
       if (detail == null) {
-        if (_repo.lastMessage.trim().isNotEmpty) {
-          _snack(_repo.lastMessage, isError: true);
-        }
         final mawb = mawbController.text.trim();
         if (mawb.isNotEmpty) await fetchLinehaulForMawb(mawb);
         return;
@@ -361,14 +358,8 @@ class OutboundSectorPickupController extends GetxController {
           }
 
           _applyExpectedShipments(expected);
-          final msg = _messageFromResponse(data);
-          if (msg.isNotEmpty) _snack(msg);
         },
-        error: (e) {
-          if (e.message.trim().isNotEmpty) {
-            _snack(e.message, isError: true);
-          }
-        },
+        error: (_) {},
       );
     } finally {
       isBusy.value = false;
