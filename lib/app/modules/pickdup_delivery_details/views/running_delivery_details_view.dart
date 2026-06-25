@@ -9,7 +9,6 @@ import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
 import 'package:axlpl_delivery/common_widget/common_textfiled.dart';
 import 'package:axlpl_delivery/common_widget/delivery_dialog.dart';
-import 'package:axlpl_delivery/common_widget/invoice_image_dialog.dart';
 import 'package:axlpl_delivery/common_widget/otp_dialog.dart';
 import 'package:axlpl_delivery/common_widget/pickup_dialog.dart';
 import 'package:axlpl_delivery/common_widget/tracking_info_widget.dart';
@@ -51,16 +50,16 @@ class RunningDeliveryDetailsView
 
     final String? date = args?['date'] as String?;
 
-    final String? invoicePhoto = args?['invoicePhoto'] as String?;
-
     final pickupController = Get.put(PickupController());
     controller.loadUserRole();
 
     void showInvoiceSourcePicker(String shipmentId) {
+      final details = controller.shipmentDetail.value;
       showInvoiceSourcePickerSheet(
         context: context,
         controller: controller,
         shipmentId: shipmentId,
+        invoiceFile: details?.invoiceFile,
       );
     }
 
@@ -506,32 +505,24 @@ class RunningDeliveryDetailsView
                               //         ? 'N/A'
                               //         : '' ?? 'N/A'),
                               Divider(),
-                              (details?.invoiceFile ?? '').isNotEmpty
-                                  ? InvoiceImagePopup(
-                                      invoicePath:
-                                          details?.invoicePath.toString() ??
-                                              invoicePath ??
-                                              '',
-                                      invoicePhoto:
-                                          details?.invoiceFile.toString() ??
-                                              invoicePhoto ??
-                                              '',
-                                    )
-                                  : InvoiceAttachmentSection(
-                                      controller: controller,
-                                      shipmentId: shipmentID.toString(),
-                                      showSourcePicker: showInvoiceSourcePicker,
-                                      onUpload: () {
-                                        controller.uploadInvoice(
-                                          shipmentID: details?.shipmentId
-                                                  .toString() ??
-                                              shipmentID.toString(),
-                                          files: controller.getImages(
-                                            shipmentID.toString(),
-                                          ),
-                                        );
-                                      },
+                              InvoiceAttachmentSection(
+                                controller: controller,
+                                shipmentId: shipmentID.toString(),
+                                invoiceFile: details?.invoiceFile,
+                                invoicePath: details?.invoicePath?.toString() ??
+                                    invoicePath,
+                                showSourcePicker: showInvoiceSourcePicker,
+                                onUpload: () {
+                                  controller.uploadInvoice(
+                                    shipmentID: details?.shipmentId
+                                            .toString() ??
+                                        shipmentID.toString(),
+                                    files: controller.getImages(
+                                      shipmentID.toString(),
                                     ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         )

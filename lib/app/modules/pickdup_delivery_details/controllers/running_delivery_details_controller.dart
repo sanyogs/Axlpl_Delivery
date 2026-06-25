@@ -76,10 +76,21 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   // 🔹 Local utility helpers
   // --------------------------------------------------------------------------
-  void addImages(String shipmentId, List<File> files) {
+  void addImages(
+    String shipmentId,
+    List<File> files, {
+    dynamic invoiceFile,
+  }) {
     if (files.isEmpty) return;
     final current = List<File>.from(imageMap[shipmentId] ?? const []);
-    final merged = InvoiceAttachmentState.appendFiles(current, files);
+    final remaining = remainingAttachmentSlots(
+      shipmentId,
+      invoiceFile: invoiceFile,
+    );
+    final merged = InvoiceAttachmentState.appendFiles(
+      current,
+      files.take(remaining).toList(growable: false),
+    );
     if (merged.length == current.length) {
       _showAttachmentLimitSnack();
       return;
@@ -91,8 +102,12 @@ class RunningDeliveryDetailsController extends GetxController {
     imageMap.refresh();
   }
 
-  void addImage(String shipmentId, File file) {
-    addImages(shipmentId, [file]);
+  void addImage(
+    String shipmentId,
+    File file, {
+    dynamic invoiceFile,
+  }) {
+    addImages(shipmentId, [file], invoiceFile: invoiceFile);
   }
 
   void removeImage(String shipmentId, int index) {
@@ -116,11 +131,33 @@ class RunningDeliveryDetailsController extends GetxController {
 
   int pendingAttachmentCount(String shipmentId) => getImages(shipmentId).length;
 
-  int remainingAttachmentSlots(String shipmentId) =>
-      InvoiceAttachmentState.remainingSlots(pendingAttachmentCount(shipmentId));
+  int uploadedAttachmentCount({dynamic invoiceFile}) =>
+      InvoiceAttachmentState.uploadedCountFromInvoiceFile(invoiceFile);
 
-  bool canAddMoreAttachments(String shipmentId) =>
-      InvoiceAttachmentState.canAddMore(pendingAttachmentCount(shipmentId));
+  int totalAttachmentCount(
+    String shipmentId, {
+    dynamic invoiceFile,
+  }) =>
+      InvoiceAttachmentState.totalCount(
+        uploadedCount: uploadedAttachmentCount(invoiceFile: invoiceFile),
+        pendingCount: pendingAttachmentCount(shipmentId),
+      );
+
+  int remainingAttachmentSlots(
+    String shipmentId, {
+    dynamic invoiceFile,
+  }) =>
+      InvoiceAttachmentState.remainingSlots(
+        totalAttachmentCount(shipmentId, invoiceFile: invoiceFile),
+      );
+
+  bool canAddMoreAttachments(
+    String shipmentId, {
+    dynamic invoiceFile,
+  }) =>
+      InvoiceAttachmentState.canAddMore(
+        totalAttachmentCount(shipmentId, invoiceFile: invoiceFile),
+      );
 
   void _showAttachmentLimitSnack({bool partial = false}) {
     final msg = partial
@@ -155,22 +192,37 @@ class RunningDeliveryDetailsController extends GetxController {
     }
   }
 
-  Future<void> pickImagesFromGallery(String shipmentId) async {
-    final remaining = remainingAttachmentSlots(shipmentId);
+  Future<void> pickImagesFromGallery(
+    String shipmentId, {
+    dynamic invoiceFile,
+  }) async {
+    final remaining = remainingAttachmentSlots(
+      shipmentId,
+      invoiceFile: invoiceFile,
+    );
     if (remaining <= 0) {
       _showAttachmentLimitSnack();
       return;
     }
     try {
       final picker = ImagePicker();
-      final pickedFiles = await picker.pickMultiImage(
-        imageQuality: 85,
-        limit: remaining,
-      );
+      final List<XFile> pickedFiles;
+      if (remaining == 1) {
+        final single = await picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        pickedFiles = single == null ? const [] : [single];
+      } else {
+        pickedFiles = await picker.pickMultiImage(
+          imageQuality: 85,
+          limit: remaining.clamp(1, maxInvoiceAttachments),
+        );
+      }
       if (pickedFiles.isEmpty) return;
 
       final files = <File>[];
-      for (final picked in pickedFiles) {
+      for (final picked in pickedFiles.take(remaining)) {
         final file = File(picked.path);
         if (await file.exists()) files.add(file);
       }
@@ -183,7 +235,7 @@ class RunningDeliveryDetailsController extends GetxController {
         );
         return;
       }
-      addImages(shipmentId, files);
+      addImages(shipmentId, files, invoiceFile: invoiceFile);
     } on PlatformException catch (e) {
       _handlePickError(e);
     } catch (e) {

@@ -19,21 +19,38 @@ class InvoiceAttachmentSection extends StatelessWidget {
     required this.shipmentId,
     required this.onUpload,
     required this.showSourcePicker,
+    this.invoiceFile,
+    this.invoicePath,
   });
 
   final RunningDeliveryDetailsController controller;
   final String shipmentId;
   final VoidCallback onUpload;
   final InvoiceSourcePicker showSourcePicker;
+  final dynamic invoiceFile;
+  final String? invoicePath;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final files = controller.getImages(shipmentId);
-      final remaining = controller.remainingAttachmentSlots(shipmentId);
+      final uploadedUrls = InvoiceAttachmentState.uploadedInvoiceUrls(
+        invoicePath: invoicePath,
+        invoiceFile: invoiceFile,
+      );
+      final uploadedCount = uploadedUrls.length;
+      final total = controller.totalAttachmentCount(
+        shipmentId,
+        invoiceFile: invoiceFile,
+      );
+      final remaining = controller.remainingAttachmentSlots(
+        shipmentId,
+        invoiceFile: invoiceFile,
+      );
       final uploading =
           controller.isInvoiceUpload.value == Status.loading;
       final max = InvoiceAttachmentState.maxInvoiceAttachments;
+      final tileCount = uploadedCount + files.length + (remaining > 0 ? 1 : 0);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -48,13 +65,13 @@ class InvoiceAttachmentSection extends StatelessWidget {
                 ),
               ),
               Text(
-                '${files.length}/$max',
+                '$total/$max',
                 style: themes.fontSize14_400.copyWith(color: themes.grayColor),
               ),
             ],
           ),
           SizedBox(height: 8.h),
-          if (files.isEmpty)
+          if (tileCount == 0)
             InkWell(
               onTap: uploading ? null : () => showSourcePicker(shipmentId),
               borderRadius: BorderRadius.circular(12.r),
@@ -91,15 +108,20 @@ class InvoiceAttachmentSection extends StatelessWidget {
               height: 112.h,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: files.length + (remaining > 0 ? 1 : 0),
+                itemCount: tileCount,
                 separatorBuilder: (_, __) => SizedBox(width: 10.w),
                 itemBuilder: (context, index) {
-                  if (index < files.length) {
+                  if (index < uploadedCount) {
+                    return _UploadedAttachmentThumb(url: uploadedUrls[index]);
+                  }
+                  final pendingIndex = index - uploadedCount;
+                  if (pendingIndex < files.length) {
                     return _AttachmentThumb(
-                      file: files[index],
+                      file: files[pendingIndex],
                       onRemove: uploading
                           ? null
-                          : () => controller.removeImage(shipmentId, index),
+                          : () =>
+                              controller.removeImage(shipmentId, pendingIndex),
                     );
                   }
                   return _AddAttachmentTile(
@@ -141,6 +163,55 @@ class InvoiceAttachmentSection extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+class _UploadedAttachmentThumb extends StatelessWidget {
+  const _UploadedAttachmentThumb({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10.r),
+          child: Image.network(
+            url,
+            width: 100.w,
+            height: 100.w,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 100.w,
+              height: 100.w,
+              color: themes.lightGrayColor,
+              alignment: Alignment.center,
+              child: Icon(Icons.image_outlined, color: themes.grayColor),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 4,
+          bottom: 4,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(
+              'Uploaded',
+              style: themes.fontSize14_400.copyWith(
+                fontSize: 9.sp,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -240,8 +311,9 @@ void showInvoiceSourcePickerSheet({
   required BuildContext context,
   required RunningDeliveryDetailsController controller,
   required String shipmentId,
+  dynamic invoiceFile,
 }) {
-  if (!controller.canAddMoreAttachments(shipmentId)) {
+  if (!controller.canAddMoreAttachments(shipmentId, invoiceFile: invoiceFile)) {
     Get.snackbar(
       'Invoice',
       'You can attach up to ${InvoiceAttachmentState.maxInvoiceAttachments} invoice files.',
@@ -251,7 +323,10 @@ void showInvoiceSourcePickerSheet({
     return;
   }
 
-  final remaining = controller.remainingAttachmentSlots(shipmentId);
+  final remaining = controller.remainingAttachmentSlots(
+    shipmentId,
+    invoiceFile: invoiceFile,
+  );
 
   showModalBottomSheet<void>(
     context: context,
@@ -284,11 +359,16 @@ void showInvoiceSourcePickerSheet({
             SizedBox(height: 8.h),
             _SourceTile(
               title: 'Attach invoice',
-              subtitle: 'Select up to $remaining from gallery',
+              subtitle: remaining == 1
+                  ? 'Select 1 image from gallery'
+                  : 'Select up to $remaining from gallery',
               icon: Icons.attach_file,
               onTap: () {
                 Navigator.of(ctx).pop();
-                controller.pickImagesFromGallery(shipmentId);
+                controller.pickImagesFromGallery(
+                  shipmentId,
+                  invoiceFile: invoiceFile,
+                );
               },
             ),
             _SourceTile(
@@ -298,7 +378,11 @@ void showInvoiceSourcePickerSheet({
               onTap: () {
                 Navigator.of(ctx).pop();
                 controller.pickImage(ImageSource.camera, (file) {
-                  controller.addImage(shipmentId, file);
+                  controller.addImage(
+                    shipmentId,
+                    file,
+                    invoiceFile: invoiceFile,
+                  );
                 });
               },
             ),
