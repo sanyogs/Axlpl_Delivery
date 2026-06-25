@@ -28,6 +28,7 @@ abstract class Routes {
   static const OUTBOUND_HUB_SCAN_LIST = _Paths.OUTBOUND_HUB_SCAN_LIST;
   static const OUTBOUND_BAGGING = _Paths.OUTBOUND_BAGGING;
   static const OUTBOUND_BAG_LIST = _Paths.OUTBOUND_BAG_LIST;
+  static const OUTBOUND_BAGGING_DETAILS = _Paths.OUTBOUND_BAGGING_DETAILS;
   static const OUTBOUND_BAGGING_REPORT = _Paths.OUTBOUND_BAGGING_REPORT;
   static const OUTBOUND_MANIFEST = _Paths.OUTBOUND_MANIFEST;
   static const OUTBOUND_MANIFEST_LIST = _Paths.OUTBOUND_MANIFEST_LIST;
@@ -67,6 +68,7 @@ abstract class _Paths {
   static const OUTBOUND_HUB_SCAN_LIST = '/outbound-hub-scan-list';
   static const OUTBOUND_BAGGING = '/outbound-bagging';
   static const OUTBOUND_BAG_LIST = '/outbound-bag-list';
+  static const OUTBOUND_BAGGING_DETAILS = '/outbound-bagging-details';
   static const OUTBOUND_BAGGING_REPORT = '/outbound-bagging-report';
   static const OUTBOUND_MANIFEST = '/outbound-manifest';
   static const OUTBOUND_MANIFEST_LIST = '/outbound-manifest-list';

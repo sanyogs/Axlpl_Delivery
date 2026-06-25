@@ -99,8 +99,9 @@ class BaggingBagSummaryBanner extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: themes.lightGrayColor.withValues(alpha: 0.5),
+        color: themes.whiteColor,
         borderRadius: BorderRadius.circular(6.r),
+        border: Border.all(color: themes.grayColor.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [

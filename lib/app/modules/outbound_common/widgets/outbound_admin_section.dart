@@ -163,7 +163,7 @@ class OutboundAdminInput extends StatelessWidget {
   }
 }
 
-/// Read-only grey input populated from API (admin auto-fill fields).
+/// Read-only input populated from API (admin auto-fill fields).
 class OutboundReadOnlyInput extends StatelessWidget {
   const OutboundReadOnlyInput({
     super.key,
@@ -178,7 +178,7 @@ class OutboundReadOnlyInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: themes.lightGrayColor.withValues(alpha: 0.65),
+        color: themes.whiteColor,
         borderRadius: BorderRadius.circular(4.r),
         border: Border.all(color: themes.grayColor.withValues(alpha: 0.25)),
       ),

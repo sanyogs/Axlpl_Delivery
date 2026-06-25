@@ -174,6 +174,34 @@ class OutboundSecondaryButton extends StatelessWidget {
   }
 }
 
+/// Cyan table action link (not default grey [TextButton]).
+class OutboundTableTextLink extends StatelessWidget {
+  const OutboundTableTextLink({
+    super.key,
+    required this.label,
+    this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: themes.darkCyanBlue,
+        disabledForegroundColor: themes.grayColor,
+        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: themes.fontSize14_500.copyWith(fontSize: 12.sp),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
 /// Two equal-width actions in one row (secondary pair or mixed).
 class OutboundButtonRow extends StatelessWidget {
   const OutboundButtonRow({

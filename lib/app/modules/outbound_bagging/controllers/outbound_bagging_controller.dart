@@ -12,6 +12,7 @@ import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_g
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
@@ -701,19 +702,50 @@ class OutboundBaggingController extends GetxController {
     }
   }
 
-  void applyBagFromList(OutboundBagRow row) {
-    final fetchRef = row.bagCode?.trim().isNotEmpty == true
-        ? row.bagCode!.trim()
-        : row.metalSealNo?.trim();
-    if (fetchRef != null && fetchRef.isNotEmpty) {
-      _lastBagDetailsFetchRef = fetchRef;
-      if (row.bagCode?.trim().isNotEmpty == true) {
-        _loadedBagCode = row.bagCode!.trim();
+  void openBagDetailsFromList(OutboundBagRow row) {
+    final fetchRef = _bagRefFromRow(row);
+    if (fetchRef == null) {
+      Get.snackbar('Bagging', 'Bag reference is required.');
+      return;
+    }
+    // View-only — never loads this bag into the bagging edit session.
+    Get.toNamed(
+      Routes.OUTBOUND_BAGGING_DETAILS,
+      arguments: {'bagRef': fetchRef},
+    );
+  }
+
+  String? _bagRefFromRow(OutboundBagRow row) {
+    final code = row.bagCode?.trim();
+    if (code != null && code.isNotEmpty) return code;
+    final seal = row.metalSealNo?.trim();
+    if (seal != null && seal.isNotEmpty) return seal;
+    return null;
+  }
+
+  /// Loads bag into the edit session — only for **Add More** from bag details.
+  Future<void> openBagForEditing(
+    BagDetail detail, {
+    String? fetchRef,
+  }) async {
+    final ref = fetchRef?.trim().isNotEmpty == true
+        ? fetchRef!.trim()
+        : detail.bagCode?.trim().isNotEmpty == true
+            ? detail.bagCode!.trim()
+            : detail.metalSealNo?.trim();
+    if (ref != null && ref.isNotEmpty) {
+      _lastBagDetailsFetchRef = ref;
+      if (detail.bagCode?.trim().isNotEmpty == true) {
+        _loadedBagCode = detail.bagCode!.trim();
+      }
+      final seal = detail.metalSealNo?.trim();
+      if (seal != null && seal.isNotEmpty) {
+        metalSealController.text = seal;
       }
     }
+    _storeBagDetail(detail, fetchRef: ref);
     sessionScannedRows.clear();
-    refreshBagDetailsQuiet();
-    Get.back();
+    await refreshBagDetailsQuiet();
   }
 
   void prefillBaggingReport() {
@@ -775,10 +807,19 @@ class OutboundBaggingController extends GetxController {
       Get.snackbar('Bagging', 'Bagging number is required.');
       return;
     }
+    await _printBaggingChallan(code);
+  }
+
+  Future<void> _printBaggingChallan(String code) async {
+    final ref = code.trim();
+    if (ref.isEmpty) {
+      Get.snackbar('Bagging', 'Bagging number is required.');
+      return;
+    }
 
     isBusy.value = true;
     try {
-      final r = await _fetchBaggingReportForRef(code);
+      final r = await _fetchBaggingReportForRef(ref);
       dynamic data;
       var failed = false;
       r.when(

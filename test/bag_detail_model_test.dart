@@ -251,4 +251,40 @@ void main() {
     expect(detail.destinationSectorId, '39');
     expect(detail.items, hasLength(1));
   });
+
+  test('parses created_by_name and summary helpers for bagging details', () {
+    const sample = {
+      'bag_code': 'BAG1',
+      'metal_seal_no': 'SEAL1',
+      'origin_branch_name': 'Vishakapatnam',
+      'destination_sector_name': 'Mumbai',
+      'created_by_name': 'SURAJ BAIT',
+      'created_at': '2026-06-25 11:42:00',
+      'manifest_status': 'Not Manifested',
+      'gross_weight': '5111.50',
+      'shipment_count': 2,
+      'items': [
+        {
+          'shipment_id': '111',
+          'shipment_invoice_no': '2015',
+          'no_of_package': '1',
+          'total_weight': '100',
+        },
+        {
+          'shipment_id': '222',
+          'shipment_invoice_no': 'DC-89',
+          'no_of_package': '1',
+          'total_weight': '50',
+        },
+      ],
+    };
+
+    final detail = BagDetail.fromJson(sample);
+    expect(detail.createdByName, 'SURAJ BAIT');
+    expect(detail.createdByDisplay, 'SURAJ BAIT');
+    expect(detail.totalBoxes, 2);
+    expect(detail.totalWeightDisplay, '5111.50');
+    expect(detail.isOpenForChanges, isTrue);
+    expect(detail.shipmentCountDisplay, 2);
+  });
 }

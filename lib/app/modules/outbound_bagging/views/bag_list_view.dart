@@ -112,7 +112,7 @@ class _BagListViewState extends State<BagListView> {
                   rows: rows,
                   rowOffset: controller.bagListRowNumberOffset,
                   branchLabel: branchList.displayLabelForId,
-                  onTap: controller.applyBagFromList,
+                  onTap: controller.openBagDetailsFromList,
                   onRebag: (row) => controller.showRebagDialog(
                     defaultNewBagCode: row.bagCode,
                   ),
@@ -222,9 +222,9 @@ class _BagListTable extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextButton(
+                        OutboundTableTextLink(
+                          label: OutboundLabels.btnView,
                           onPressed: () => onTap(rows[i]),
-                          child: const Text('Open'),
                         ),
                         IconButton(
                           tooltip: OutboundLabels.btnCopy,

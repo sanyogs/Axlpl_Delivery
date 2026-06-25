@@ -12,6 +12,7 @@ class BagDetail {
     this.destinationSectorId,
     this.destinationSectorName,
     this.createdBy,
+    this.createdByName,
     this.createdAt,
     this.updatedAt,
     this.shipmentCount,
@@ -28,6 +29,7 @@ class BagDetail {
   final String? destinationSectorId;
   final String? destinationSectorName;
   final String? createdBy;
+  final String? createdByName;
   final String? createdAt;
   final String? updatedAt;
   final int? shipmentCount;
@@ -44,6 +46,44 @@ class BagDetail {
   String? get status => manifestStatus;
 
   String? get lockedAt => null;
+
+  int get totalBoxes {
+    var sum = 0;
+    for (final item in items) {
+      final pcs = int.tryParse(item.noOfPackage?.trim() ?? '');
+      sum += pcs ?? 1;
+    }
+    if (sum > 0) return sum;
+    return shipmentCount ?? items.length;
+  }
+
+  String get totalWeightDisplay {
+    final bagWt = grossWeight?.trim();
+    if (bagWt != null && bagWt.isNotEmpty) return bagWt;
+    var sum = 0.0;
+    for (final item in items) {
+      final w = double.tryParse(item.totalWeight?.trim() ?? '');
+      if (w != null) sum += w;
+    }
+    if (sum > 0) return sum.toStringAsFixed(2);
+    return '—';
+  }
+
+  String get createdByDisplay {
+    final name = createdByName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final id = createdBy?.trim();
+    if (id != null && id.isNotEmpty) return id;
+    return 'N/A';
+  }
+
+  bool get isOpenForChanges {
+    final status = manifestStatus?.trim().toLowerCase() ?? '';
+    if (status.isEmpty) return true;
+    return !status.contains('lock');
+  }
+
+  int get shipmentCountDisplay => shipmentCount ?? items.length;
 
   static const _bagCodeKeys = [
     'bag_code',
@@ -134,6 +174,10 @@ class BagDetail {
         'destinationSectorName',
       ]),
       createdBy: OutboundDataParse.optionalString(json, 'created_by'),
+      createdByName: OutboundDataParse.firstNonEmptyString(json, const [
+        'created_by_name',
+        'createdByName',
+      ]),
       createdAt: OutboundDataParse.firstNonEmptyString(json, const [
         'created_at',
         'createdAt',
@@ -296,6 +340,7 @@ class BagDetail {
         if (destinationSectorId != null)
           'destination_sector_id': destinationSectorId,
         if (createdBy != null) 'created_by': createdBy,
+        if (createdByName != null) 'created_by_name': createdByName,
         if (createdAt != null) 'created_at': createdAt,
         if (updatedAt != null) 'updated_at': updatedAt,
         if (shipmentCount != null) 'shipment_count': shipmentCount,
