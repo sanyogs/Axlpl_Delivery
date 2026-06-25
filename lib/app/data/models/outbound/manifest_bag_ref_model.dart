@@ -6,12 +6,14 @@ class ManifestBagRef {
     this.id,
     this.bagCode,
     this.metalSealNo,
+    this.masterBag,
     this.grossWeight,
   });
 
   final String? id;
   final String? bagCode;
   final String? metalSealNo;
+  final String? masterBag;
   final String? grossWeight;
 
   factory ManifestBagRef.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,11 @@ class ManifestBagRef {
         'code',
       ]),
       metalSealNo: OutboundDataParse.optionalString(json, 'metal_seal_no'),
+      masterBag: OutboundDataParse.firstNonEmptyString(json, const [
+        'master_bag',
+        'master_bag_no',
+        'm_bag_no',
+      ]),
       grossWeight: OutboundDataParse.firstNonEmptyString(json, const [
         'gross_weight',
         'bag_weight',
@@ -35,6 +42,7 @@ class ManifestBagRef {
         if (id != null) 'id': id,
         if (bagCode != null) 'bag_code': bagCode,
         if (metalSealNo != null) 'metal_seal_no': metalSealNo,
+        if (masterBag != null) 'master_bag': masterBag,
         if (grossWeight != null) 'gross_weight': grossWeight,
       };
 

@@ -13,7 +13,11 @@ class ManifestShipmentRef {
     this.destinationCity,
     this.numberOfParcel,
     this.grossWeight,
+    this.netWeight,
     this.volumetricWeight,
+    this.paymentMode,
+    this.productMode,
+    this.entryNo,
   });
 
   final String? id;
@@ -26,7 +30,11 @@ class ManifestShipmentRef {
   final String? destinationCity;
   final String? numberOfParcel;
   final String? grossWeight;
+  final String? netWeight;
   final String? volumetricWeight;
+  final String? paymentMode;
+  final String? productMode;
+  final String? entryNo;
 
   factory ManifestShipmentRef.fromJson(Map<String, dynamic> json) {
     return ManifestShipmentRef(
@@ -48,12 +56,54 @@ class ManifestShipmentRef {
         'total_weight',
         'weight',
       ]),
+      netWeight: OutboundDataParse.firstNonEmptyString(json, const [
+        'net_weight',
+        'billing_weight',
+        'chargeable_weight',
+      ]),
       volumetricWeight: OutboundDataParse.firstNonEmptyString(json, const [
         'volumetric_weight',
         'vol_weight',
       ]),
+      paymentMode: OutboundDataParse.firstNonEmptyString(json, const [
+        'payment_mode',
+        'paid',
+        'payment_type',
+        'shipment_type',
+        'pay_mode',
+      ]),
+      productMode: OutboundDataParse.firstNonEmptyString(json, const [
+        'product_mode',
+        'mode',
+        'product_type',
+      ]),
+      entryNo: OutboundDataParse.optionalString(json, 'entry_no'),
     );
   }
+
+  String get docketNo => id?.trim().isNotEmpty == true
+      ? id!.trim()
+      : (shipmentInvoiceNo?.trim().isNotEmpty == true
+          ? shipmentInvoiceNo!.trim()
+          : '—');
+
+  String get pcsDisplay {
+    final pcs = numberOfParcel?.trim();
+    if (pcs != null && pcs.isNotEmpty) return pcs;
+    return '—';
+  }
+
+  String get netWeightDisplay {
+    final net = netWeight?.trim();
+    if (net != null && net.isNotEmpty) return net;
+    return grossWeight?.trim().isNotEmpty == true ? grossWeight!.trim() : '—';
+  }
+
+  String get grossWeightDisplay =>
+      grossWeight?.trim().isNotEmpty == true ? grossWeight!.trim() : '—';
+
+  String get paidDisplay =>
+      paymentMode?.trim().isNotEmpty == true ? paymentMode!.trim() : '—';
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
@@ -66,7 +116,11 @@ class ManifestShipmentRef {
         if (destinationCity != null) 'destination_city': destinationCity,
         if (numberOfParcel != null) 'number_of_parcel': numberOfParcel,
         if (grossWeight != null) 'gross_weight': grossWeight,
+        if (netWeight != null) 'net_weight': netWeight,
         if (volumetricWeight != null) 'volumetric_weight': volumetricWeight,
+        if (paymentMode != null) 'payment_mode': paymentMode,
+        if (productMode != null) 'product_mode': productMode,
+        if (entryNo != null) 'entry_no': entryNo,
       };
 
   static List<ManifestShipmentRef> listFromDynamic(dynamic data) =>

@@ -28,9 +28,11 @@ import '../modules/outbound_hub_scan/bindings/outbound_hub_scan_binding.dart';
 import '../modules/outbound_hub_scan/views/hub_scan_list_view.dart';
 import '../modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import '../modules/outbound_linehaul/bindings/linehaul_edit_binding.dart';
+import '../modules/outbound_linehaul/bindings/linehaul_pre_alert_binding.dart';
 import '../modules/outbound_linehaul/bindings/outbound_linehaul_binding.dart';
 import '../modules/outbound_linehaul/views/linehaul_edit_view.dart';
 import '../modules/outbound_linehaul/views/linehaul_list_view.dart';
+import '../modules/outbound_linehaul/views/linehaul_pre_alert_view.dart';
 import '../modules/outbound_linehaul/views/outbound_linehaul_view.dart';
 import '../modules/outbound_manifest/bindings/outbound_manifest_binding.dart';
 import '../modules/outbound_manifest/views/manifest_list_view.dart';
@@ -223,6 +225,11 @@ class AppPages {
       name: _Paths.OUTBOUND_LINEHAUL_EDIT,
       page: () => const LinehaulEditView(),
       binding: LinehaulEditBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_LINEHAUL_PRE_ALERT,
+      page: () => const LinehaulPreAlertView(),
+      binding: LinehaulPreAlertBinding(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_SECTOR_PICKUP_LIST,

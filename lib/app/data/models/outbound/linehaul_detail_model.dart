@@ -1,4 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_manifest_ref_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/manifest_bag_ref_model.dart';
+import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 
 /// Raw object from `getlinehauldetails` GET (Postman / QA verify).
@@ -30,6 +32,12 @@ class LinehaulDetail {
     this.manifestIds,
     this.manifestCodes,
     this.manifests = const [],
+    this.originBranchName,
+    this.destinationBranchName,
+    this.flightDate,
+    this.shipmentCount,
+    this.shipments = const [],
+    this.bags = const [],
   });
 
   final String? linehaulId;
@@ -58,6 +66,12 @@ class LinehaulDetail {
   final String? manifestIds;
   final String? manifestCodes;
   final List<LinehaulManifestRef> manifests;
+  final String? originBranchName;
+  final String? destinationBranchName;
+  final String? flightDate;
+  final int? shipmentCount;
+  final List<ManifestShipmentRef> shipments;
+  final List<ManifestBagRef> bags;
 
   factory LinehaulDetail.fromJson(Map<String, dynamic> json) {
     return LinehaulDetail(
@@ -111,6 +125,26 @@ class LinehaulDetail {
       manifestIds: OutboundDataParse.optionalString(json, 'manifest_ids'),
       manifestCodes: OutboundDataParse.optionalString(json, 'manifest_codes'),
       manifests: LinehaulManifestRef.listFromDynamic(json['manifests']),
+      originBranchName: OutboundDataParse.firstNonEmptyString(json, const [
+        'origin_branch_name',
+        'origin_hub',
+        'origin_name',
+        'origin_hub_name',
+      ]),
+      destinationBranchName: OutboundDataParse.firstNonEmptyString(json, const [
+        'destination_branch_name',
+        'destination_hub',
+        'destination_name',
+        'destination_hub_name',
+      ]),
+      flightDate: OutboundDataParse.firstNonEmptyString(json, const [
+        'flight_date',
+        'departure_date',
+        'airway_bill_date',
+      ]),
+      shipmentCount: OutboundDataParse.optionalInt(json, 'shipment_count'),
+      shipments: ManifestShipmentRef.listFromDynamic(json['shipments']),
+      bags: ManifestBagRef.listFromDynamic(json['bags']),
     );
   }
 
@@ -131,6 +165,30 @@ class LinehaulDetail {
     final id = linehaulId?.trim();
     if (id != null && id.isNotEmpty && id != '0') return id;
     return null;
+  }
+
+  /// Total consignments — API count or parsed shipment rows.
+  int get totalConsignments =>
+      shipmentCount ?? (shipments.isNotEmpty ? shipments.length : 0);
+
+  String get flightNoAndMode {
+    final flight = flightNo?.trim();
+    final mode = transportType?.trim();
+    if (flight != null &&
+        flight.isNotEmpty &&
+        mode != null &&
+        mode.isNotEmpty) {
+      return '$flight / $mode';
+    }
+    return flight ?? mode ?? '—';
+  }
+
+  String? get stdFromDeparture {
+    final raw = departureTime?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final parts = raw.split(' ');
+    if (parts.length >= 2) return parts.last;
+    return raw;
   }
 
   /// Short lines for snackbar / response panel after `getlinehauldetails`.
@@ -180,5 +238,12 @@ class LinehaulDetail {
         if (manifestIds != null) 'manifest_ids': manifestIds,
         if (manifestCodes != null) 'manifest_codes': manifestCodes,
         'manifests': manifests.map((e) => e.toJson()).toList(),
+        if (originBranchName != null) 'origin_branch_name': originBranchName,
+        if (destinationBranchName != null)
+          'destination_branch_name': destinationBranchName,
+        if (flightDate != null) 'flight_date': flightDate,
+        if (shipmentCount != null) 'shipment_count': shipmentCount,
+        'shipments': shipments.map((e) => e.toJson()).toList(),
+        'bags': bags.map((e) => e.toJson()).toList(),
       };
 }

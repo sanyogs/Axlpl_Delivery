@@ -42,7 +42,10 @@ class _LinehaulListViewState extends State<LinehaulListView> {
     return Obx(() {
       final loading = controller.isLinehaulListLoading.value;
       final err = controller.linehaulListError.value.trim();
-      final rows = controller.linehaulRows;
+      final rows = controller.linehaulListPageRows;
+      final page = controller.linehaulListPage.value;
+      final totalPages = controller.linehaulListTotalPages;
+      final rangeLabel = controller.linehaulListRangeLabel;
       final busy = controller.isBusy.value;
       final detail = controller.linehaulDetail.value;
       final selectedRef = controller.selectedListLinehaulRef.value;
@@ -99,14 +102,45 @@ class _LinehaulListViewState extends State<LinehaulListView> {
                 _ListMessage(text: err, onRetry: controller.loadLinehaulList)
               else if (rows.isEmpty)
                 const _ListMessage(text: OutboundLabels.linehaulListEmptyMessage)
-              else
+              else ...[
+                Text(
+                  rangeLabel,
+                  style:
+                      themes.fontSize14_400.copyWith(color: themes.grayColor),
+                ),
                 _LinehaulListTable(
                   rows: rows,
+                  rowOffset: controller.linehaulListRowNumberOffset,
                   branchLabel: branchList.displayLabelForId,
                   onDetails: (row) => controller.openLinehaulDetailsFromList(row),
                   onEdit: (row) => controller.openLinehaulEdit(row),
                   onDelete: (row) => controller.confirmDeleteLinehaulFromList(row),
                 ),
+                if (totalPages > 1) ...[
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Page $page of $totalPages',
+                    textAlign: TextAlign.center,
+                    style:
+                        themes.fontSize14_400.copyWith(color: themes.grayColor),
+                  ),
+                  SizedBox(height: 8.h),
+                  OutboundButtonRow(
+                    start: OutboundSecondaryButton(
+                      label: 'Previous',
+                      onPressed: page > 1
+                          ? controller.linehaulListPreviousPage
+                          : null,
+                    ),
+                    end: OutboundSecondaryButton(
+                      label: 'Next',
+                      onPressed: page < totalPages
+                          ? controller.linehaulListNextPage
+                          : null,
+                    ),
+                  ),
+                ],
+              ],
             ],
           ),
           if (selectedRef != null && selectedRef.isNotEmpty)
@@ -142,6 +176,7 @@ class _LinehaulListViewState extends State<LinehaulListView> {
 class _LinehaulListTable extends StatelessWidget {
   const _LinehaulListTable({
     required this.rows,
+    required this.rowOffset,
     required this.branchLabel,
     required this.onDetails,
     required this.onEdit,
@@ -149,6 +184,7 @@ class _LinehaulListTable extends StatelessWidget {
   });
 
   final List<OutboundLinehaulRow> rows;
+  final int rowOffset;
   final String Function(String? id) branchLabel;
   final void Function(OutboundLinehaulRow row) onDetails;
   final void Function(OutboundLinehaulRow row) onEdit;
@@ -182,6 +218,7 @@ class _LinehaulListTable extends StatelessWidget {
             color: themes.grayColor,
           ),
           columns: const [
+            DataColumn(label: Text(OutboundLabels.colSlNo)),
             DataColumn(label: Text(OutboundLabels.colMawbVehicle)),
             DataColumn(label: Text(OutboundLabels.colOriginHub)),
             DataColumn(label: Text(OutboundLabels.colDestinationHub)),
@@ -189,46 +226,42 @@ class _LinehaulListTable extends StatelessWidget {
             DataColumn(label: Text(OutboundLabels.colBookingDate)),
             DataColumn(label: Text(OutboundLabels.colActions)),
           ],
-          rows: rows
-              .map(
-                (row) => DataRow(
-                  cells: [
-                    DataCell(
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          OutboundCopyableTableCell(
-                            value: row.mawbNo ?? row.vehicleNo ?? row.tripNo,
-                            displayText: row.displayMawbOrVehicle,
-                            emphasized: true,
-                            snackbarTitle: 'Linehaul',
-                          ),
-                          if (row.ewayBill?.trim().isNotEmpty == true)
-                            OutboundCopyableInline(
-                              text: 'EWB: ${row.ewayBill!.trim()}',
-                              value: row.ewayBill,
-                              style: themes.fontSize14_400.copyWith(
-                                fontSize: 10.sp,
-                                color: themes.grayColor,
-                              ),
-                              snackbarTitle: 'Linehaul',
-                              compact: true,
-                            ),
-                        ],
-                      ),
+          rows: [
+            for (var i = 0; i < rows.length; i++)
+              DataRow(
+                cells: [
+                  DataCell(
+                    Text(rows[i].displaySerialNo(rowOffset + i + 1)),
+                  ),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: rows[i].mawbNo ?? rows[i].vehicleNo ?? rows[i].tripNo,
+                      displayText: rows[i].displayMawbOrVehicle,
+                      emphasized: true,
+                      snackbarTitle: 'Linehaul',
                     ),
-                    DataCell(Text(_hub(row.origin, row.origin))),
-                    DataCell(Text(_hub(row.destination, row.destination))),
-                    DataCell(_TransportChip(label: row.transportType ?? row.driverName)),
-                    DataCell(Text(row.bookingDate ?? '—')),
+                  ),
+                    DataCell(Text(_hub(rows[i].origin, rows[i].origin))),
+                    DataCell(Text(_hub(rows[i].destination, rows[i].destination))),
+                    DataCell(_TransportChip(label: rows[i].transportType ?? rows[i].driverName)),
+                    DataCell(Text(rows[i].bookingDate ?? '—')),
                     DataCell(
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextButton(
-                            onPressed: () => onDetails(row),
-                            child: Text(OutboundLabels.btnDetails),
+                          IconButton(
+                            tooltip: OutboundLabels.btnViewDetails,
+                            icon: Icon(
+                              Icons.visibility_outlined,
+                              size: 18.sp,
+                              color: themes.darkCyanBlue,
+                            ),
+                            onPressed: () => onDetails(rows[i]),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                           ),
                           IconButton(
                             tooltip: OutboundLabels.btnEdit,
@@ -237,7 +270,7 @@ class _LinehaulListTable extends StatelessWidget {
                               size: 18.sp,
                               color: themes.darkCyanBlue,
                             ),
-                            onPressed: () => onEdit(row),
+                            onPressed: () => onEdit(rows[i]),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -251,7 +284,7 @@ class _LinehaulListTable extends StatelessWidget {
                               size: 18.sp,
                               color: themes.redColor,
                             ),
-                            onPressed: () => onDelete(row),
+                            onPressed: () => onDelete(rows[i]),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
                               minWidth: 32,
@@ -263,8 +296,7 @@ class _LinehaulListTable extends StatelessWidget {
                     ),
                   ],
                 ),
-              )
-              .toList(),
+          ],
         ),
       ),
     );

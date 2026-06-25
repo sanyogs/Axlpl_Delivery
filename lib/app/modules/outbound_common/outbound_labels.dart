@@ -88,6 +88,13 @@ class OutboundLabels {
   static const metalSeal = 'Metal seal no';
   static const shipmentIdsForCreateBag = 'Shipment nos (comma separated)';
   static const removeRebagDocket = 'Remove / rebag docket no';
+  static const sectionRebag = 'Rebag shipment';
+  static const subtitleRebag =
+      'Move a shipment from the source bag into a destination bag.';
+  static const sourceBagCode = 'Source bag';
+  static const hintNewBagCode = 'Scan destination bag / metal seal';
+  static const rebagValidationMessage =
+      'Destination bag code and docket are required.';
   static const useScanDocketForBag = 'Copy docket';
   static const selectStatus = 'Select';
 
@@ -242,6 +249,32 @@ class OutboundLabels {
   static const linehaulListEmptyMessage = 'No linehauls found.';
   static const linehaulReportTitle = 'Linehaul report';
   static const subtitleLinehaulReport = 'Choose a date range.';
+  static const linehaulPreAlertTitle = 'Linehaul Pre-Alert View';
+  static const sectionPreAlertDetails = 'PRE-ALERT DETAILS';
+  static const sectionConsignmentDetails = 'CONSIGNMENT DETAILS';
+  static const btnPrintPreAlert = 'Print Pre-Alert';
+  static const colVendor = 'Vendor';
+  static const colStd = 'STD';
+  static const colSta = 'STA';
+  static const colFlightNoMode = 'Flight No & Mode';
+  static const colFlightDate = 'Flight Date';
+  static const colMawbNo = 'MAWB NO';
+  static const colMasterBag = 'Master Bag';
+  static const colBagNo = 'Bag No';
+  static const colEntryNo = 'Entry No';
+  static const colDestHub = 'Dest Hub';
+  static const colNoOfConsign = 'No of Consign';
+  static const colNoOfBoxes = 'No of Boxes';
+  static const colProductMode = 'Product mode';
+  static const colShipmentType = 'Shipment Type';
+  static const colSender = 'SENDER';
+  static const colReceiver = 'RECEIVER';
+  static const colNetWeight = 'NET WEIGHT';
+  static const colGrossWeight = 'GROSS WEIGHT';
+  static const colPaid = 'PAID';
+  static const colTotalNoOfCons = 'Total No of Cons';
+  static const colTotalNoOfBoxes = 'Total No of Boxes';
+  static const colTotalWtInKg = 'Total Wt(In Kg)';
 
   // Sector pickup (admin New Sector Pickup)
   static const sectorPickupScreenTitle = 'New Sector Pickup';

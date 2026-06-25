@@ -98,6 +98,7 @@ class OutboundLinehaulController extends GetxController {
   final transportMode = OutboundLabels.modeAirway.obs;
   final manifestDetail = Rxn<ManifestDetail>();
   final linehaulRows = <OutboundLinehaulRow>[].obs;
+  final linehaulListPage = 1.obs;
   final linehaulDetail = Rxn<LinehaulDetail>();
   final bagTableRows = <LinehaulBagTableRow>[].obs;
   final manifestLoadRevision = 0.obs;
@@ -122,6 +123,53 @@ class OutboundLinehaulController extends GetxController {
     'Dispatched',
     'Completed',
   ];
+
+  static const linehaulListPageSize = 20;
+
+  int get linehaulListTotalCount => linehaulRows.length;
+
+  int get linehaulListTotalPages {
+    if (linehaulRows.isEmpty) return 1;
+    return (linehaulRows.length / linehaulListPageSize).ceil();
+  }
+
+  List<OutboundLinehaulRow> get linehaulListPageRows {
+    final rows = linehaulRows;
+    if (rows.isEmpty) return const [];
+    final page = linehaulListPage.value.clamp(1, linehaulListTotalPages);
+    final start = (page - 1) * linehaulListPageSize;
+    if (start >= rows.length) return const [];
+    final end = start + linehaulListPageSize;
+    final cappedEnd = end > rows.length ? rows.length : end;
+    return rows.sublist(start, cappedEnd);
+  }
+
+  int get linehaulListRowNumberOffset =>
+      (linehaulListPage.value.clamp(1, linehaulListTotalPages) - 1) *
+      linehaulListPageSize;
+
+  String get linehaulListRangeLabel {
+    final total = linehaulListTotalCount;
+    if (total == 0) return '0 records';
+    final page = linehaulListPage.value.clamp(1, linehaulListTotalPages);
+    final start = (page - 1) * linehaulListPageSize + 1;
+    final end = start + linehaulListPageRows.length - 1;
+    return '$start–$end of $total';
+  }
+
+  void linehaulListGoToPage(int page) {
+    linehaulListPage.value = page.clamp(1, linehaulListTotalPages);
+  }
+
+  void linehaulListNextPage() {
+    if (linehaulListPage.value < linehaulListTotalPages) {
+      linehaulListPage.value++;
+    }
+  }
+
+  void linehaulListPreviousPage() {
+    if (linehaulListPage.value > 1) linehaulListPage.value--;
+  }
 
   final manifestFocusNode = FocusNode();
   final manifestNoController = TextEditingController();
@@ -535,6 +583,7 @@ class OutboundLinehaulController extends GetxController {
       final status = listFilterStatus.value?.trim() ?? '';
       final rows = await _repo.listLinehauls(status: status);
       linehaulRows.assignAll(rows);
+      linehaulListPage.value = 1;
       final msg = _repo.lastMessage.trim();
       if (msg.isNotEmpty) {
         linehaulListError.value = msg;
@@ -637,8 +686,19 @@ class OutboundLinehaulController extends GetxController {
   }
 
   Future<void> openLinehaulDetailsFromList(OutboundLinehaulRow row) async {
-    applyLinehaulFromRow(row);
-    await getLinehaulDetails(refOverride: row.detailLookupRef);
+    openLinehaulPreAlertFromList(row);
+  }
+
+  void openLinehaulPreAlertFromList(OutboundLinehaulRow row) {
+    final ref = row.detailLookupRef;
+    if (ref == null || ref.isEmpty) {
+      Get.snackbar('Linehaul', 'Linehaul reference missing for this row');
+      return;
+    }
+    Get.toNamed(
+      Routes.OUTBOUND_LINEHAUL_PRE_ALERT,
+      arguments: {'ref': ref},
+    );
   }
 
   Future<void> updateLinehaulStatus() async {

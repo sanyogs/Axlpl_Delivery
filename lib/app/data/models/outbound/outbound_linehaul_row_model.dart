@@ -14,6 +14,7 @@ class OutboundLinehaulRow {
     this.bookingDate,
     this.mawbNo,
     this.ewayBill,
+    this.serialNo,
   });
 
   final String? linehaulId;
@@ -27,6 +28,7 @@ class OutboundLinehaulRow {
   final String? bookingDate;
   final String? mawbNo;
   final String? ewayBill;
+  final String? serialNo;
 
   String get displayMawbOrVehicle {
     final mawb = mawbNo?.trim();
@@ -116,7 +118,20 @@ class OutboundLinehaulRow {
         'ewayBill',
         'ewb',
       ]),
+      serialNo: OutboundDataParse.firstNonEmptyString(json, const [
+        'sl_no',
+        'sr_no',
+        'serial_no',
+        'sno',
+      ]),
     );
+  }
+
+  /// Server-provided serial when present; otherwise use list index at display time.
+  String displaySerialNo(int fallbackIndex) {
+    final fromApi = serialNo?.trim();
+    if (fromApi != null && fromApi.isNotEmpty) return fromApi;
+    return '$fallbackIndex';
   }
 
   Map<String, dynamic> toJson() => {
@@ -131,6 +146,7 @@ class OutboundLinehaulRow {
         if (bookingDate != null) 'booking_date': bookingDate,
         if (mawbNo != null) 'mawb_no': mawbNo,
         if (ewayBill != null) 'eway_bill': ewayBill,
+        if (serialNo != null) 'sl_no': serialNo,
       };
 
   Map<String, dynamic> get asMap => toJson();

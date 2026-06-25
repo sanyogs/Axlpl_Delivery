@@ -115,9 +115,7 @@ class _BagListViewState extends State<BagListView> {
                   branchLabel: branchList.displayLabelForId,
                   busy: busy,
                   onTap: controller.openBagDetailsFromList,
-                  onRebag: (row) => controller.showRebagDialog(
-                    defaultNewBagCode: row.bagCode,
-                  ),
+                  onRebag: (row) => controller.showRebagDialog(sourceBag: row),
                   onPrint: controller.printBagChallanFromRow,
                 ),
                 if (totalPages > 1) ...[

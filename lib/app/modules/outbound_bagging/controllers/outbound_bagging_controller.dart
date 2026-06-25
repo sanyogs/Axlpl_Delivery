@@ -9,14 +9,11 @@ import 'package:axlpl_delivery/app/data/networking/api_exception.dart';
 import 'package:axlpl_delivery/app/data/networking/api_response.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_generator.dart';
+import 'package:axlpl_delivery/app/modules/outbound_bagging/widgets/rebag_dialog.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
-import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
@@ -923,76 +920,13 @@ class OutboundBaggingController extends GetxController {
     }
   }
 
-  void showRebagDialog({String? defaultNewBagCode}) {
-    final newBagCtrl =
-        TextEditingController(text: defaultNewBagCode?.trim() ?? '');
-    final docketCtrl = TextEditingController();
-    Get.dialog<void>(
-      Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: SingleChildScrollView(
-            child: OutboundAdminSection(
-              title: OutboundLabels.btnRebag,
-              children: [
-                Text(
-                  'Move a shipment from this bag into another bag.',
-                  style: themes.fontSize14_400.copyWith(
-                    color: themes.grayColor,
-                  ),
-                ),
-                OutboundLabeledFieldRow(
-                  label: OutboundLabels.newBagCode,
-                  required: true,
-                  child: OutboundAdminInput(
-                    controller: newBagCtrl,
-                    hintText: OutboundLabels.newBagCode,
-                  ),
-                ),
-                OutboundLabeledFieldRow(
-                  label: OutboundLabels.docketNo,
-                  required: true,
-                  child: OutboundAdminInput(
-                    controller: docketCtrl,
-                    hintText: OutboundLabels.docketNo,
-                  ),
-                ),
-                OutboundButtonRow(
-                  start: OutboundSecondaryButton(
-                    label: OutboundLabels.btnCancel,
-                    onPressed: () => Get.back(),
-                  ),
-                  end: OutboundPrimaryButtonCompact(
-                    title: OutboundLabels.btnRebag,
-                    onPressed: () async {
-                      final newBag = newBagCtrl.text.trim();
-                      final docket = docketCtrl.text.trim();
-                      if (newBag.isEmpty || docket.isEmpty) {
-                        Get.snackbar(
-                          'Bagging',
-                          'New bag code and docket are required.',
-                        );
-                        return;
-                      }
-                      Get.back();
-                      await rebagShipment(
-                        newBagCode: newBag,
-                        docketNo: docket,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+  void showRebagDialog({OutboundBagRow? sourceBag}) {
+    RebagDialog.show(
+      sourceBag: sourceBag,
+      onSubmit: ({required newBagCode, required docketNo}) => rebagShipment(
+        newBagCode: newBagCode,
+        docketNo: docketNo,
       ),
-      barrierDismissible: true,
-    ).whenComplete(() {
-      newBagCtrl.dispose();
-      docketCtrl.dispose();
-    });
+    );
   }
 }

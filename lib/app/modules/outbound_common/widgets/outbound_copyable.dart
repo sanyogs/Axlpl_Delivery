@@ -24,6 +24,8 @@ class OutboundCopyableTableCell extends StatelessWidget {
     this.emphasized = false,
     this.textStyle,
     this.snackbarTitle = 'Outbound',
+    this.dense = false,
+    this.maxLines,
   });
 
   final String? value;
@@ -31,6 +33,8 @@ class OutboundCopyableTableCell extends StatelessWidget {
   final bool emphasized;
   final TextStyle? textStyle;
   final String snackbarTitle;
+  final bool dense;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -48,18 +52,30 @@ class OutboundCopyableTableCell extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Flexible(child: Text(shown, style: style)),
+        Flexible(
+          child: Text(
+            shown,
+            style: style,
+            softWrap: true,
+            maxLines: maxLines,
+            overflow:
+                maxLines != null ? TextOverflow.ellipsis : TextOverflow.visible,
+          ),
+        ),
         IconButton(
           tooltip: OutboundLabels.btnCopy,
           onPressed: () => outboundCopyToClipboard(raw, snackbarTitle: snackbarTitle),
           icon: Icon(
             Icons.copy_outlined,
-            size: 16.sp,
+            size: dense ? 14.sp : 16.sp,
             color: themes.darkCyanBlue,
           ),
           padding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
-          constraints: BoxConstraints(minWidth: 28.w, minHeight: 28.w),
+          constraints: BoxConstraints(
+            minWidth: dense ? 24.w : 28.w,
+            minHeight: dense ? 24.w : 28.w,
+          ),
         ),
       ],
     );
@@ -96,7 +112,7 @@ class OutboundCopyableInline extends StatelessWidget {
           child: Text(
             text,
             style: style,
-            overflow: TextOverflow.ellipsis,
+            softWrap: true,
           ),
         ),
         IconButton(
