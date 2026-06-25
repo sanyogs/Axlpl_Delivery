@@ -1000,14 +1000,26 @@ class OutboundRepository {
   }
 
   Future<APIResponse<dynamic>> pickupReport({
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
+    int? page,
+    String? originBranch,
+    String? destinationBranch,
+    String? docketNo,
+    String? status,
+    String? linehaulNo,
   }) =>
       _requireToken(
         (token) => _api.pickupReportOutbound(
           token: token,
           startDate: startDate,
           endDate: endDate,
+          page: page,
+          originBranch: originBranch,
+          destinationBranch: destinationBranch,
+          docketNo: docketNo,
+          status: status,
+          linehaulNo: linehaulNo,
         ),
       );
 }

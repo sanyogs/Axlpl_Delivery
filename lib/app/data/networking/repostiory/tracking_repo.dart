@@ -44,28 +44,33 @@ class TrackingRepo {
 
   Future<bool> uploadInvoiceRepo(
     String shipmentID,
-    File? file, // Change to File here for better flexibility
+    List<File> files,
   ) async {
     apiMessage = null;
 
     final userData = await _localStorage.getUserLocalData();
-    final userID = userData?.messangerdetail?.id?.toString() ??
-        userData?.customerdetail?.id?.toString();
     final token =
         userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
     try {
-      MultipartFile? attachment;
-      if (file != null) {
-        attachment = await MultipartFile.fromFile(
-          file.path,
-          filename: file.path.split('/').last,
+      final attachments = <MultipartFile>[];
+      for (final file in files) {
+        if (!await file.exists()) continue;
+        attachments.add(
+          await MultipartFile.fromFile(
+            file.path,
+            filename: file.path.split('/').last,
+          ),
         );
+      }
+      if (attachments.isEmpty) {
+        apiMessage = 'No valid invoice files to upload.';
+        return false;
       }
 
       final response = await _apiServices.uploadInvoice(
         shipmentID,
-        attachment,
+        attachments,
         token,
       );
 

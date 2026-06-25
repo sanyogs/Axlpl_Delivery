@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
+import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/invoice_attachment_state.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/models/transtion_history_model.dart';
 import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
@@ -41,7 +42,10 @@ class RunningDeliveryDetailsController extends GetxController {
   var isTrackingLoading = Status.initial.obs;
   var isInvoiceUpload = Status.initial.obs;
   final message = ''.obs;
-  var imageMap = <String, File>{}.obs;
+  var imageMap = <String, List<File>>{}.obs;
+
+  static const int maxInvoiceAttachments =
+      InvoiceAttachmentState.maxInvoiceAttachments;
 
   final DeliveryRepo _deliveryRepo = DeliveryRepo();
 
@@ -72,18 +76,62 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   // 🔹 Local utility helpers
   // --------------------------------------------------------------------------
-  void setImage(String shipmentId, File file) {
-    imageMap[shipmentId] = file;
+  void addImages(String shipmentId, List<File> files) {
+    if (files.isEmpty) return;
+    final current = List<File>.from(imageMap[shipmentId] ?? const []);
+    final merged = InvoiceAttachmentState.appendFiles(current, files);
+    if (merged.length == current.length) {
+      _showAttachmentLimitSnack();
+      return;
+    }
+    if (merged.length - current.length < files.length) {
+      _showAttachmentLimitSnack(partial: true);
+    }
+    imageMap[shipmentId] = merged;
     imageMap.refresh();
   }
 
-  void removeImage(String shipmentId) {
+  void addImage(String shipmentId, File file) {
+    addImages(shipmentId, [file]);
+  }
+
+  void removeImage(String shipmentId, int index) {
+    final current = imageMap[shipmentId];
+    if (current == null || index < 0 || index >= current.length) return;
+    imageMap[shipmentId] = InvoiceAttachmentState.removeAt(current, index);
+    if (imageMap[shipmentId]!.isEmpty) {
+      imageMap.remove(shipmentId);
+    }
+    imageMap.refresh();
+  }
+
+  void clearImages(String shipmentId) {
     imageMap.remove(shipmentId);
     imageMap.refresh();
   }
 
-  File? getImage(String shipmentId) {
-    return imageMap[shipmentId];
+  List<File> getImages(String shipmentId) {
+    return List<File>.from(imageMap[shipmentId] ?? const []);
+  }
+
+  int pendingAttachmentCount(String shipmentId) => getImages(shipmentId).length;
+
+  int remainingAttachmentSlots(String shipmentId) =>
+      InvoiceAttachmentState.remainingSlots(pendingAttachmentCount(shipmentId));
+
+  bool canAddMoreAttachments(String shipmentId) =>
+      InvoiceAttachmentState.canAddMore(pendingAttachmentCount(shipmentId));
+
+  void _showAttachmentLimitSnack({bool partial = false}) {
+    final msg = partial
+        ? 'Only ${maxInvoiceAttachments} invoice files allowed. Extra files were skipped.'
+        : 'You can attach up to $maxInvoiceAttachments invoice files.';
+    Get.snackbar(
+      'Invoice',
+      msg,
+      backgroundColor: themes.redColor,
+      colorText: themes.whiteColor,
+    );
   }
 
   List<CashLog> get cashCollectionData => cashCollData;
@@ -104,6 +152,47 @@ class RunningDeliveryDetailsController extends GetxController {
     final Uri url = Uri(scheme: 'tel', path: phoneNo);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       throw Exception('Could not launch $url');
+    }
+  }
+
+  Future<void> pickImagesFromGallery(String shipmentId) async {
+    final remaining = remainingAttachmentSlots(shipmentId);
+    if (remaining <= 0) {
+      _showAttachmentLimitSnack();
+      return;
+    }
+    try {
+      final picker = ImagePicker();
+      final pickedFiles = await picker.pickMultiImage(
+        imageQuality: 85,
+        limit: remaining,
+      );
+      if (pickedFiles.isEmpty) return;
+
+      final files = <File>[];
+      for (final picked in pickedFiles) {
+        final file = File(picked.path);
+        if (await file.exists()) files.add(file);
+      }
+      if (files.isEmpty) {
+        Get.snackbar(
+          "Error",
+          "Unable to read the selected images.",
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+        return;
+      }
+      addImages(shipmentId, files);
+    } on PlatformException catch (e) {
+      _handlePickError(e);
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Unable to pick images: $e",
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
     }
   }
 
@@ -131,20 +220,7 @@ class RunningDeliveryDetailsController extends GetxController {
 
       onPicked(file);
     } on PlatformException catch (e) {
-      final code = e.code.toLowerCase();
-      final isPermissionIssue = code.contains('permission') ||
-          code.contains('denied') ||
-          code.contains('camera_access_denied') ||
-          code.contains('photo_access_denied');
-
-      Get.snackbar(
-        isPermissionIssue ? "Permission Required" : "Error",
-        isPermissionIssue
-            ? "Please allow camera/photos permission to add the invoice."
-            : (e.message ?? "Unable to pick image."),
-        backgroundColor: themes.redColor,
-        colorText: themes.whiteColor,
-      );
+      _handlePickError(e);
     } catch (e) {
       Get.snackbar(
         "Error",
@@ -153,6 +229,23 @@ class RunningDeliveryDetailsController extends GetxController {
         colorText: themes.whiteColor,
       );
     }
+  }
+
+  void _handlePickError(PlatformException e) {
+    final code = e.code.toLowerCase();
+    final isPermissionIssue = code.contains('permission') ||
+        code.contains('denied') ||
+        code.contains('camera_access_denied') ||
+        code.contains('photo_access_denied');
+
+    Get.snackbar(
+      isPermissionIssue ? "Permission Required" : "Error",
+      isPermissionIssue
+          ? "Please allow camera/photos permission to add the invoice."
+          : (e.message ?? "Unable to pick image."),
+      backgroundColor: themes.redColor,
+      colorText: themes.whiteColor,
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -218,13 +311,17 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   Future<void> uploadInvoice({
     required String shipmentID,
-    required File file,
+    required List<File> files,
   }) async {
     try {
-      if (!await file.exists()) {
+      final existing = <File>[];
+      for (final file in files) {
+        if (await file.exists()) existing.add(file);
+      }
+      if (existing.isEmpty) {
         Get.snackbar(
           "Error",
-          "Selected invoice file not found.",
+          "Selected invoice files not found.",
           backgroundColor: themes.redColor,
           colorText: themes.whiteColor,
         );
@@ -234,10 +331,11 @@ class RunningDeliveryDetailsController extends GetxController {
       isInvoiceUpload.value = Status.loading;
       message.value = '';
 
-      final result = await repo.uploadInvoiceRepo(shipmentID, file);
+      final result = await repo.uploadInvoiceRepo(shipmentID, existing);
       if (result) {
         isInvoiceUpload.value = Status.success;
         message.value = repo.apiMessage ?? 'Upload Invoice successful';
+        clearImages(shipmentID);
         Get.snackbar("Success", message.value,
             backgroundColor: themes.darkCyanBlue, colorText: themes.whiteColor);
         fetchTrackingData(shipmentID);

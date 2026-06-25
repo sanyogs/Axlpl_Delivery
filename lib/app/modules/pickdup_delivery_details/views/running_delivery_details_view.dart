@@ -18,13 +18,13 @@ import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 
 // ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import '../controllers/running_delivery_details_controller.dart';
+import '../widgets/invoice_attachment_section.dart';
 
 class RunningDeliveryDetailsView
     extends GetView<RunningDeliveryDetailsController> {
@@ -57,46 +57,10 @@ class RunningDeliveryDetailsView
     controller.loadUserRole();
 
     void showInvoiceSourcePicker(String shipmentId) {
-      showModalBottomSheet<void>(
+      showInvoiceSourcePickerSheet(
         context: context,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-        ),
-        builder: (ctx) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 8.h),
-              Text(
-                'Add Invoice',
-                style:
-                    themes.fontSize16_400.copyWith(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8.h),
-              ListTile(
-                leading: Icon(Icons.attach_file, color: themes.darkCyanBlue),
-                title: const Text('Attach invoice'),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  controller.pickImage(ImageSource.gallery, (file) {
-                    controller.setImage(shipmentId, file);
-                  });
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.camera_alt, color: themes.darkCyanBlue),
-                title: const Text('Capture using camera'),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  controller.pickImage(ImageSource.camera, (file) {
-                    controller.setImage(shipmentId, file);
-                  });
-                },
-              ),
-              SizedBox(height: 8.h),
-            ],
-          ),
-        ),
+        controller: controller,
+        shipmentId: shipmentId,
       );
     }
 
@@ -553,136 +517,20 @@ class RunningDeliveryDetailsView
                                               invoicePhoto ??
                                               '',
                                     )
-                                  : Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(height: 8.h),
-                                        Obx(() {
-                                          final file = controller
-                                              .getImage(shipmentID.toString());
-
-                                          return Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              if (file ==
-                                                  null) // No image selected, show upload icon
-                                                InkWell(
-                                                  onTap: () {
-                                                    showInvoiceSourcePicker(
-                                                      shipmentID.toString(),
-                                                    );
-                                                  },
-                                                  child: Icon(
-                                                    Icons.upload_file,
-                                                    color: themes.darkCyanBlue,
-                                                    size: 40.sp,
-                                                  ),
-                                                )
-                                              else // Image selected, show preview with remove button
-                                                Stack(
-                                                  children: [
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: Image.file(
-                                                        file,
-                                                        width: 120,
-                                                        height: 120,
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                    Positioned(
-                                                      top: 4,
-                                                      right: 4,
-                                                      child: GestureDetector(
-                                                        onTap: () => controller
-                                                            .removeImage(
-                                                                shipmentID
-                                                                    .toString()),
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                Colors.black54,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
-                                                          padding:
-                                                              EdgeInsets.all(4),
-                                                          child: Icon(
-                                                            Icons.close,
-                                                            size: 20,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      themes.darkCyanBlue,
-                                                  foregroundColor:
-                                                      themes.whiteColor,
-                                                ),
-                                                onPressed: file == null
-                                                    ? null
-                                                    : () {
-                                                        controller
-                                                            .uploadInvoice(
-                                                          shipmentID: details
-                                                                  ?.shipmentId
-                                                                  .toString() ??
-                                                              '0',
-                                                          file: file,
-                                                        );
-                                                      },
-                                                child: Text('UPLOAD'),
-                                              ),
-                                            ],
-                                          );
-                                        }),
-                                        // SizedBox(height: 12.h),
-                                        // Obx(() {
-                                        //   final file = controller
-                                        //       .getImage(shipmentID.toString());
-                                        //   if (file == null) return SizedBox();
-
-                                        //   return Stack(
-                                        //     children: [
-                                        //       ClipRRect(
-                                        //         borderRadius:
-                                        //             BorderRadius.circular(8),
-                                        //         child: Image.file(file,
-                                        //             width: 120,
-                                        //             height: 120,
-                                        //             fit: BoxFit.cover),
-                                        //       ),
-                                        //       Positioned(
-                                        //         top: 4,
-                                        //         right: 4,
-                                        //         child: GestureDetector(
-                                        //           onTap: () => controller
-                                        //               .removeImage(shipmentID
-                                        //                   .toString()),
-                                        //           child: Container(
-                                        //             decoration: BoxDecoration(
-                                        //                 color: Colors.black54,
-                                        //                 shape: BoxShape.circle),
-                                        //             child: Icon(Icons.close,
-                                        //                 size: 20,
-                                        //                 color: Colors.white),
-                                        //           ),
-                                        //         ),
-                                        //       ),
-                                        //     ],
-                                        //   );
-                                        // }),
-                                      ],
+                                  : InvoiceAttachmentSection(
+                                      controller: controller,
+                                      shipmentId: shipmentID.toString(),
+                                      showSourcePicker: showInvoiceSourcePicker,
+                                      onUpload: () {
+                                        controller.uploadInvoice(
+                                          shipmentID: details?.shipmentId
+                                                  .toString() ??
+                                              shipmentID.toString(),
+                                          files: controller.getImages(
+                                            shipmentID.toString(),
+                                          ),
+                                        );
+                                      },
                                     ),
                             ],
                           ),

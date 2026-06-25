@@ -43,8 +43,12 @@ import '../modules/outbound_menu/views/outbound_menu_view.dart';
 import '../modules/outbound_remote_detail/bindings/outbound_remote_detail_binding.dart';
 import '../modules/outbound_remote_detail/views/outbound_remote_detail_view.dart';
 import '../modules/outbound_sector_pickup/bindings/outbound_sector_pickup_binding.dart';
+import '../modules/outbound_sector_pickup/bindings/sector_pickup_report_show_binding.dart';
+import '../modules/outbound_sector_pickup/bindings/sector_pickup_status_report_binding.dart';
 import '../modules/outbound_sector_pickup/views/outbound_sector_pickup_view.dart';
 import '../modules/outbound_sector_pickup/views/sector_pickup_list_view.dart';
+import '../modules/outbound_sector_pickup/views/sector_pickup_report_show_view.dart';
+import '../modules/outbound_sector_pickup/views/sector_pickup_status_report_view.dart';
 import '../modules/pickdup_delivery_details/bindings/running_delivery_details_binding.dart';
 import '../modules/pickdup_delivery_details/views/running_delivery_details_view.dart';
 import '../modules/pickup/bindings/pickup_binding.dart';
@@ -240,6 +244,16 @@ class AppPages {
       name: _Paths.OUTBOUND_SECTOR_PICKUP,
       page: () => const OutboundSectorPickupView(),
       binding: OutboundSectorPickupBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT,
+      page: () => const SectorPickupStatusReportView(),
+      binding: SectorPickupStatusReportBinding(),
+    ),
+    GetPage(
+      name: _Paths.OUTBOUND_SECTOR_PICKUP_REPORT_SHOW,
+      page: () => const SectorPickupReportShowView(),
+      binding: SectorPickupReportShowBinding(),
     ),
     GetPage(
       name: _Paths.OUTBOUND_REMOTE_DETAIL,

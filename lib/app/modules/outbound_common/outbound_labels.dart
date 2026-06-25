@@ -303,12 +303,37 @@ class OutboundLabels {
   static const statScanned = 'SCANNED';
   static const statMissing = 'MISSING';
   static const subtitleSectorPickupList =
-      'Tap a pickup to continue scanning shipments.';
-  static const subtitleSectorPickupReport =
-      'Enter pickup id and print, or choose a date range for status summary.';
+      'Tap Report for pickup PDF, Scan to continue shipments.';
   static const sectorPickupReportTitle = 'Sector Pickup Report';
-  static const hintPickupIdForReport = 'Pickup id from list (e.g. 286)';
+  static const sectorPickupStatusReportTitle = 'Sector Pickup Status Report';
+  static const subtitleSectorPickupStatusReport =
+      'Filter and browse sector pickup shipment status from pickupreport API.';
+  static const sectorPickupStatusReportEmpty =
+      'No shipments match the current filters.';
+  static const sectorPickupReportEmpty = 'No shipment rows in this pickup.';
   static const btnPrintPickupReport = 'Print Report';
-  static const sectionPickupStatusSummary = 'Status summary';
+  static const btnSectorPickupStatusReport = 'Status Report';
+  static const btnReport = 'Report';
+  static const btnScan = 'Scan';
+  static const btnFilter = 'Filter';
+  static const btnReset = 'Reset';
+  static const btnExportCsv = 'Export CSV';
+  static const msgCsvExported = 'CSV exported.';
+  static const sectionReportFilters = 'Report Filters';
+  static const sectionPickupDetailsReceived = 'Pickup Details (Received Shipments)';
+  static const colHubBranch = 'Hub Branch';
+  static const colBagSealAndCode = 'Bag Seal & Code';
+  static const colShipmentsDockets = 'Shipments / Dockets';
+  static const colPackets = 'Packets';
+  static const colShipmentNo = 'Shipment No';
+  static const colLinehaulNo = 'Linehaul No';
+  static const colLinehaulDate = 'Linehaul Date';
+  static const colPickupStatus = 'Pickup Status';
+  static const colCurrentStatus = 'Current Status';
+  static const hintDocketAwb = 'Docket / AWB';
+  static const hintLinehaulNo = 'Linehaul number';
+  static const statTotalShipmentsLinehaul = 'Total Shipments (Linehaul)';
+  static const statSectorPickupDone = 'Sector Pickup Done';
+  static const statSectorPickupPending = 'Sector Pickup Pending';
   static const sectorPickupListEmpty = 'No sector pickups found.';
 }

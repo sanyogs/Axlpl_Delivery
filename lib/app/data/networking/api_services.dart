@@ -572,17 +572,23 @@ class ApiServices {
 
   Future<APIResponse> uploadInvoice(
     final shipmentID,
-    MultipartFile? attetchment,
+    List<MultipartFile> attachments,
     final token,
   ) async {
-    final formData = FormData.fromMap({
-      'shipment_id': shipmentID,
-      'invoice_file': attetchment,
-    });
+    final formData = FormData();
+    formData.fields.add(MapEntry('shipment_id', shipmentID.toString()));
+    if (attachments.length == 1) {
+      formData.files.add(MapEntry('invoice_file', attachments.first));
+    } else {
+      for (final file in attachments) {
+        formData.files.add(MapEntry('invoice_file[]', file));
+      }
+    }
     return _api.post(
       uploadInvoicePoint,
       formData,
       token: token,
+      contentType: ContentType.multipart,
     );
   }
 
@@ -1660,16 +1666,39 @@ class ApiServices {
 
   Future<APIResponse> pickupReportOutbound({
     required String token,
-    required String startDate,
-    required String endDate,
+    String? startDate,
+    String? endDate,
+    int? page,
+    String? originBranch,
+    String? destinationBranch,
+    String? docketNo,
+    String? status,
+    String? linehaulNo,
   }) async {
+    final query = <String, String>{};
+    final start = startDate?.trim();
+    if (start != null && start.isNotEmpty) query['start_date'] = start;
+    final end = endDate?.trim();
+    if (end != null && end.isNotEmpty) query['end_date'] = end;
+    if (page != null && page > 0) query['page'] = '$page';
+    final origin = originBranch?.trim();
+    if (origin != null && origin.isNotEmpty) query['origin_branch'] = origin;
+    final dest = destinationBranch?.trim();
+    if (dest != null && dest.isNotEmpty) {
+      query['destination_branch'] = dest;
+    }
+    final docket = docketNo?.trim();
+    if (docket != null && docket.isNotEmpty) query['docket_no'] = docket;
+    final st = status?.trim();
+    if (st != null && st.isNotEmpty) query['status'] = st;
+    final linehaul = linehaulNo?.trim();
+    if (linehaul != null && linehaul.isNotEmpty) {
+      query['linehaul_no'] = linehaul;
+    }
     return _api.getOutbound(
       pickupReportPoint,
       token: token,
-      query: {
-        'start_date': startDate,
-        'end_date': endDate,
-      },
+      query: query,
       contentType: ContentType.urlEncoded,
     );
   }

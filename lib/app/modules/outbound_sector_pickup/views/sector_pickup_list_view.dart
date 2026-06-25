@@ -1,21 +1,17 @@
-import 'package:axlpl_delivery/app/data/models/outbound/pickup_report_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/sector_pickup_row_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-/// Admin **Sector Pickup List** — `getpickuplist`, tap row to open scan screen.
+/// Admin **Sector Pickup List** — `getpickuplist`, Report + Scan actions.
 class SectorPickupListView extends StatefulWidget {
   const SectorPickupListView({super.key});
 
@@ -41,7 +37,6 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
       final loading = controller.isListLoading.value;
       final busy = controller.isBusy.value;
       final rows = controller.pickupRows;
-      final _ = controller.pickupReportRows.length;
 
       return OutboundScreen(
         title: OutboundLabels.sectorPickupListTitle,
@@ -52,9 +47,14 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
                 await controller.loadPickupList();
               },
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutboundPrimaryButtonCompact(
+          OutboundButtonRow(
+            start: OutboundSecondaryButton(
+              label: OutboundLabels.btnSectorPickupStatusReport,
+              onPressed: busy
+                  ? null
+                  : () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT),
+            ),
+            end: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnNewSectorPickup,
               onPressed: busy ? null : _openNewPickup,
             ),
@@ -102,70 +102,9 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
                 _SectorPickupListTable(
                   rows: rows,
                   busy: busy,
-                  onRowTap: _openPickup,
+                  onReport: _openReport,
+                  onScan: _openPickup,
                 ),
-            ],
-          ),
-          OutboundAdminSection(
-            title: OutboundLabels.sectorPickupReportTitle,
-            children: [
-              Text(
-                OutboundLabels.subtitleSectorPickupReport,
-                style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.pickupId,
-                required: true,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutboundScanField(
-                        controller: controller.reportPickupIdController,
-                        hintText: OutboundLabels.hintPickupIdForReport,
-                        prefixIcon: const Icon(CupertinoIcons.number),
-                        onSubmitted: (_) => controller.printPickupReport(),
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: OutboundLabels.btnCopy,
-                      onPressed: () => outboundCopyToClipboard(
-                        controller.reportPickupIdController.text,
-                        snackbarTitle: 'Sector pickup',
-                      ),
-                      icon: Icon(
-                        Icons.copy_outlined,
-                        color: themes.darkCyanBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutboundPrimaryButton(
-                  title: OutboundLabels.btnPrintPickupReport,
-                  onPressed: busy ? null : controller.printPickupReport,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                OutboundLabels.sectionPickupStatusSummary,
-                style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
-              ),
-              SizedBox(height: 8.h),
-              OutboundDateField(
-                controller: controller.reportStartController,
-                hintText: OutboundLabels.reportStart,
-              ),
-              OutboundDateField(
-                controller: controller.reportEndController,
-                hintText: OutboundLabels.reportEnd,
-              ),
-              OutboundPrimaryButton(
-                title: OutboundLabels.btnPickupReport,
-                onPressed: busy ? null : controller.pickupReport,
-              ),
-              _PickupReportTable(rows: controller.pickupReportRows),
             ],
           ),
         ],
@@ -187,18 +126,30 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
     controller.resetSession();
     Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP, arguments: row);
   }
+
+  void _openReport(SectorPickupRow row) {
+    final id = row.id?.trim();
+    if (id == null || id.isEmpty) {
+      Get.snackbar('Sector pickup', 'Pickup id is missing for this row.',
+          duration: const Duration(seconds: 3));
+      return;
+    }
+    Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_REPORT_SHOW, arguments: id);
+  }
 }
 
 class _SectorPickupListTable extends StatelessWidget {
   const _SectorPickupListTable({
     required this.rows,
     required this.busy,
-    required this.onRowTap,
+    required this.onReport,
+    required this.onScan,
   });
 
   final List<SectorPickupRow> rows;
   final bool busy;
-  final void Function(SectorPickupRow row) onRowTap;
+  final void Function(SectorPickupRow row) onReport;
+  final void Function(SectorPickupRow row) onScan;
 
   @override
   Widget build(BuildContext context) {
@@ -219,13 +170,10 @@ class _SectorPickupListTable extends StatelessWidget {
             color: themes.grayColor,
           ),
           columns: const [
-            DataColumn(label: Text('Pickup id')),
+            DataColumn(label: Text('ID')),
             DataColumn(label: Text(OutboundLabels.mawbNo)),
-            DataColumn(label: Text(OutboundLabels.colOriginHub)),
-            DataColumn(label: Text(OutboundLabels.colDestinationHub)),
-            DataColumn(label: Text(OutboundLabels.flightNo)),
+            DataColumn(label: Text(OutboundLabels.colHubBranch)),
             DataColumn(label: Text(OutboundLabels.pickupDate)),
-            DataColumn(label: Text(OutboundLabels.pickupTime)),
             DataColumn(label: Text(OutboundLabels.pickedBy)),
             DataColumn(label: Text(OutboundLabels.colActions)),
           ],
@@ -247,20 +195,22 @@ class _SectorPickupListTable extends StatelessWidget {
                       ),
                     ),
                     DataCell(Text(_cell(e.displayOriginHub))),
-                    DataCell(Text(_cell(e.displayDestHub))),
-                    DataCell(
-                      OutboundCopyableTableCell(
-                        value: e.flightNo,
-                        snackbarTitle: 'Sector pickup',
-                      ),
-                    ),
-                    DataCell(Text(_cell(e.pickupDate))),
-                    DataCell(Text(_cell(e.pickupTime))),
+                    DataCell(Text(_pickupDateTime(e))),
                     DataCell(Text(_cell(e.pickedBy))),
                     DataCell(
-                      TextButton(
-                        onPressed: busy ? null : () => onRowTap(e),
-                        child: const Text('Open'),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          OutboundTableTextLink(
+                            label: OutboundLabels.btnReport,
+                            onPressed: busy ? null : () => onReport(e),
+                          ),
+                          SizedBox(width: 8.w),
+                          OutboundTableTextLink(
+                            label: OutboundLabels.btnScan,
+                            onPressed: busy ? null : () => onScan(e),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -277,42 +227,12 @@ class _SectorPickupListTable extends StatelessWidget {
     if (t == null || t.isEmpty) return '—';
     return t;
   }
-}
 
-class _PickupReportTable extends StatelessWidget {
-  const _PickupReportTable({required this.rows});
-
-  final List<PickupReportRow> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    if (rows.isEmpty) {
-      return Text(
-        'No report rows — generate report above.',
-        style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-      );
-    }
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: themes.whiteColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text(OutboundLabels.colStatus)),
-          DataColumn(label: Text('Count')),
-        ],
-        rows: rows
-            .map(
-              (e) => DataRow(
-                cells: [
-                  DataCell(Text(_SectorPickupListTable._cell(e.status))),
-                  DataCell(Text(_SectorPickupListTable._cell(e.count))),
-                ],
-              ),
-            )
-            .toList(),
-      ),
-    );
+  static String _pickupDateTime(SectorPickupRow row) {
+    final date = row.pickupDate?.trim();
+    if (date == null || date.isEmpty) return '—';
+    final time = row.pickupTime?.trim();
+    if (time == null || time.isEmpty) return date;
+    return '$date $time';
   }
 }
