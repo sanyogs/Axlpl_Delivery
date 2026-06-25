@@ -4,11 +4,11 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 /// `listbags` — filtered by origin `branch_id` from the bagging screen.
@@ -43,6 +43,7 @@ class _BagListViewState extends State<BagListView> {
       final totalPages = controller.bagListTotalPages;
       final rangeLabel = controller.bagListRangeLabel;
       final filterNote = controller.selectedDepotSummary;
+      final busy = controller.isBusy.value;
 
       return OutboundScreen(
         title: OutboundLabels.bagListTitle,
@@ -57,13 +58,13 @@ class _BagListViewState extends State<BagListView> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnPerformBagging,
-              onPressed: () => Get.back(),
+              onPressed: controller.returnToFreshBagging,
             ),
           ),
           OutboundAdminSection(
             title: OutboundLabels.bagListTitle,
             trailing: TextButton.icon(
-              onPressed: () => Get.back(),
+              onPressed: controller.returnToFreshBagging,
               style: TextButton.styleFrom(
                 backgroundColor: themes.whiteColor,
                 foregroundColor: themes.darkCyanBlue,
@@ -112,11 +113,12 @@ class _BagListViewState extends State<BagListView> {
                   rows: rows,
                   rowOffset: controller.bagListRowNumberOffset,
                   branchLabel: branchList.displayLabelForId,
+                  busy: busy,
                   onTap: controller.openBagDetailsFromList,
                   onRebag: (row) => controller.showRebagDialog(
                     defaultNewBagCode: row.bagCode,
                   ),
-                  onCopy: _copyBagCode,
+                  onPrint: controller.printBagChallanFromRow,
                 ),
                 if (totalPages > 1) ...[
                   SizedBox(height: 8.h),
@@ -154,17 +156,19 @@ class _BagListTable extends StatelessWidget {
     required this.rows,
     required this.rowOffset,
     required this.branchLabel,
+    required this.busy,
     required this.onTap,
     required this.onRebag,
-    required this.onCopy,
+    required this.onPrint,
   });
 
   final List<OutboundBagRow> rows;
   final int rowOffset;
   final String Function(String? id) branchLabel;
+  final bool busy;
   final void Function(OutboundBagRow row) onTap;
   final void Function(OutboundBagRow row) onRebag;
-  final void Function(String? bagCode) onCopy;
+  final void Function(OutboundBagRow row) onPrint;
 
   @override
   Widget build(BuildContext context) {
@@ -201,14 +205,18 @@ class _BagListTable extends StatelessWidget {
                 cells: [
                   DataCell(Text('${rowOffset + i + 1}')),
                   DataCell(
-                    Text(
-                      rows[i].bagCode ?? '—',
-                      style: themes.fontSize14_500.copyWith(
-                        color: themes.darkCyanBlue,
-                      ),
+                    OutboundCopyableTableCell(
+                      value: rows[i].bagCode,
+                      emphasized: true,
+                      snackbarTitle: 'Bagging',
                     ),
                   ),
-                  DataCell(Text(rows[i].metalSealNo ?? '—')),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: rows[i].metalSealNo,
+                      snackbarTitle: 'Bagging',
+                    ),
+                  ),
                   DataCell(Text(branchLabel(rows[i].originBranchId))),
                   DataCell(
                     Text(
@@ -224,25 +232,17 @@ class _BagListTable extends StatelessWidget {
                       children: [
                         OutboundTableTextLink(
                           label: OutboundLabels.btnView,
-                          onPressed: () => onTap(rows[i]),
+                          onPressed: busy ? null : () => onTap(rows[i]),
                         ),
-                        IconButton(
-                          tooltip: OutboundLabels.btnCopy,
-                          onPressed: () => onCopy(rows[i].bagCode),
-                          icon: Icon(
-                            Icons.copy_outlined,
-                            size: 18.sp,
-                            color: themes.darkCyanBlue,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
+                        SizedBox(width: 8.w),
+                        OutboundTableTextLink(
+                          label: OutboundLabels.btnPrint,
+                          onPressed: busy ? null : () => onPrint(rows[i]),
                         ),
-                        TextButton(
-                          onPressed: () => onRebag(rows[i]),
-                          child: Text(OutboundLabels.btnRebag),
+                        SizedBox(width: 8.w),
+                        OutboundTableTextLink(
+                          label: OutboundLabels.btnRebag,
+                          onPressed: busy ? null : () => onRebag(rows[i]),
                         ),
                       ],
                     ),
@@ -254,13 +254,6 @@ class _BagListTable extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _copyBagCode(String? bagCode) async {
-  final code = bagCode?.trim();
-  if (code == null || code.isEmpty) return;
-  await Clipboard.setData(ClipboardData(text: code));
-  Get.snackbar('Bagging', 'Bag code copied.');
 }
 
 class _ListMessage extends StatelessWidget {

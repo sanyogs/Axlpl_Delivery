@@ -48,6 +48,8 @@ class LinehaulEditView extends GetView<LinehaulEditController> {
                 child: OutboundReadOnlyInput(
                   controller: controller.linehaulIdController,
                   hintText: OutboundLabels.linehaulId,
+                  copyable: true,
+                  snackbarTitle: 'Linehaul',
                 ),
               ),
               OutboundLabeledFieldRow(

@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart'
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
@@ -190,11 +191,27 @@ class _SectorPickupListTable extends StatelessWidget {
               .map(
                 (e) => DataRow(
                   cells: [
-                    DataCell(Text(_cell(e.id))),
-                    DataCell(Text(_cell(e.mawbNo))),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.id,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.mawbNo,
+                        emphasized: true,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
                     DataCell(Text(_cell(e.displayOriginHub))),
                     DataCell(Text(_cell(e.displayDestHub))),
-                    DataCell(Text(_cell(e.flightNo))),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.flightNo,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
                     DataCell(Text(_cell(e.pickupDate))),
                     DataCell(Text(_cell(e.pickupTime))),
                     DataCell(Text(_cell(e.pickedBy))),

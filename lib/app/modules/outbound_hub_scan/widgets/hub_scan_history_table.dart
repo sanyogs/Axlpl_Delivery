@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_log_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -84,20 +85,11 @@ class HubScanHistoryTable extends StatelessWidget {
       cells: [
         DataCell(Text('$index', style: themes.fontSize14_400)),
         DataCell(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.inventory_2_outlined,
-                size: 16.sp,
-                color: themes.darkCyanBlue,
-              ),
-              SizedBox(width: 4.w),
-              Text(
-                row.docketDisplay,
-                style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
-              ),
-            ],
+          OutboundCopyableTableCell(
+            value: row.shipmentId ?? row.shipmentInvoiceNo,
+            displayText: row.docketDisplay,
+            emphasized: true,
+            snackbarTitle: 'Hub scan',
           ),
         ),
         DataCell(Text(scanType, style: themes.fontSize14_400)),
@@ -173,9 +165,16 @@ void showHubScanLogDetail(
   showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(
-        row.docketDisplay,
-        style: themes.fontSize18_600,
+      title: Row(
+        children: [
+          Expanded(
+            child: OutboundCopyableInline(
+              text: row.docketDisplay,
+              style: themes.fontSize18_600,
+              snackbarTitle: 'Hub scan',
+            ),
+          ),
+        ],
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -185,11 +184,23 @@ void showHubScanLogDetail(
             OutboundDetailField(
               label: OutboundLabels.colShipmentDocket,
               value: row.docketDisplay,
+              copyable: true,
+              copyValue: row.shipmentId ?? row.shipmentInvoiceNo,
+              snackbarTitle: 'Hub scan',
             ),
             OutboundDetailField(
               label: OutboundLabels.hubScanShipmentId,
               value: row.shipmentId ?? '—',
+              copyable: true,
+              snackbarTitle: 'Hub scan',
             ),
+            if (row.shipmentInvoiceNo?.trim().isNotEmpty == true)
+              OutboundDetailField(
+                label: OutboundLabels.colAwb,
+                value: row.shipmentInvoiceNo!,
+                copyable: true,
+                snackbarTitle: 'Hub scan',
+              ),
             OutboundDetailField(
               label: OutboundLabels.colScanType,
               value: scanType,
@@ -205,10 +216,14 @@ void showHubScanLogDetail(
             OutboundDetailField(
               label: OutboundLabels.hubScanLogId,
               value: row.id ?? '—',
+              copyable: true,
+              snackbarTitle: 'Hub scan',
             ),
             OutboundDetailField(
               label: OutboundLabels.hubScanBoxNo,
               value: row.boxNo ?? '—',
+              copyable: true,
+              snackbarTitle: 'Hub scan',
             ),
             OutboundDetailField(
               label: OutboundLabels.created,

@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart'
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
@@ -134,6 +135,8 @@ class _ManifestReportSummary extends StatelessWidget {
         OutboundDetailField(
           label: OutboundLabels.manifestCode,
           value: report.manifestNo ?? '—',
+          copyable: true,
+          snackbarTitle: 'Manifest',
         ),
         OutboundDetailField(
           label: OutboundLabels.originDepot,
@@ -179,8 +182,19 @@ class _ManifestReportBagsTable extends StatelessWidget {
             DataRow(
               cells: [
                 DataCell(Text('${i + 1}')),
-                DataCell(Text(bags[i].bagCode ?? '—')),
-                DataCell(Text(bags[i].metalSealNo ?? '—')),
+                DataCell(
+                  OutboundCopyableTableCell(
+                    value: bags[i].bagCode,
+                    emphasized: true,
+                    snackbarTitle: 'Bagging',
+                  ),
+                ),
+                DataCell(
+                  OutboundCopyableTableCell(
+                    value: bags[i].metalSealNo,
+                    snackbarTitle: 'Bagging',
+                  ),
+                ),
                 DataCell(Text(bags[i].grossWeight ?? '—')),
               ],
             ),
@@ -219,7 +233,12 @@ class _ManifestReportShipmentsTable extends StatelessWidget {
             DataRow(
               cells: [
                 DataCell(Text('${i + 1}')),
-                DataCell(Text(shipments[i].id ?? '—')),
+                DataCell(
+                  OutboundCopyableTableCell(
+                    value: shipments[i].id,
+                    snackbarTitle: 'Manifest',
+                  ),
+                ),
                 DataCell(
                   Text(
                     shipments[i].receiverName ?? shipments[i].senderName ?? '—',

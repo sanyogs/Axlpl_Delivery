@@ -1,3 +1,5 @@
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -169,14 +171,19 @@ class OutboundReadOnlyInput extends StatelessWidget {
     super.key,
     required this.controller,
     this.hintText = '',
+    this.copyable = false,
+    this.snackbarTitle = 'Outbound',
   });
 
   final TextEditingController controller;
   final String hintText;
+  final bool copyable;
+  final String snackbarTitle;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final value = controller.text.trim();
+    final field = Container(
       decoration: BoxDecoration(
         color: themes.whiteColor,
         borderRadius: BorderRadius.circular(4.r),
@@ -198,6 +205,27 @@ class OutboundReadOnlyInput extends StatelessWidget {
           border: InputBorder.none,
         ),
       ),
+    );
+    if (!copyable || value.isEmpty) return field;
+    return Row(
+      children: [
+        Expanded(child: field),
+        IconButton(
+          tooltip: OutboundLabels.btnCopy,
+          onPressed: () => outboundCopyToClipboard(
+            value,
+            snackbarTitle: snackbarTitle,
+          ),
+          icon: Icon(
+            Icons.copy_outlined,
+            size: 18.sp,
+            color: themes.darkCyanBlue,
+          ),
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.w),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart'
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_time_field.dart';
@@ -309,8 +310,19 @@ class _ScannedInventoryTable extends StatelessWidget {
               .map(
                 (row) => DataRow(
                   cells: [
-                    DataCell(Text(_cell(row.sealNo))),
-                    DataCell(Text(_cell(row.docketNo))),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: row.sealNo,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: row.docketNo,
+                        emphasized: true,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
                     DataCell(Text(_cell(row.pkgs))),
                     DataCell(
                       TextButton(
@@ -390,8 +402,19 @@ class _MissingFromManifestTable extends StatelessWidget {
               .map(
                 (row) => DataRow(
                   cells: [
-                    DataCell(Text(_ScannedInventoryTable._cell(row.sealNo))),
-                    DataCell(Text(_ScannedInventoryTable._cell(row.docketNo))),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: row.sealNo,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: row.docketNo,
+                        emphasized: true,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                    ),
                     DataCell(Text(_ScannedInventoryTable._cell(row.status))),
                     DataCell(
                       Wrap(

@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_acti
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/outbound_linehaul_controller.dart';
@@ -197,19 +198,22 @@ class _LinehaulListTable extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            row.displayMawbOrVehicle,
-                            style: themes.fontSize14_500.copyWith(
-                              color: themes.darkCyanBlue,
-                            ),
+                          OutboundCopyableTableCell(
+                            value: row.mawbNo ?? row.vehicleNo ?? row.tripNo,
+                            displayText: row.displayMawbOrVehicle,
+                            emphasized: true,
+                            snackbarTitle: 'Linehaul',
                           ),
                           if (row.ewayBill?.trim().isNotEmpty == true)
-                            Text(
-                              'EWB: ${row.ewayBill!.trim()}',
+                            OutboundCopyableInline(
+                              text: 'EWB: ${row.ewayBill!.trim()}',
+                              value: row.ewayBill,
                               style: themes.fontSize14_400.copyWith(
                                 fontSize: 10.sp,
                                 color: themes.grayColor,
                               ),
+                              snackbarTitle: 'Linehaul',
+                              compact: true,
                             ),
                         ],
                       ),

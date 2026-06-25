@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/hub_scan_table_row.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -75,14 +76,13 @@ class HubScanSessionCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 2.h),
-                      Text(
-                        _v(row.docketNo),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      OutboundCopyableInline(
+                        text: _v(row.docketNo),
                         style: themes.fontSize18_600.copyWith(
                           color: themes.darkCyanBlue,
                           fontSize: 14.5.sp,
                         ),
+                        snackbarTitle: 'Hub scan',
                       ),
                     ],
                   ),
@@ -108,7 +108,7 @@ class HubScanSessionCard extends StatelessWidget {
                 children: [
                   _line(OutboundLabels.scanType, _v(row.scanType)),
                   _line(OutboundLabels.branchHub, branch),
-                  _line(OutboundLabels.clientCode, _v(row.clientCode)),
+                  _copyLine(OutboundLabels.clientCode, _v(row.clientCode)),
                   _line(OutboundLabels.noOfBox, _v(row.noOfBox)),
                   _line(OutboundLabels.boxWeight, _v(row.boxWeight)),
                   _line(OutboundLabels.originPincode, _v(row.originPincode)),
@@ -121,6 +121,36 @@ class HubScanSessionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _copyLine(String label, String value) {
+    if (value == '—') return _line(label, value);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 3.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 106.w,
+            child: Text(
+              '$label :',
+              style: themes.fontSize14_400.copyWith(
+                color: themes.grayColor,
+                fontSize: 10.8.sp,
+              ),
+            ),
+          ),
+          Expanded(
+            child: OutboundCopyableInline(
+              text: value,
+              style: themes.fontSize14_500.copyWith(fontSize: 11.5.sp),
+              snackbarTitle: 'Hub scan',
+              compact: true,
+            ),
+          ),
+        ],
       ),
     );
   }

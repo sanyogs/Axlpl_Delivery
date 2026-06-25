@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -120,10 +121,12 @@ class BaggingDetailsView extends GetView<BaggingDetailsController> {
               _ShipmentDetailRow(
                 label: OutboundLabels.colShipmentId,
                 value: _formatShipmentId(item.shipmentId),
+                copyValue: item.shipmentId,
               ),
               _ShipmentDetailRow(
                 label: OutboundLabels.colAwb,
                 value: item.shipmentInvoiceNo,
+                copyable: true,
               ),
               _ShipmentDetailRow(
                 label: OutboundLabels.colDestination,
@@ -222,6 +225,7 @@ class _BagSummaryPanel extends StatelessWidget {
             _SummaryCell(
               label: OutboundLabels.metalSeal.toUpperCase(),
               value: seal != null && seal.isNotEmpty ? seal : '—',
+              copyValue: seal,
             ),
             _SummaryCell(label: 'ORIGIN DEPOT', value: origin),
             _SummaryCell(label: 'DESTINATION DEPOT', value: destination),
@@ -257,14 +261,14 @@ class _BagSummaryPanel extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         OutboundButtonRow(
-          start: _OrangeActionButton(
+          start: OutboundSecondaryButton(
             label: OutboundLabels.btnAddMore,
-            icon: Icons.add,
             onPressed: onAddMore,
           ),
-          end: _PrintChallanButton(
+          end: OutboundPrimaryButtonCompact(
+            title: OutboundLabels.btnPrintChallan,
             onPressed: onPrint,
-            busy: busy,
+            isLoading: busy,
           ),
         ),
       ],
@@ -354,19 +358,18 @@ class _IncludedShipmentsPanel extends StatelessWidget {
                       cells: [
                         DataCell(Text('${i + 1}')),
                         DataCell(
-                          Text(
-                            _formatShipmentId(items[i].shipmentId),
-                            style: themes.fontSize14_500.copyWith(
-                              color: themes.darkCyanBlue,
-                            ),
+                          OutboundCopyableTableCell(
+                            value: items[i].shipmentId,
+                            displayText: _formatShipmentId(items[i].shipmentId),
+                            emphasized: true,
+                            snackbarTitle: 'Bagging',
                           ),
                         ),
                         DataCell(
-                          Text(
-                            items[i].shipmentInvoiceNo ?? '—',
-                            style: themes.fontSize14_500.copyWith(
-                              color: themes.darkCyanBlue,
-                            ),
+                          OutboundCopyableTableCell(
+                            value: items[i].shipmentInvoiceNo,
+                            emphasized: true,
+                            snackbarTitle: 'Bagging',
                           ),
                         ),
                         DataCell(
@@ -440,11 +443,13 @@ class _SummaryCell extends StatelessWidget {
   const _SummaryCell({
     required this.label,
     required this.value,
+    this.copyValue,
     this.fullWidth = false,
   });
 
   final String label;
   final String value;
+  final String? copyValue;
   final bool fullWidth;
 
   @override
@@ -469,10 +474,18 @@ class _SummaryCell extends StatelessWidget {
             ),
           ),
           SizedBox(height: 4.h),
-          Text(
-            value,
-            style: themes.fontSize14_500.copyWith(fontSize: 12.sp),
-          ),
+          copyValue?.trim().isNotEmpty == true
+              ? OutboundCopyableInline(
+                  text: value,
+                  value: copyValue,
+                  style: themes.fontSize14_500.copyWith(fontSize: 12.sp),
+                  snackbarTitle: 'Bagging',
+                  compact: true,
+                )
+              : Text(
+                  value,
+                  style: themes.fontSize14_500.copyWith(fontSize: 12.sp),
+                ),
         ],
       ),
     );
@@ -488,17 +501,19 @@ class _HeaderBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: themes.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
       ),
-      child: Text(
-        text,
+      child: OutboundCopyableInline(
+        text: text,
         style: themes.fontSize14_500.copyWith(
           fontSize: 10.sp,
           color: themes.darkCyanBlue,
         ),
+        snackbarTitle: 'Bagging',
+        compact: true,
       ),
     );
   }
@@ -594,93 +609,26 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _PrintChallanButton extends StatelessWidget {
-  const _PrintChallanButton({this.onPressed, this.busy = false});
-
-  final VoidCallback? onPressed;
-  final bool busy;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null && !busy;
-    return SizedBox(
-      width: double.infinity,
-      height: OutboundButtons.height,
-      child: OutlinedButton.icon(
-        onPressed: enabled ? onPressed : null,
-        icon: busy
-            ? SizedBox(
-                width: 16.sp,
-                height: 16.sp,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: themes.whiteColor,
-                ),
-              )
-            : Icon(Icons.print_outlined, size: 16.sp),
-        label: Text(OutboundLabels.btnPrintChallan),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: themes.whiteColor,
-          backgroundColor:
-              enabled ? themes.darkCyanBlue : themes.lightGrayColor.withValues(alpha: 0.55),
-          side: BorderSide.none,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-          textStyle: themes.fontReboto16_600.copyWith(fontSize: 12.sp),
-        ),
-      ),
-    );
-  }
-}
-
-class _OrangeActionButton extends StatelessWidget {
-  const _OrangeActionButton({
+class _ShipmentDetailRow extends StatelessWidget {
+  const _ShipmentDetailRow({
     required this.label,
-    required this.icon,
-    this.onPressed,
+    required this.value,
+    this.copyValue,
+    this.copyable = false,
   });
 
   final String label;
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    return SizedBox(
-      width: double.infinity,
-      height: OutboundButtons.height,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 16.sp, color: enabled ? Colors.white : themes.grayColor),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: enabled ? Colors.white : themes.grayColor,
-          backgroundColor: enabled ? const Color(0xFFE65100) : themes.lightGrayColor.withValues(alpha: 0.35),
-          side: BorderSide.none,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-          textStyle: themes.fontReboto16_600.copyWith(fontSize: 12.sp),
-        ),
-      ),
-    );
-  }
-}
-
-class _ShipmentDetailRow extends StatelessWidget {
-  const _ShipmentDetailRow({required this.label, required this.value});
-
-  final String label;
   final String? value;
+  final String? copyValue;
+  final bool copyable;
 
   @override
   Widget build(BuildContext context) {
     final v = value?.trim();
     if (v == null || v.isEmpty) return const SizedBox.shrink();
+    final raw = copyValue?.trim().isNotEmpty == true
+        ? copyValue!.trim()
+        : (copyable ? v : null);
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -694,7 +642,15 @@ class _ShipmentDetailRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(v, style: themes.fontSize14_400),
+            child: raw != null
+                ? OutboundCopyableInline(
+                    text: v,
+                    value: raw,
+                    style: themes.fontSize14_400,
+                    snackbarTitle: 'Bagging',
+                    compact: true,
+                  )
+                : Text(v, style: themes.fontSize14_400),
           ),
         ],
       ),

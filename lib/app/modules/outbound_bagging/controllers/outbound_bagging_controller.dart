@@ -11,8 +11,12 @@ import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repositor
 import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_generator.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
+import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart';
@@ -259,17 +263,42 @@ class OutboundBaggingController extends GetxController {
     final next = _buildDepotContextKey();
     if (_depotContextKey == next) return;
     _depotContextKey = next;
-    sessionScannedRows.clear();
+    resetBaggingSession(clearBagList: true);
+  }
+
+  /// Clears the active bag / scan session. Origin and destination depot stay selected.
+  void resetBaggingSession({bool clearBagList = false}) {
+    metalSealController.clear();
+    shipmentController.clear();
     bagDetail.value = null;
     _loadedBagCode = null;
     _lastBagDetailsFetchRef = null;
-    bagListAllRows.clear();
-    bagListPage.value = 1;
-    bagListError.value = '';
+    sessionScannedRows.clear();
     fetchedShipment.value = null;
     _lastFetchedShipmentId = null;
     fetchStatusMessage.value = '';
-    shipmentController.clear();
+    baggingReportData.value = null;
+    scrollToScannedTable.value = 0;
+    if (clearBagList) {
+      bagListAllRows.clear();
+      bagListPage.value = 1;
+      bagListError.value = '';
+    }
+  }
+
+  void openBagList() {
+    resetBaggingSession();
+    Get.toNamed(Routes.OUTBOUND_BAG_LIST);
+  }
+
+  void openBaggingReport() {
+    resetBaggingSession();
+    Get.toNamed(Routes.OUTBOUND_BAGGING_REPORT);
+  }
+
+  void returnToFreshBagging() {
+    resetBaggingSession();
+    Get.back();
   }
 
   /// Store parsed bag details only — never backfill origin/destination/M-Bag form fields.
@@ -810,6 +839,15 @@ class OutboundBaggingController extends GetxController {
     await _printBaggingChallan(code);
   }
 
+  Future<void> printBagChallanFromRow(OutboundBagRow row) async {
+    final ref = _bagRefFromRow(row);
+    if (ref == null) {
+      Get.snackbar('Bagging', 'Bag reference is required.');
+      return;
+    }
+    await _printBaggingChallan(ref);
+  }
+
   Future<void> _printBaggingChallan(String code) async {
     final ref = code.trim();
     if (ref.isEmpty) {
@@ -889,42 +927,72 @@ class OutboundBaggingController extends GetxController {
     final newBagCtrl =
         TextEditingController(text: defaultNewBagCode?.trim() ?? '');
     final docketCtrl = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Rebag shipment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: newBagCtrl,
-              decoration: const InputDecoration(
-                labelText: 'New bag code',
-                hintText: 'Target bag (new_bag_code)',
-              ),
+    Get.dialog<void>(
+      Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: SingleChildScrollView(
+            child: OutboundAdminSection(
+              title: OutboundLabels.btnRebag,
+              children: [
+                Text(
+                  'Move a shipment from this bag into another bag.',
+                  style: themes.fontSize14_400.copyWith(
+                    color: themes.grayColor,
+                  ),
+                ),
+                OutboundLabeledFieldRow(
+                  label: OutboundLabels.newBagCode,
+                  required: true,
+                  child: OutboundAdminInput(
+                    controller: newBagCtrl,
+                    hintText: OutboundLabels.newBagCode,
+                  ),
+                ),
+                OutboundLabeledFieldRow(
+                  label: OutboundLabels.docketNo,
+                  required: true,
+                  child: OutboundAdminInput(
+                    controller: docketCtrl,
+                    hintText: OutboundLabels.docketNo,
+                  ),
+                ),
+                OutboundButtonRow(
+                  start: OutboundSecondaryButton(
+                    label: OutboundLabels.btnCancel,
+                    onPressed: () => Get.back(),
+                  ),
+                  end: OutboundPrimaryButtonCompact(
+                    title: OutboundLabels.btnRebag,
+                    onPressed: () async {
+                      final newBag = newBagCtrl.text.trim();
+                      final docket = docketCtrl.text.trim();
+                      if (newBag.isEmpty || docket.isEmpty) {
+                        Get.snackbar(
+                          'Bagging',
+                          'New bag code and docket are required.',
+                        );
+                        return;
+                      }
+                      Get.back();
+                      await rebagShipment(
+                        newBagCode: newBag,
+                        docketNo: docket,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: docketCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Docket / shipment ID',
-                hintText: 'docket_no',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              Get.back();
-              await rebagShipment(
-                newBagCode: newBagCtrl.text,
-                docketNo: docketCtrl.text,
-              );
-            },
-            child: const Text('Rebag'),
           ),
-        ],
+        ),
       ),
-    );
+      barrierDismissible: true,
+    ).whenComplete(() {
+      newBagCtrl.dispose();
+      docketCtrl.dispose();
+    });
   }
 }

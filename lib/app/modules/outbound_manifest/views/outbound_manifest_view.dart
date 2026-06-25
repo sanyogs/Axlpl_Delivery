@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_acti
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_transport_mode_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_manifest/controllers/outbound_manifest_controller.dart';
@@ -301,11 +302,10 @@ class _ManifestBagTable extends StatelessWidget {
               DataRow(
                 cells: [
                   DataCell(
-                    Text(
-                      row.bagCode,
-                      style: themes.fontSize14_500.copyWith(
-                        color: themes.darkCyanBlue,
-                      ),
+                    OutboundCopyableTableCell(
+                      value: row.bagCode,
+                      emphasized: true,
+                      snackbarTitle: 'Bagging',
                     ),
                   ),
                   DataCell(Text(row.originLabel)),
@@ -375,11 +375,33 @@ class _ManifestShipmentTable extends StatelessWidget {
             for (final row in rows)
               DataRow(
                 cells: [
-                  DataCell(Text(row.bagNumber)),
-                  DataCell(Text(row.boxNo ?? '—')),
-                  DataCell(Text(row.consignmentNo ?? '—')),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: row.bagNumber,
+                      emphasized: true,
+                      snackbarTitle: 'Bagging',
+                    ),
+                  ),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: row.boxNo,
+                      snackbarTitle: 'Bagging',
+                    ),
+                  ),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: row.consignmentNo,
+                      emphasized: true,
+                      snackbarTitle: 'Manifest',
+                    ),
+                  ),
                   DataCell(Text(row.origin ?? '—')),
-                  DataCell(Text(row.consigneeCode ?? '—')),
+                  DataCell(
+                    OutboundCopyableTableCell(
+                      value: row.consigneeCode,
+                      snackbarTitle: 'Manifest',
+                    ),
+                  ),
                   DataCell(Text(row.consigneeName ?? '—')),
                   DataCell(Text(row.cityName ?? '—')),
                   DataCell(Text(row.pcs ?? '—')),

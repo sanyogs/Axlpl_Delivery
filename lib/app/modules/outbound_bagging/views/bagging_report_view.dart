@@ -2,8 +2,10 @@ import 'package:axlpl_delivery/app/modules/outbound_bagging/controllers/outbound
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
+import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -49,11 +51,28 @@ class _BaggingReportViewState extends State<BaggingReportView> {
               OutboundLabeledFieldRow(
                 label: OutboundLabels.baggingNo,
                 required: true,
-                child: OutboundScanField(
-                  controller: controller.reportBagCodeController,
-                  hintText: OutboundLabels.hintBaggingNo,
-                  prefixIcon: const Icon(CupertinoIcons.cube_box),
-                  onSubmitted: (_) => controller.printBaggingReport(),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutboundScanField(
+                        controller: controller.reportBagCodeController,
+                        hintText: OutboundLabels.hintBaggingNo,
+                        prefixIcon: const Icon(CupertinoIcons.cube_box),
+                        onSubmitted: (_) => controller.printBaggingReport(),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: OutboundLabels.btnCopy,
+                      onPressed: () => outboundCopyToClipboard(
+                        controller.reportBagCodeController.text,
+                        snackbarTitle: 'Bagging',
+                      ),
+                      icon: Icon(
+                        Icons.copy_outlined,
+                        color: themes.darkCyanBlue,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Align(

@@ -3,6 +3,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_response_panel.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
@@ -274,11 +275,10 @@ class _ManifestListTable extends StatelessWidget {
                 cells: [
                   DataCell(Text('${rowOffset + i + 1}')),
                   DataCell(
-                    Text(
-                      rows[i].manifestNo ?? rows[i].id ?? '—',
-                      style: themes.fontSize14_500.copyWith(
-                        color: themes.darkCyanBlue,
-                      ),
+                    OutboundCopyableTableCell(
+                      value: rows[i].manifestNo ?? rows[i].id,
+                      emphasized: true,
+                      snackbarTitle: 'Manifest',
                     ),
                   ),
                   DataCell(Text(branchLabel(rows[i].originBranch))),

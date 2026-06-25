@@ -7,6 +7,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_mo
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_expandable_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
@@ -21,14 +22,21 @@ class OutboundDetailField extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
+    this.copyable = false,
+    this.copyValue,
+    this.snackbarTitle = 'Outbound',
   });
 
   final String label;
   final String value;
+  final bool copyable;
+  final String? copyValue;
+  final String snackbarTitle;
 
   @override
   Widget build(BuildContext context) {
     if (value.trim().isEmpty || value == '—') return const SizedBox.shrink();
+    final raw = copyValue?.trim().isNotEmpty == true ? copyValue!.trim() : value.trim();
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -42,10 +50,17 @@ class OutboundDetailField extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SelectableText(
-              value,
-              style: themes.fontSize14_400,
-            ),
+            child: copyable
+                ? OutboundCopyableInline(
+                    text: value,
+                    value: raw,
+                    style: themes.fontSize14_400,
+                    snackbarTitle: snackbarTitle,
+                  )
+                : SelectableText(
+                    value,
+                    style: themes.fontSize14_400,
+                  ),
           ),
         ],
       ),
@@ -110,10 +125,14 @@ class OutboundBagDetailBody extends StatelessWidget {
             OutboundDetailField(
               label: OutboundLabels.bagCode,
               value: detail.bagCode ?? '—',
+              copyable: true,
+              snackbarTitle: 'Bagging',
             ),
             OutboundDetailField(
               label: OutboundLabels.metalSeal,
               value: detail.metalSealNo ?? '—',
+              copyable: true,
+              snackbarTitle: 'Bagging',
             ),
             OutboundDetailField(
               label: OutboundLabels.manifestStatus,
@@ -181,6 +200,8 @@ class OutboundManifestDetailBody extends StatelessWidget {
       OutboundDetailField(
         label: OutboundLabels.manifestCode,
         value: detail.manifestNo ?? '—',
+        copyable: true,
+        snackbarTitle: 'Manifest',
       ),
       OutboundDetailField(
         label: OutboundLabels.originDepot,
@@ -305,10 +326,14 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
         OutboundDetailField(
           label: OutboundLabels.tripNo,
           value: _v(detail.tripNo ?? detail.airwayBillNo ?? detail.mawbNo),
+          copyable: true,
+          snackbarTitle: 'Linehaul',
         ),
         OutboundDetailField(
           label: OutboundLabels.linehaulId,
           value: _v(detail.linehaulId),
+          copyable: true,
+          snackbarTitle: 'Linehaul',
         ),
         OutboundDetailField(
           label: OutboundLabels.originDepot,
@@ -324,10 +349,12 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
         ),
         OutboundDetailField(
             label: 'Airline', value: _airlineLabel(detail.airline)),
-        OutboundDetailField(label: 'Flight', value: _v(detail.flightNo)),
+        OutboundDetailField(label: 'Flight', value: _v(detail.flightNo), copyable: true, snackbarTitle: 'Linehaul'),
         OutboundDetailField(
           label: OutboundLabels.vehicleNo,
           value: _v(detail.vehicleNo),
+          copyable: true,
+          snackbarTitle: 'Linehaul',
         ),
         OutboundDetailField(
           label: OutboundLabels.driverName,
@@ -378,7 +405,12 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
                     .map(
                       (m) => DataRow(
                         cells: [
-                          DataCell(Text(_v(m.manifestNo))),
+                          DataCell(
+                            OutboundCopyableTableCell(
+                              value: m.manifestNo,
+                              snackbarTitle: 'Manifest',
+                            ),
+                          ),
                           DataCell(Text(_v(m.originBranch))),
                           DataCell(Text(_v(m.destinationBranch))),
                           DataCell(Text(_v(m.createdAt))),
@@ -393,6 +425,8 @@ class OutboundLinehaulDetailBody extends StatelessWidget {
           OutboundDetailField(
             label: OutboundLabels.manifestNumbers,
             value: _v(detail.manifestCodes ?? detail.manifestIds),
+            copyable: true,
+            snackbarTitle: 'Manifest',
           ),
       ],
     );
@@ -429,8 +463,18 @@ class OutboundBagDetailItemsTable extends StatelessWidget {
               .map(
                 (e) => DataRow(
                   cells: [
-                    DataCell(Text(e.shipmentId ?? '—')),
-                    DataCell(Text(e.shipmentInvoiceNo ?? '—')),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.shipmentId,
+                        snackbarTitle: 'Bagging',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.shipmentInvoiceNo,
+                        snackbarTitle: 'Bagging',
+                      ),
+                    ),
                     DataCell(Text(e.shipmentStatus ?? '—')),
                   ],
                 ),
@@ -470,8 +514,19 @@ class OutboundManifestBagsTable extends StatelessWidget {
               .map(
                 (e) => DataRow(
                   cells: [
-                    DataCell(Text(e.bagCode ?? '—')),
-                    DataCell(Text(e.metalSealNo ?? '—')),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.bagCode,
+                        emphasized: true,
+                        snackbarTitle: 'Bagging',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.metalSealNo,
+                        snackbarTitle: 'Bagging',
+                      ),
+                    ),
                     DataCell(Text(e.grossWeight ?? '—')),
                   ],
                 ),
@@ -514,10 +569,25 @@ class OutboundManifestShipmentsTable extends StatelessWidget {
               .map(
                 (e) => DataRow(
                   cells: [
-                    DataCell(Text(e.id ?? '—')),
-                    DataCell(Text(e.shipmentInvoiceNo ?? '—')),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.id,
+                        snackbarTitle: 'Manifest',
+                      ),
+                    ),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.shipmentInvoiceNo,
+                        snackbarTitle: 'Manifest',
+                      ),
+                    ),
                     DataCell(Text(e.shipmentStatus ?? '—')),
-                    DataCell(Text(e.bagCode ?? e.bagId ?? '—')),
+                    DataCell(
+                      OutboundCopyableTableCell(
+                        value: e.bagCode ?? e.bagId,
+                        snackbarTitle: 'Bagging',
+                      ),
+                    ),
                     DataCell(Text(e.grossWeight ?? '—')),
                     DataCell(Text(e.numberOfParcel ?? '—')),
                   ],

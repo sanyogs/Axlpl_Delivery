@@ -1,5 +1,6 @@
 import 'package:axlpl_delivery/app/data/models/outbound/bagging_table_row.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -74,12 +75,23 @@ class BaggingScannedBoxTable extends StatelessWidget {
       color: WidgetStateProperty.all(stripe),
       cells: [
         DataCell(Text('$index', style: themes.fontSize14_400)),
-        DataCell(Text(cell(row.bagCode), style: themes.fontSize14_400)),
-        DataCell(Text(cell(row.boxNumber), style: themes.fontSize14_400)),
         DataCell(
-          Text(
-            cell(row.shipmentId),
-            style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
+          OutboundCopyableTableCell(
+            value: row.bagCode,
+            snackbarTitle: 'Bagging',
+          ),
+        ),
+        DataCell(
+          OutboundCopyableTableCell(
+            value: row.boxNumber,
+            snackbarTitle: 'Bagging',
+          ),
+        ),
+        DataCell(
+          OutboundCopyableTableCell(
+            value: row.shipmentId,
+            emphasized: true,
+            snackbarTitle: 'Bagging',
           ),
         ),
         DataCell(Text(cell(row.destination), style: themes.fontSize14_400)),

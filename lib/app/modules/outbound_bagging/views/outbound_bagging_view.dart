@@ -8,7 +8,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admi
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_branch_select.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
-import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -66,21 +65,22 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
       final __ = controller.selectedOriginDepotId.value;
       final ___ = controller.selectedDestDepotId.value;
 
-      return OutboundScreen(
+      return PopScope(
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) controller.resetBaggingSession();
+        },
+        child: OutboundScreen(
         title: OutboundLabels.baggingScreenTitle,
         busy: busy,
         children: [
           OutboundButtonRow(
             start: OutboundSecondaryButton(
               label: OutboundLabels.btnViewReport,
-              onPressed: busy
-                  ? null
-                  : () => Get.toNamed(Routes.OUTBOUND_BAGGING_REPORT),
+              onPressed: busy ? null : controller.openBaggingReport,
             ),
             end: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed:
-                  busy ? null : () => Get.toNamed(Routes.OUTBOUND_BAG_LIST),
+              onPressed: busy ? null : controller.openBagList,
             ),
           ),
           OutboundAdminSection(
@@ -184,6 +184,7 @@ class _OutboundBaggingViewState extends State<OutboundBaggingView> {
             ),
           ),
         ],
+        ),
       );
     });
   }

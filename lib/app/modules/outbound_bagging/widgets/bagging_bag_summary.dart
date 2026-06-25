@@ -34,10 +34,14 @@ class BaggingBagSummary extends StatelessWidget {
         OutboundDetailField(
           label: OutboundLabels.bagCode,
           value: detail.bagCode ?? '—',
+          copyable: true,
+          snackbarTitle: 'Bagging',
         ),
         OutboundDetailField(
           label: OutboundLabels.metalSeal,
           value: detail.metalSealNo ?? '—',
+          copyable: true,
+          snackbarTitle: 'Bagging',
         ),
         OutboundDetailField(
           label: OutboundLabels.manifestStatus,
