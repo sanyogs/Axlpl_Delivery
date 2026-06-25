@@ -304,7 +304,11 @@ class OutboundLabels {
   static const statMissing = 'MISSING';
   static const subtitleSectorPickupList =
       'Tap a pickup to continue scanning shipments.';
-  static const subtitleSectorPickupReport = 'Choose a date range for summary.';
+  static const subtitleSectorPickupReport =
+      'Enter pickup id and print, or choose a date range for status summary.';
   static const sectorPickupReportTitle = 'Sector Pickup Report';
+  static const hintPickupIdForReport = 'Pickup id from list (e.g. 286)';
+  static const btnPrintPickupReport = 'Print Report';
+  static const sectionPickupStatusSummary = 'Status summary';
   static const sectorPickupListEmpty = 'No sector pickups found.';
 }

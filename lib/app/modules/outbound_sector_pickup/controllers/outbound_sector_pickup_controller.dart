@@ -12,8 +12,10 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.d
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
+import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/sector_pickup_report_pdf_generator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:open_file/open_file.dart';
 
 class OutboundSectorPickupController extends GetxController {
   OutboundSectorPickupController({OutboundRepository? repo})
@@ -42,6 +44,7 @@ class OutboundSectorPickupController extends GetxController {
   final remarksController = TextEditingController();
   final reportStartController = TextEditingController();
   final reportEndController = TextEditingController();
+  final reportPickupIdController = TextEditingController();
 
   final docketFocusNode = FocusNode();
   final bagSealFocusNode = FocusNode();
@@ -96,6 +99,7 @@ class OutboundSectorPickupController extends GetxController {
     remarksController.dispose();
     reportStartController.dispose();
     reportEndController.dispose();
+    reportPickupIdController.dispose();
     docketFocusNode.dispose();
     bagSealFocusNode.dispose();
     super.onClose();
@@ -588,6 +592,43 @@ class OutboundSectorPickupController extends GetxController {
     final idx = missingRows.indexWhere((r) => r.sessionKey == row.sessionKey);
     if (idx < 0) return;
     missingRows[idx] = row.copyWith(status: status);
+  }
+
+  Future<void> printPickupReport() async {
+    final pickupId = reportPickupIdController.text.trim();
+    if (pickupId.isEmpty) {
+      _snack('Enter pickup id to print report', isError: true);
+      return;
+    }
+
+    isBusy.value = true;
+    try {
+      final detail = await _repo.pickupDetail(pickupId);
+      if (detail == null) {
+        if (_repo.lastMessage.trim().isNotEmpty) {
+          _snack(_repo.lastMessage, isError: true);
+        } else {
+          _snack('Pickup details not found', isError: true);
+        }
+        return;
+      }
+      if (detail.id?.trim().isEmpty != false &&
+          detail.shipmentList.isEmpty &&
+          detail.mawbNo?.trim().isEmpty != false) {
+        _snack('No pickup report data returned', isError: true);
+        return;
+      }
+
+      final path = await SectorPickupReportPdfGenerator.save(detail: detail);
+      final open = await OpenFile.open(path);
+      if (open.type != ResultType.done) {
+        _snack('PDF saved: $path');
+        return;
+      }
+      _snack('Sector pickup report PDF generated.');
+    } finally {
+      isBusy.value = false;
+    }
   }
 
   Future<void> pickupReport() async {

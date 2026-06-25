@@ -5,10 +5,12 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_acti
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -111,6 +113,46 @@ class _SectorPickupListViewState extends State<SectorPickupListView> {
                 OutboundLabels.subtitleSectorPickupReport,
                 style: themes.fontSize14_400.copyWith(color: themes.grayColor),
               ),
+              OutboundLabeledFieldRow(
+                label: OutboundLabels.pickupId,
+                required: true,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutboundScanField(
+                        controller: controller.reportPickupIdController,
+                        hintText: OutboundLabels.hintPickupIdForReport,
+                        prefixIcon: const Icon(CupertinoIcons.number),
+                        onSubmitted: (_) => controller.printPickupReport(),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: OutboundLabels.btnCopy,
+                      onPressed: () => outboundCopyToClipboard(
+                        controller.reportPickupIdController.text,
+                        snackbarTitle: 'Sector pickup',
+                      ),
+                      icon: Icon(
+                        Icons.copy_outlined,
+                        color: themes.darkCyanBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutboundPrimaryButton(
+                  title: OutboundLabels.btnPrintPickupReport,
+                  onPressed: busy ? null : controller.printPickupReport,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                OutboundLabels.sectionPickupStatusSummary,
+                style: themes.fontSize14_500.copyWith(color: themes.darkCyanBlue),
+              ),
+              SizedBox(height: 8.h),
               OutboundDateField(
                 controller: controller.reportStartController,
                 hintText: OutboundLabels.reportStart,
