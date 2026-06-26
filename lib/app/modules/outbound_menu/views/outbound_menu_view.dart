@@ -14,55 +14,65 @@ class OutboundMenuView extends StatelessWidget {
   Widget build(BuildContext context) {
     return CommonScaffold(
       appBar: commonAppbar('Outbound'),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.2,
-                children: [
-                  HomeIconContainer(
-                    title: 'Hub scan',
-                    Img: OutboundMenuIcons.hubScan,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
-                  ),
-                  HomeIconContainer(
-                    title: 'Bagging',
-                    Img: OutboundMenuIcons.bagging,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
-                  ),
-                  HomeIconContainer(
-                    title: 'Manifest',
-                    Img: OutboundMenuIcons.manifest,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
-                  ),
-                  HomeIconContainer(
-                    title: 'Linehaul',
-                    Img: OutboundMenuIcons.linehaul,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
-                  ),
-                  HomeIconContainer(
-                    title: 'Sector pickup',
-                    Img: OutboundMenuIcons.sectorPickup,
-                    OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
-                  ),
-                  HomeIconContainer(
-                    title: 'Pickup report',
-                    Img: OutboundMenuIcons.sectorPickupReport,
-                    OnTap: () =>
-                        Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT),
-                  ),
-                ],
+            _outboundRow(
+              HomeIconContainer(
+                title: 'Hub scan',
+                Img: OutboundMenuIcons.hubScan,
+                OnTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
+              ),
+              HomeIconContainer(
+                title: 'Bagging',
+                Img: OutboundMenuIcons.bagging,
+                OnTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
+              ),
+            ),
+            SizedBox(height: 10.h),
+            _outboundRow(
+              HomeIconContainer(
+                title: 'Manifest',
+                Img: OutboundMenuIcons.manifest,
+                OnTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
+              ),
+              HomeIconContainer(
+                title: 'Linehaul',
+                Img: OutboundMenuIcons.linehaul,
+                OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
+              ),
+            ),
+            SizedBox(height: 10.h),
+            _outboundRow(
+              HomeIconContainer(
+                title: 'Sector pickup',
+                Img: OutboundMenuIcons.sectorPickup,
+                OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
+              ),
+              HomeIconContainer(
+                title: 'Pickup report',
+                Img: OutboundMenuIcons.sectorPickupReport,
+                OnTap: () =>
+                    Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Same two-column row pattern as the home dashboard — avoids GridView clipping PNG icons.
+  Widget _outboundRow(Widget start, Widget end) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: start),
+        SizedBox(width: 10.w),
+        Expanded(child: end),
+      ],
     );
   }
 }

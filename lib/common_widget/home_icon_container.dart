@@ -42,32 +42,27 @@ class HomeIconContainer extends StatelessWidget {
         decoration: BoxDecoration(
             color: themes.whiteColor, borderRadius: BorderRadius.circular(5.r)),
         child: Padding(
-          // Use .w for vertical padding — grid tile height is width-derived;
-          // .h padding on tall phones overflows and clips PNG icons at the bottom.
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.w),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 15.h),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8.w,
+            spacing: 10,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title ?? 'N/A',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.fade,
                 style: themes.fontSize14_500,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _tileIcon(),
                   CircleAvatar(
                     backgroundColor: themes.lightCream,
-                    radius: 15.r,
-                    child: Icon(Icons.arrow_forward, size: 16.sp),
-                  ),
+                    radius: 15,
+                    child: Icon(Icons.arrow_forward),
+                  )
                 ],
-              ),
+              )
             ],
           ),
         ),
