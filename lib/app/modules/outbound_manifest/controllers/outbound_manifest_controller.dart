@@ -398,6 +398,7 @@ class OutboundManifestController extends GetxController {
                   : 'Manifest $code created')
               : serverMsg;
           if (snack.isNotEmpty) Get.snackbar('Manifest', snack);
+          openManifestList();
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -641,6 +642,10 @@ class OutboundManifestController extends GetxController {
     } finally {
       isBusy.value = false;
     }
+  }
+
+  void openManifestList() {
+    Get.toNamed(Routes.OUTBOUND_MANIFEST_LIST);
   }
 
   void openManifestDetailPage() {

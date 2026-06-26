@@ -9,7 +9,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scre
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_select_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/controllers/outbound_hub_scan_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/widgets/hub_scan_session_card.dart';
-import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -72,7 +71,7 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed: busy ? null : _openHubScanList,
+              onPressed: busy ? null : controller.openHubScanList,
             ),
           ),
           OutboundAdminSection(
@@ -192,10 +191,6 @@ class _OutboundHubScanViewState extends State<OutboundHubScanView> {
         ],
       );
     });
-  }
-
-  void _openHubScanList() {
-    Get.toNamed(Routes.OUTBOUND_HUB_SCAN_LIST);
   }
 }
 

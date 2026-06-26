@@ -473,6 +473,7 @@ class OutboundBaggingController extends GetxController {
           fetchedShipment.value = null;
           _lastFetchedShipmentId = null;
           fetchStatusMessage.value = '';
+          openBagList();
         },
         error: (e) async {
           _snackServerError(e);

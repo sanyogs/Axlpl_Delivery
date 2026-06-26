@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_ui_feedback.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/common_tow_btn_dialog.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -397,6 +398,7 @@ class OutboundHubScanController extends GetxController {
 
     isBusy.value = true;
     try {
+      var allSaved = true;
       for (final row in pending) {
         final connote = row.shipmentId?.trim().isNotEmpty == true
             ? row.shipmentId!.trim()
@@ -432,10 +434,20 @@ class OutboundHubScanController extends GetxController {
             if (msg.isNotEmpty) Get.snackbar('Hub scan', msg);
           },
         );
-        if (!ok) break;
+        if (!ok) {
+          allSaved = false;
+          break;
+        }
+      }
+      if (allSaved) {
+        openHubScanList();
       }
     } finally {
       isBusy.value = false;
     }
+  }
+
+  void openHubScanList() {
+    Get.toNamed(Routes.OUTBOUND_HUB_SCAN_LIST);
   }
 }

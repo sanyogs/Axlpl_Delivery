@@ -11,6 +11,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_api_params.d
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_auth_context.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_branch_list_controller.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_repository_retry.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -153,6 +154,10 @@ class OutboundSectorPickupController extends GetxController {
     } finally {
       isListLoading.value = false;
     }
+  }
+
+  void openPickupList() {
+    Get.offNamed(Routes.OUTBOUND_SECTOR_PICKUP_LIST);
   }
 
   void resetSession() {

@@ -255,7 +255,7 @@ class _BagSummaryPanel extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onBack,
             icon: Icon(Icons.arrow_back, size: 16.sp, color: themes.darkCyanBlue),
-            label: Text(OutboundLabels.btnBackToList),
+            label: Text(OutboundLabels.btnPerformBagging),
             style: OutboundButtons.secondaryStyle(),
           ),
         ),

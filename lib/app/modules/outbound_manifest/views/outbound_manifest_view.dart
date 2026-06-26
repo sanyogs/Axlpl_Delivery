@@ -80,8 +80,7 @@ class _OutboundManifestViewState extends State<OutboundManifestView> {
             ),
             end: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed:
-                  busy ? null : () => Get.toNamed(Routes.OUTBOUND_MANIFEST_LIST),
+              onPressed: busy ? null : controller.openManifestList,
             ),
           ),
           OutboundAdminSection(

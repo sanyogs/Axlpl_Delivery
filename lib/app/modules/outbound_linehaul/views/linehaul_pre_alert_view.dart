@@ -85,7 +85,7 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
                 SizedBox(height: 16.h),
                 OutboundButtonRow(
                   start: OutboundSecondaryButton(
-                    label: OutboundLabels.btnBackToList,
+                    label: OutboundLabels.btnShowList,
                     onPressed: printing ? null : () => Get.back(),
                   ),
                   end: OutboundPrimaryButtonCompact(

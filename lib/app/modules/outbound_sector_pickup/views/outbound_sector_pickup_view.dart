@@ -9,7 +9,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_scan
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_time_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_sector_pickup/controllers/outbound_sector_pickup_controller.dart';
-import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +77,7 @@ class _OutboundSectorPickupViewState extends State<OutboundSectorPickupView> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed: busy ? null : _showList,
+              onPressed: busy ? null : controller.openPickupList,
             ),
           ),
           OutboundAdminSection(
@@ -196,10 +195,6 @@ class _OutboundSectorPickupViewState extends State<OutboundSectorPickupView> {
         ],
       );
     });
-  }
-
-  void _showList() {
-    Get.offNamed(Routes.OUTBOUND_SECTOR_PICKUP_LIST);
   }
 }
 
