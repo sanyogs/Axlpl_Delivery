@@ -1022,4 +1022,26 @@ class OutboundRepository {
           linehaulNo: linehaulNo,
         ),
       );
+
+  Future<APIResponse<dynamic>> sectorPickupReportExport({
+    String? startDate,
+    String? endDate,
+    String? originBranch,
+    String? destinationBranch,
+    String? docketNo,
+    String? status,
+    String? linehaulNo,
+  }) =>
+      _requireToken(
+        (token) => _api.sectorPickupReportExportOutbound(
+          token: token,
+          startDate: startDate,
+          endDate: endDate,
+          originBranch: originBranch,
+          destinationBranch: destinationBranch,
+          docketNo: docketNo,
+          status: status,
+          linehaulNo: linehaulNo,
+        ),
+      );
 }

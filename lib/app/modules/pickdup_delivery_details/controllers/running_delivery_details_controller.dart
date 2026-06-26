@@ -1,12 +1,13 @@
 import 'dart:io';
 
 import 'package:axlpl_delivery/app/data/localstorage/local_storage.dart';
-import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/invoice_attachment_state.dart';
 import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
+import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/invoice_attachment_state.dart';
 import 'package:axlpl_delivery/app/data/models/transtion_history_model.dart';
 import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/tracking_repo.dart';
+import 'package:axlpl_delivery/common_widget/common_tow_btn_dialog.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,8 +42,11 @@ class RunningDeliveryDetailsController extends GetxController {
   var imageFile = Rx<File?>(null);
   var isTrackingLoading = Status.initial.obs;
   var isInvoiceUpload = Status.initial.obs;
+  var isInvoiceDelete = Status.initial.obs;
   final message = ''.obs;
   var imageMap = <String, List<File>>{}.obs;
+  final invoiceFileIdCache = <String, Map<String, String>>{}.obs;
+  final hadMultiInvoiceFiles = <String, bool>{}.obs;
 
   static const int maxInvoiceAttachments =
       InvoiceAttachmentState.maxInvoiceAttachments;
@@ -76,16 +80,165 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   // 🔹 Local utility helpers
   // --------------------------------------------------------------------------
+  List<String> resolveUploadedInvoiceUrls({
+    required String shipmentId,
+    String? invoicePath,
+    dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
+  }) {
+    return resolveUploadedInvoiceFiles(
+      shipmentId: shipmentId,
+      invoicePath: invoicePath,
+      invoiceFile: invoiceFile,
+      invoiceFiles: invoiceFiles,
+    )
+        .map((file) => file.resolvedUrl(invoicePath))
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<ShipmentInvoiceFile> resolveUploadedInvoiceFiles({
+    required String shipmentId,
+    String? invoicePath,
+    dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
+  }) {
+    final out = <ShipmentInvoiceFile>[];
+    final seen = <String>{};
+
+    void add(ShipmentInvoiceFile raw) {
+      final enriched = _enrichInvoiceFile(shipmentId, raw);
+      final url = enriched.resolvedUrl(invoicePath);
+      if (url.isEmpty) return;
+      final key = enriched.fileName?.trim().isNotEmpty == true
+          ? enriched.fileName!.trim()
+          : url;
+      if (seen.contains(key)) return;
+      seen.add(key);
+      out.add(enriched);
+    }
+
+    final fromList = invoiceFiles ?? const <ShipmentInvoiceFile>[];
+    for (final file in fromList) {
+      if (file.resolvedUrl(invoicePath).isNotEmpty) add(file);
+    }
+
+    final suppressLegacy = fromList.isEmpty &&
+        hadMultiInvoiceFiles[shipmentId] == true;
+    if (fromList.isEmpty && !suppressLegacy) {
+      final legacyUrls = InvoiceAttachmentState.uploadedInvoiceUrls(
+        invoicePath: invoicePath,
+        invoiceFile: invoiceFile,
+      );
+      for (final url in legacyUrls) {
+        final name = url.split('/').last;
+        add(ShipmentInvoiceFile(fileName: name, fileUrl: url));
+      }
+    }
+
+    return out;
+  }
+
+  ShipmentInvoiceFile _enrichInvoiceFile(
+    String shipmentId,
+    ShipmentInvoiceFile file,
+  ) {
+    if (file.canDelete) return file;
+    final name = file.fileName?.trim();
+    if (name == null || name.isEmpty) return file;
+    final cached = invoiceFileIdCache[shipmentId]?[name];
+    if (cached == null || cached.isEmpty) return file;
+    return ShipmentInvoiceFile(
+      id: cached,
+      fileName: file.fileName,
+      originalName: file.originalName,
+      fileUrl: file.fileUrl,
+    );
+  }
+
+  void _rememberInvoiceFileIds(String shipmentId, ShipmentDetails? details) {
+    final id = shipmentId.trim();
+    if (id.isEmpty || details == null) return;
+
+    final files = details.invoiceFiles;
+    if (files == null || files.isEmpty) return;
+
+    hadMultiInvoiceFiles[id] = true;
+    final cache = invoiceFileIdCache.putIfAbsent(id, () => {});
+    for (final file in files) {
+      final fileId = file.id?.trim();
+      final name = file.fileName?.trim();
+      if (fileId != null &&
+          fileId.isNotEmpty &&
+          name != null &&
+          name.isNotEmpty) {
+        cache[name] = fileId;
+      }
+    }
+    invoiceFileIdCache.refresh();
+    hadMultiInvoiceFiles.refresh();
+  }
+
+  void _forgetCachedInvoiceFile(String shipmentId, ShipmentInvoiceFile file) {
+    final id = shipmentId.trim();
+    final name = file.fileName?.trim();
+    if (id.isEmpty || name == null || name.isEmpty) return;
+    invoiceFileIdCache[id]?.remove(name);
+    invoiceFileIdCache.refresh();
+  }
+
+  Future<String?> _resolveInvoiceFileIdForDelete({
+    required String shipmentID,
+    required ShipmentInvoiceFile file,
+  }) async {
+    final direct = file.id?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+
+    final enriched = _enrichInvoiceFile(shipmentID, file);
+    final cached = enriched.id?.trim();
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    await fetchTrackingData(shipmentID, silent: true);
+    final details = shipmentDetail.value;
+    final refreshed = resolveUploadedInvoiceFiles(
+      shipmentId: shipmentID,
+      invoicePath: details?.invoicePath,
+      invoiceFile: details?.invoiceFile,
+      invoiceFiles: details?.invoiceFiles,
+    );
+    final targetName = file.fileName?.trim();
+    final targetUrl = file.resolvedUrl(details?.invoicePath);
+    for (final candidate in refreshed) {
+      final candidateId = candidate.id?.trim();
+      if (candidateId == null || candidateId.isEmpty) continue;
+      final name = candidate.fileName?.trim();
+      if (targetName != null &&
+          targetName.isNotEmpty &&
+          name == targetName) {
+        return candidateId;
+      }
+      if (targetUrl.isNotEmpty &&
+          candidate.resolvedUrl(details?.invoicePath) == targetUrl) {
+        return candidateId;
+      }
+    }
+    return null;
+  }
+
   void addImages(
     String shipmentId,
     List<File> files, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) {
     if (files.isEmpty) return;
     final current = List<File>.from(imageMap[shipmentId] ?? const []);
     final remaining = remainingAttachmentSlots(
       shipmentId,
+      invoicePath: invoicePath,
       invoiceFile: invoiceFile,
+      invoiceFiles: invoiceFiles,
     );
     final merged = InvoiceAttachmentState.appendFiles(
       current,
@@ -105,9 +258,17 @@ class RunningDeliveryDetailsController extends GetxController {
   void addImage(
     String shipmentId,
     File file, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) {
-    addImages(shipmentId, [file], invoiceFile: invoiceFile);
+    addImages(
+      shipmentId,
+      [file],
+      invoicePath: invoicePath,
+      invoiceFile: invoiceFile,
+      invoiceFiles: invoiceFiles,
+    );
   }
 
   void removeImage(String shipmentId, int index) {
@@ -131,32 +292,63 @@ class RunningDeliveryDetailsController extends GetxController {
 
   int pendingAttachmentCount(String shipmentId) => getImages(shipmentId).length;
 
-  int uploadedAttachmentCount({dynamic invoiceFile}) =>
-      InvoiceAttachmentState.uploadedCountFromInvoiceFile(invoiceFile);
+  int uploadedAttachmentCount({
+    required String shipmentId,
+    String? invoicePath,
+    dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
+  }) =>
+      resolveUploadedInvoiceUrls(
+        shipmentId: shipmentId,
+        invoicePath: invoicePath,
+        invoiceFile: invoiceFile,
+        invoiceFiles: invoiceFiles,
+      ).length;
 
   int totalAttachmentCount(
     String shipmentId, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) =>
       InvoiceAttachmentState.totalCount(
-        uploadedCount: uploadedAttachmentCount(invoiceFile: invoiceFile),
+        uploadedCount: uploadedAttachmentCount(
+          shipmentId: shipmentId,
+          invoicePath: invoicePath,
+          invoiceFile: invoiceFile,
+          invoiceFiles: invoiceFiles,
+        ),
         pendingCount: pendingAttachmentCount(shipmentId),
       );
 
   int remainingAttachmentSlots(
     String shipmentId, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) =>
       InvoiceAttachmentState.remainingSlots(
-        totalAttachmentCount(shipmentId, invoiceFile: invoiceFile),
+        totalAttachmentCount(
+          shipmentId,
+          invoicePath: invoicePath,
+          invoiceFile: invoiceFile,
+          invoiceFiles: invoiceFiles,
+        ),
       );
 
   bool canAddMoreAttachments(
     String shipmentId, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) =>
       InvoiceAttachmentState.canAddMore(
-        totalAttachmentCount(shipmentId, invoiceFile: invoiceFile),
+        totalAttachmentCount(
+          shipmentId,
+          invoicePath: invoicePath,
+          invoiceFile: invoiceFile,
+          invoiceFiles: invoiceFiles,
+        ),
       );
 
   void _showAttachmentLimitSnack({bool partial = false}) {
@@ -194,11 +386,15 @@ class RunningDeliveryDetailsController extends GetxController {
 
   Future<void> pickImagesFromGallery(
     String shipmentId, {
+    String? invoicePath,
     dynamic invoiceFile,
+    List<ShipmentInvoiceFile>? invoiceFiles,
   }) async {
     final remaining = remainingAttachmentSlots(
       shipmentId,
+      invoicePath: invoicePath,
       invoiceFile: invoiceFile,
+      invoiceFiles: invoiceFiles,
     );
     if (remaining <= 0) {
       _showAttachmentLimitSnack();
@@ -235,7 +431,13 @@ class RunningDeliveryDetailsController extends GetxController {
         );
         return;
       }
-      addImages(shipmentId, files, invoiceFile: invoiceFile);
+      addImages(
+        shipmentId,
+        files,
+        invoicePath: invoicePath,
+        invoiceFile: invoiceFile,
+        invoiceFiles: invoiceFiles,
+      );
     } on PlatformException catch (e) {
       _handlePickError(e);
     } catch (e) {
@@ -303,8 +505,13 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   // 🔹 Tracking Fetch
   // --------------------------------------------------------------------------
-  Future<void> fetchTrackingData(String shipmentID) async {
-    isTrackingLoading.value = Status.loading;
+  Future<void> fetchTrackingData(
+    String shipmentID, {
+    bool silent = false,
+  }) async {
+    if (!silent) {
+      isTrackingLoading.value = Status.loading;
+    }
     try {
       final trackingData = await repo.trackingRepo(shipmentID);
       final trackingList = trackingData?.tracking ?? [];
@@ -336,7 +543,10 @@ class RunningDeliveryDetailsController extends GetxController {
         receiverData.value = receiverDataList;
         cashCollData.value = cashCollList;
         shipmentDetail.value = shipmentDetails;
-        isTrackingLoading.value = Status.success;
+        _rememberInvoiceFileIds(shipmentID, shipmentDetails);
+        if (!silent) {
+          isTrackingLoading.value = Status.success;
+        }
 
         Utils().logInfo("""
         Tracking Data Loaded:
@@ -348,12 +558,16 @@ class RunningDeliveryDetailsController extends GetxController {
         """);
       } else {
         _clearAllData();
-        isTrackingLoading.value = Status.error;
+        if (!silent) {
+          isTrackingLoading.value = Status.error;
+        }
         Utils().logInfo("No tracking data found for shipment: $shipmentID");
       }
     } catch (e) {
       _clearAllData();
-      isTrackingLoading.value = Status.error;
+      if (!silent) {
+        isTrackingLoading.value = Status.error;
+      }
       Utils().logError("Failed to fetch tracking data: ${e.toString()}");
     }
   }
@@ -384,16 +598,23 @@ class RunningDeliveryDetailsController extends GetxController {
       message.value = '';
 
       final result = await repo.uploadInvoiceRepo(shipmentID, existing);
-      if (result) {
+      if (result.success) {
         isInvoiceUpload.value = Status.success;
-        message.value = repo.apiMessage ?? 'Upload Invoice successful';
+        final uploadedCount = result.totalFilesUploaded > 0
+            ? result.totalFilesUploaded
+            : existing.length;
+        message.value = result.message?.trim().isNotEmpty == true
+            ? result.message!.trim()
+            : uploadedCount > 1
+                ? '$uploadedCount invoices uploaded successfully'
+                : 'Invoice uploaded successfully';
         clearImages(shipmentID);
         Get.snackbar("Success", message.value,
             backgroundColor: themes.darkCyanBlue, colorText: themes.whiteColor);
-        fetchTrackingData(shipmentID);
+        await fetchTrackingData(shipmentID);
       } else {
         isInvoiceUpload.value = Status.error;
-        message.value = repo.apiMessage ?? 'Upload failed';
+        message.value = result.message ?? repo.apiMessage ?? 'Upload failed';
         Get.snackbar("Error", message.value,
             backgroundColor: themes.redColor, colorText: themes.whiteColor);
       }
@@ -402,6 +623,98 @@ class RunningDeliveryDetailsController extends GetxController {
       message.value = 'Unexpected error: $e';
       Get.snackbar("Error", message.value,
           backgroundColor: themes.redColor, colorText: themes.whiteColor);
+    }
+  }
+
+  void confirmDeleteUploadedInvoice({
+    required String shipmentID,
+    required ShipmentInvoiceFile file,
+  }) {
+    if (isInvoiceDelete.value == Status.loading ||
+        isInvoiceUpload.value == Status.loading) {
+      return;
+    }
+
+    final displayName = file.originalName?.trim().isNotEmpty == true
+        ? file.originalName!.trim()
+        : (file.fileName?.trim().isNotEmpty == true
+            ? file.fileName!.trim()
+            : 'this invoice');
+
+    commonDialog(
+      'Delete Invoice',
+      'Are you sure you want to delete $displayName?',
+      'Delete',
+      'Cancel',
+      () async {
+        final invoiceFileId = await _resolveInvoiceFileIdForDelete(
+          shipmentID: shipmentID,
+          file: file,
+        );
+        if (invoiceFileId == null || invoiceFileId.isEmpty) {
+          Get.snackbar(
+            'Invoice',
+            'Unable to delete this attachment. Please refresh and try again.',
+            backgroundColor: themes.redColor,
+            colorText: themes.whiteColor,
+          );
+          return;
+        }
+        await deleteUploadedInvoice(
+          shipmentID: shipmentID,
+          invoiceFileId: invoiceFileId,
+          file: file,
+        );
+      },
+      icon: Icons.delete_outline,
+      iconColor: themes.redColor,
+    );
+  }
+
+  Future<void> deleteUploadedInvoice({
+    required String shipmentID,
+    required String invoiceFileId,
+    ShipmentInvoiceFile? file,
+  }) async {
+    try {
+      isInvoiceDelete.value = Status.loading;
+      message.value = '';
+
+      final result = await repo.deleteShipmentInvoiceFileRepo(invoiceFileId);
+      if (result.success) {
+        isInvoiceDelete.value = Status.success;
+        if (file != null) {
+          _forgetCachedInvoiceFile(shipmentID, file);
+        }
+        message.value = result.message?.trim().isNotEmpty == true
+            ? result.message!.trim()
+            : 'Invoice file deleted successfully';
+        Get.snackbar(
+          'Success',
+          message.value,
+          backgroundColor: themes.darkCyanBlue,
+          colorText: themes.whiteColor,
+        );
+        await fetchTrackingData(shipmentID, silent: true);
+      } else {
+        isInvoiceDelete.value = Status.error;
+        message.value = result.message ?? repo.apiMessage ?? 'Delete failed';
+        Get.snackbar(
+          'Error',
+          message.value,
+          backgroundColor: themes.redColor,
+          colorText: themes.whiteColor,
+        );
+      }
+    } catch (e) {
+      isInvoiceDelete.value = Status.error;
+      message.value = 'Unexpected error: $e';
+      Get.snackbar(
+        'Error',
+        message.value,
+        backgroundColor: themes.redColor,
+        colorText: themes.whiteColor,
+      );
     }
   }
 

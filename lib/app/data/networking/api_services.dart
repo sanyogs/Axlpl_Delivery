@@ -577,17 +577,28 @@ class ApiServices {
   ) async {
     final formData = FormData();
     formData.fields.add(MapEntry('shipment_id', shipmentID.toString()));
-    if (attachments.length == 1) {
-      formData.files.add(MapEntry('invoice_file', attachments.first));
-    } else {
-      for (final file in attachments) {
-        formData.files.add(MapEntry('invoice_file[]', file));
-      }
+    for (final file in attachments) {
+      formData.files.add(MapEntry('invoice_file[]', file));
     }
     return _api.post(
       uploadInvoicePoint,
       formData,
       token: token,
+      contentType: ContentType.multipart,
+    );
+  }
+
+  Future<APIResponse> deleteShipmentInvoiceFile(
+    String invoiceFileId,
+    final token,
+  ) async {
+    final formData = FormData();
+    formData.fields.add(MapEntry('id', invoiceFileId.toString()));
+    return _api.post(
+      '',
+      formData,
+      token: token,
+      query: {'request': deleteShipmentInvoiceFilePoint},
       contentType: ContentType.multipart,
     );
   }
@@ -1680,7 +1691,7 @@ class ApiServices {
     if (start != null && start.isNotEmpty) query['start_date'] = start;
     final end = endDate?.trim();
     if (end != null && end.isNotEmpty) query['end_date'] = end;
-    if (page != null && (page > 0 || page == -1)) query['page'] = '$page';
+    if (page != null && page > 0) query['page'] = '$page';
     final origin = originBranch?.trim();
     if (origin != null && origin.isNotEmpty) query['origin_branch'] = origin;
     final dest = destinationBranch?.trim();
@@ -1697,6 +1708,43 @@ class ApiServices {
     }
     return _api.getOutbound(
       pickupReportPoint,
+      token: token,
+      query: query,
+      contentType: ContentType.urlEncoded,
+    );
+  }
+
+  Future<APIResponse> sectorPickupReportExportOutbound({
+    required String token,
+    String? startDate,
+    String? endDate,
+    String? originBranch,
+    String? destinationBranch,
+    String? docketNo,
+    String? status,
+    String? linehaulNo,
+  }) async {
+    final query = <String, String>{'export': '1'};
+    final start = startDate?.trim();
+    if (start != null && start.isNotEmpty) query['start_date'] = start;
+    final end = endDate?.trim();
+    if (end != null && end.isNotEmpty) query['end_date'] = end;
+    final origin = originBranch?.trim();
+    if (origin != null && origin.isNotEmpty) query['origin_branch'] = origin;
+    final dest = destinationBranch?.trim();
+    if (dest != null && dest.isNotEmpty) {
+      query['destination_branch'] = dest;
+    }
+    final docket = docketNo?.trim();
+    if (docket != null && docket.isNotEmpty) query['docket_no'] = docket;
+    final st = status?.trim();
+    if (st != null && st.isNotEmpty) query['status'] = st;
+    final linehaul = linehaulNo?.trim();
+    if (linehaul != null && linehaul.isNotEmpty) {
+      query['linehaul_no'] = linehaul;
+    }
+    return _api.getOutbound(
+      sectorPickupReportPoint,
       token: token,
       query: query,
       contentType: ContentType.urlEncoded,

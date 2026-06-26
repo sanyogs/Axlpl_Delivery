@@ -48,8 +48,6 @@ class OutboundManifestController extends GetxController {
   final bagScanController = TextEditingController();
   final bagScanFocusNode = FocusNode();
   final manifestCodeController = TextEditingController();
-  final reportStartController = TextEditingController();
-  final reportEndController = TextEditingController();
   final reportManifestCodeController = TextEditingController();
 
   final connoteCountController = TextEditingController();
@@ -150,8 +148,6 @@ class OutboundManifestController extends GetxController {
     bagScanFocusNode.dispose();
     bagScanController.dispose();
     manifestCodeController.dispose();
-    reportStartController.dispose();
-    reportEndController.dispose();
     reportManifestCodeController.dispose();
     connoteCountController.dispose();
     boxCountController.dispose();
@@ -607,13 +603,6 @@ class OutboundManifestController extends GetxController {
   }
 
   void prefillManifestReport() {
-    final range = OutboundApiParams.defaultReportDateRange();
-    if (reportStartController.text.trim().isEmpty) {
-      reportStartController.text = range['start_date']!;
-    }
-    if (reportEndController.text.trim().isEmpty) {
-      reportEndController.text = range['end_date']!;
-    }
     if (reportManifestCodeController.text.trim().isEmpty) {
       final working = manifestCodeController.text.trim();
       if (working.isNotEmpty) {
@@ -624,22 +613,17 @@ class OutboundManifestController extends GetxController {
 
   Future<void> manifestReport() async {
     final manifestNo = reportManifestCodeController.text.trim();
-    final start = reportStartController.text.trim();
-    final end = reportEndController.text.trim();
     if (manifestNo.isEmpty) {
       Get.snackbar('Manifest', 'Manifest number is required.');
       return;
     }
-    if (start.isEmpty || end.isEmpty) {
-      Get.snackbar('Manifest', 'Start and end date are required.');
-      return;
-    }
+    final range = OutboundApiParams.defaultReportDateRange();
 
     isBusy.value = true;
     try {
       final r = await _repo.manifestReport(
-        startDate: start,
-        endDate: end,
+        startDate: range['start_date']!,
+        endDate: range['end_date']!,
         manifestNo: manifestNo,
       );
       r.when(

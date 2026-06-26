@@ -2,7 +2,6 @@ import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.da
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_linehaul_row_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/outbound_mutation_result.dart';
-import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound_data_parse.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/outbound_repository.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_airline_list_controller.dart';
@@ -367,17 +366,12 @@ class OutboundLinehaulController extends GetxController {
     final cdWeight = _sumWeights(
       detail.shipments.map((s) => s.grossWeight),
     );
-    final billingWeight = _sumBillingWeights(detail.shipments);
     if (cdWeight > 0) {
       totalCdWeightController.text = _formatWeight(cdWeight);
     } else if (weightText.isNotEmpty) {
       totalCdWeightController.text = weightText;
     }
-    if (billingWeight > 0) {
-      totalBillingWeightController.text = _formatWeight(billingWeight);
-    } else if (weightText.isNotEmpty) {
-      totalBillingWeightController.text = weightText;
-    }
+    totalBillingWeightController.clear();
 
     manifestLoadRevision.value++;
   }
@@ -392,16 +386,6 @@ class OutboundLinehaulController extends GetxController {
     var sum = 0.0;
     for (final v in values) {
       sum += _parseWeight(v);
-    }
-    return sum;
-  }
-
-  static double _sumBillingWeights(Iterable<ManifestShipmentRef> shipments) {
-    var sum = 0.0;
-    for (final s in shipments) {
-      final gross = _parseWeight(s.grossWeight);
-      final vol = _parseWeight(s.volumetricWeight);
-      sum += gross > vol ? gross : vol;
     }
     return sum;
   }
@@ -559,6 +543,7 @@ class OutboundLinehaulController extends GetxController {
             'Linehaul',
             msg.isNotEmpty ? msg : 'Linehaul booking saved',
           );
+          openLinehaulList();
         },
         error: (e) {
           lastResponseText.value = e.message;
@@ -594,6 +579,10 @@ class OutboundLinehaulController extends GetxController {
 
   Future<void> listLinehauls() async {
     await loadLinehaulList();
+  }
+
+  void openLinehaulList() {
+    Get.toNamed(Routes.OUTBOUND_LINEHAUL_LIST);
   }
 
   void applyLinehaulFromRow(OutboundLinehaulRow row) {

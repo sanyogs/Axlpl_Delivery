@@ -169,13 +169,32 @@ class SectorPickupStatusReportController extends GetxController {
   Future<void> exportCsv() async {
     isExporting.value = true;
     try {
-      final exportPage = await _fetchReportPage(
-        -1,
-        recordLoadError: false,
+      final r = await _repo.sectorPickupReportExport(
+        startDate: startDateController.text.trim(),
+        endDate: endDateController.text.trim(),
+        originBranch: _branchQueryValue(filterOriginBranchId.value),
+        destinationBranch: _branchQueryValue(filterDestBranchId.value),
+        docketNo: docketController.text.trim(),
+        status: _statusQueryValue(filterStatus.value),
+        linehaulNo: linehaulController.text.trim(),
+      );
+
+      SectorPickupStatusReportPage? exportPage;
+      r.when(
+        success: (data) {
+          exportPage = SectorPickupStatusReportPage.fromDynamic(data);
+        },
+        error: (e) {
+          Get.snackbar(
+            'Sector pickup',
+            e.message,
+            duration: const Duration(seconds: 4),
+          );
+        },
       );
       if (exportPage == null) return;
 
-      final allRows = exportPage.rows;
+      final allRows = exportPage!.rows;
       if (allRows.isEmpty) {
         Get.snackbar('Sector pickup', 'No rows to export.');
         return;

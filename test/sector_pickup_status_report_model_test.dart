@@ -38,4 +38,34 @@ void main() {
     expect(page.rows.first.origin, 'Jaipur');
     expect(page.rows.first.pickupStatusShort, 'DONE');
   });
+
+  test('parses sectorpickupreport export=1 payload', () {
+    const payload = {
+      'total': 2586,
+      'page': 1,
+      'limit': 2586,
+      'total_pages': 1,
+      'export': 1,
+      'data': [
+        {
+          'shipment_id': '226581782310562',
+          'shipment_no': 'RD/26-27/0693',
+          'origin': 'Mumbai',
+          'destination': 'Amritsar',
+          'linehaul_no': '09805962913',
+          'linehaul_date': '2026-06-25 22:57:00',
+          'sector_pickup_no': '423',
+          'pickup_date': '2026-06-25',
+          'current_status': 'Delivered',
+          'sector_pickup_status': 'Sector Pickup Done',
+        },
+      ],
+    };
+
+    final page = SectorPickupStatusReportPage.fromDynamic(payload);
+    expect(page.total, 2586);
+    expect(page.limit, 2586);
+    expect(page.rows, hasLength(1));
+    expect(page.rows.first.displayShipmentNo, 'RD/26-27/0693');
+  });
 }

@@ -4,7 +4,6 @@ import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_mo
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_date_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_field.dart';
@@ -60,20 +59,6 @@ class _ManifestReportViewState extends State<ManifestReportView> {
               Text(
                 OutboundLabels.subtitleManifestReport,
                 style: themes.fontSize14_400.copyWith(color: themes.grayColor),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.reportStart,
-                child: OutboundDateField(
-                  controller: controller.reportStartController,
-                  hintText: OutboundLabels.reportStart,
-                ),
-              ),
-              OutboundLabeledFieldRow(
-                label: OutboundLabels.reportEnd,
-                child: OutboundDateField(
-                  controller: controller.reportEndController,
-                  hintText: OutboundLabels.reportEnd,
-                ),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.manifestCode,

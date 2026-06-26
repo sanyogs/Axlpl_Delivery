@@ -132,7 +132,7 @@ class OutboundLabels {
   static const subtitleManifestOpen =
       'List by depot, tap a row, or enter manifest number.';
   static const subtitleManifestReport =
-      'Choose a date range and optional manifest number.';
+      'Enter a manifest number to generate the report.';
   static const manifestScreenTitle = 'Manifest Screen';
   static const sectionManifestDetails = 'Manifest Screen details';
   static const sectionMBagDetails = 'M/Bag Details';

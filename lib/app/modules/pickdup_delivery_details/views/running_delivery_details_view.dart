@@ -59,7 +59,9 @@ class RunningDeliveryDetailsView
         context: context,
         controller: controller,
         shipmentId: shipmentId,
+        invoicePath: details?.invoicePath,
         invoiceFile: details?.invoiceFile,
+        invoiceFiles: details?.invoiceFiles,
       );
     }
 
@@ -511,6 +513,7 @@ class RunningDeliveryDetailsView
                                 invoiceFile: details?.invoiceFile,
                                 invoicePath: details?.invoicePath?.toString() ??
                                     invoicePath,
+                                invoiceFiles: details?.invoiceFiles,
                                 showSourcePicker: showInvoiceSourcePicker,
                                 onUpload: () {
                                   controller.uploadInvoice(

@@ -15,7 +15,6 @@ import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_time
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_transport_mode_field.dart';
 import 'package:axlpl_delivery/app/modules/outbound_hub_scan/views/outbound_hub_scan_view.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/outbound_linehaul_controller.dart';
-import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -50,9 +49,7 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
               title: OutboundLabels.btnShowList,
-              onPressed: busy
-                  ? null
-                  : () => Get.toNamed(Routes.OUTBOUND_LINEHAUL_LIST),
+              onPressed: busy ? null : controller.openLinehaulList,
             ),
           ),
           OutboundAdminSection(
@@ -129,17 +126,20 @@ class OutboundLinehaulView extends GetView<OutboundLinehaulController> {
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.noOfBags,
-                child: OutboundReadOnlyInput(
+                child: OutboundAdminInput(
                   controller: controller.noOfBagsController,
                   hintText: OutboundLabels.noOfBags,
+                  keyboardType: TextInputType.number,
                 ),
               ),
               OutboundLabeledFieldRow(
                 label: OutboundLabels.totalWeight,
-                child: OutboundReadOnlyInput(
+                child: OutboundAdminInput(
                   key: ValueKey('total-weight-$manifestRevision'),
                   controller: controller.totalWeightController,
                   hintText: OutboundLabels.totalWeight,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
               ),
               if (controller.manifestDetail.value != null)

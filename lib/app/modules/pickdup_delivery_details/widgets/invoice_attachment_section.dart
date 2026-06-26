@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:axlpl_delivery/app/data/models/tracking_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/controllers/running_delivery_details_controller.dart';
 import 'package:axlpl_delivery/app/modules/pickdup_delivery_details/invoice_attachment_state.dart';
@@ -21,6 +22,7 @@ class InvoiceAttachmentSection extends StatelessWidget {
     required this.showSourcePicker,
     this.invoiceFile,
     this.invoicePath,
+    this.invoiceFiles,
   });
 
   final RunningDeliveryDetailsController controller;
@@ -29,26 +31,36 @@ class InvoiceAttachmentSection extends StatelessWidget {
   final InvoiceSourcePicker showSourcePicker;
   final dynamic invoiceFile;
   final String? invoicePath;
+  final List<ShipmentInvoiceFile>? invoiceFiles;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final files = controller.getImages(shipmentId);
-      final uploadedUrls = InvoiceAttachmentState.uploadedInvoiceUrls(
+      final uploadedFiles = controller.resolveUploadedInvoiceFiles(
+        shipmentId: shipmentId,
         invoicePath: invoicePath,
         invoiceFile: invoiceFile,
+        invoiceFiles: invoiceFiles,
       );
-      final uploadedCount = uploadedUrls.length;
+      final uploadedCount = uploadedFiles.length;
       final total = controller.totalAttachmentCount(
         shipmentId,
+        invoicePath: invoicePath,
         invoiceFile: invoiceFile,
+        invoiceFiles: invoiceFiles,
       );
       final remaining = controller.remainingAttachmentSlots(
         shipmentId,
+        invoicePath: invoicePath,
         invoiceFile: invoiceFile,
+        invoiceFiles: invoiceFiles,
       );
       final uploading =
           controller.isInvoiceUpload.value == Status.loading;
+      final deleting =
+          controller.isInvoiceDelete.value == Status.loading;
+      final attachmentBusy = uploading || deleting;
       final max = InvoiceAttachmentState.maxInvoiceAttachments;
       final tileCount = uploadedCount + files.length + (remaining > 0 ? 1 : 0);
 
@@ -73,7 +85,7 @@ class InvoiceAttachmentSection extends StatelessWidget {
           SizedBox(height: 8.h),
           if (tileCount == 0)
             InkWell(
-              onTap: uploading ? null : () => showSourcePicker(shipmentId),
+              onTap: attachmentBusy ? null : () => showSourcePicker(shipmentId),
               borderRadius: BorderRadius.circular(12.r),
               child: Container(
                 width: double.infinity,
@@ -104,28 +116,50 @@ class InvoiceAttachmentSection extends StatelessWidget {
               ),
             )
           else
-            SizedBox(
-              height: 112.h,
+            Container(
+              height: 116.h,
+              decoration: BoxDecoration(
+                color: themes.lightGrayColor,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: themes.grayColor.withValues(alpha: 0.25),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: tileCount,
                 separatorBuilder: (_, __) => SizedBox(width: 10.w),
                 itemBuilder: (context, index) {
                   if (index < uploadedCount) {
-                    return _UploadedAttachmentThumb(url: uploadedUrls[index]);
+                    final uploaded = uploadedFiles[index];
+                    return _UploadedAttachmentThumb(
+                      url: uploaded.resolvedUrl(invoicePath),
+                      onTap: () => _showUploadedInvoiceDialog(
+                        context,
+                        uploaded.resolvedUrl(invoicePath),
+                      ),
+                      onDelete: attachmentBusy
+                          ? null
+                          : () => controller.confirmDeleteUploadedInvoice(
+                                shipmentID: shipmentId,
+                                file: uploaded,
+                              ),
+                    );
                   }
                   final pendingIndex = index - uploadedCount;
                   if (pendingIndex < files.length) {
                     return _AttachmentThumb(
                       file: files[pendingIndex],
-                      onRemove: uploading
+                      onRemove: attachmentBusy
                           ? null
                           : () =>
                               controller.removeImage(shipmentId, pendingIndex),
                     );
                   }
                   return _AddAttachmentTile(
-                    onTap: uploading
+                    onTap: attachmentBusy
                         ? null
                         : () => showSourcePicker(shipmentId),
                     remaining: remaining,
@@ -143,7 +177,7 @@ class InvoiceAttachmentSection extends StatelessWidget {
                 disabledBackgroundColor:
                     themes.grayColor.withValues(alpha: 0.35),
               ),
-              onPressed: files.isEmpty || uploading ? null : onUpload,
+              onPressed: files.isEmpty || attachmentBusy ? null : onUpload,
               child: uploading
                   ? SizedBox(
                       width: 18.w,
@@ -167,52 +201,124 @@ class InvoiceAttachmentSection extends StatelessWidget {
 }
 
 class _UploadedAttachmentThumb extends StatelessWidget {
-  const _UploadedAttachmentThumb({required this.url});
+  const _UploadedAttachmentThumb({
+    required this.url,
+    this.onTap,
+    this.onDelete,
+  });
 
   final String url;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10.r),
-          child: Image.network(
-            url,
-            width: 100.w,
-            height: 100.w,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              width: 100.w,
-              height: 100.w,
-              color: themes.lightGrayColor,
-              alignment: Alignment.center,
-              child: Icon(Icons.image_outlined, color: themes.grayColor),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 100.w,
+        height: 100.w,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: Image.network(
+                url,
+                width: 100.w,
+                height: 100.w,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 100.w,
+                  height: 100.w,
+                  color: themes.lightGrayColor,
+                  alignment: Alignment.center,
+                  child: Icon(Icons.image_outlined, color: themes.grayColor),
+                ),
+              ),
+            ),
+            if (onDelete != null)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onDelete,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: EdgeInsets.all(4.w),
+                    child: Icon(
+                      Icons.close,
+                      size: 16.sp,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              left: 4,
+              bottom: 4,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text(
+                  'Uploaded',
+                  style: themes.fontSize14_400.copyWith(
+                    fontSize: 9.sp,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showUploadedInvoiceDialog(BuildContext context, String url) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(10),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              constraints: const BoxConstraints(minHeight: 200, minWidth: 200),
+              decoration: BoxDecoration(
+                color: themes.whiteColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Image.network(url, fit: BoxFit.contain),
             ),
           ),
-        ),
-        Positioned(
-          left: 4,
-          bottom: 4,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(6.r),
-            ),
-            child: Text(
-              'Uploaded',
-              style: themes.fontSize14_400.copyWith(
-                fontSize: 9.sp,
-                color: Colors.white,
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: const CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.black54,
+                child: Icon(Icons.close, size: 18, color: Colors.white),
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+    ),
+  );
 }
 
 class _AttachmentThumb extends StatelessWidget {
@@ -226,39 +332,42 @@ class _AttachmentThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10.r),
-          child: Image.file(
-            file,
-            width: 100.w,
-            height: 100.w,
-            fit: BoxFit.cover,
+    return SizedBox(
+      width: 100.w,
+      height: 100.w,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10.r),
+            child: Image.file(
+              file,
+              width: 100.w,
+              height: 100.w,
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        if (onRemove != null)
-          Positioned(
-            top: -6,
-            right: -6,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                padding: EdgeInsets.all(4.w),
-                child: Icon(
-                  Icons.close,
-                  size: 16.sp,
-                  color: Colors.white,
+          if (onRemove != null)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: onRemove,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(4.w),
+                  child: Icon(
+                    Icons.close,
+                    size: 16.sp,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -311,9 +420,16 @@ void showInvoiceSourcePickerSheet({
   required BuildContext context,
   required RunningDeliveryDetailsController controller,
   required String shipmentId,
+  String? invoicePath,
   dynamic invoiceFile,
+  List<ShipmentInvoiceFile>? invoiceFiles,
 }) {
-  if (!controller.canAddMoreAttachments(shipmentId, invoiceFile: invoiceFile)) {
+  if (!controller.canAddMoreAttachments(
+    shipmentId,
+    invoicePath: invoicePath,
+    invoiceFile: invoiceFile,
+    invoiceFiles: invoiceFiles,
+  )) {
     Get.snackbar(
       'Invoice',
       'You can attach up to ${InvoiceAttachmentState.maxInvoiceAttachments} invoice files.',
@@ -325,7 +441,9 @@ void showInvoiceSourcePickerSheet({
 
   final remaining = controller.remainingAttachmentSlots(
     shipmentId,
+    invoicePath: invoicePath,
     invoiceFile: invoiceFile,
+    invoiceFiles: invoiceFiles,
   );
 
   showModalBottomSheet<void>(
@@ -367,7 +485,9 @@ void showInvoiceSourcePickerSheet({
                 Navigator.of(ctx).pop();
                 controller.pickImagesFromGallery(
                   shipmentId,
+                  invoicePath: invoicePath,
                   invoiceFile: invoiceFile,
+                  invoiceFiles: invoiceFiles,
                 );
               },
             ),
@@ -381,7 +501,9 @@ void showInvoiceSourcePickerSheet({
                   controller.addImage(
                     shipmentId,
                     file,
+                    invoicePath: invoicePath,
                     invoiceFile: invoiceFile,
+                    invoiceFiles: invoiceFiles,
                   );
                 });
               },

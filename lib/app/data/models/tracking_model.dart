@@ -176,6 +176,7 @@ class ShipmentDetails {
   String? invoiceNumber;
   String? invoicePath;
   String? invoiceFile;
+  List<ShipmentInvoiceFile>? invoiceFiles;
   String? shipmentCharges;
   String? insuranceCharges;
   int? invoiceCharges;
@@ -209,6 +210,7 @@ class ShipmentDetails {
     this.invoiceNumber,
     this.invoicePath,
     this.invoiceFile,
+    this.invoiceFiles,
     this.shipmentCharges,
     this.insuranceCharges,
     this.invoiceCharges,
@@ -245,6 +247,12 @@ class ShipmentDetails {
         invoiceNumber: json["invoice_number"],
         invoicePath: json["invoice_path"],
         invoiceFile: json["invoice_file"],
+        invoiceFiles: json["invoice_files"] == null
+            ? []
+            : List<ShipmentInvoiceFile>.from(
+                json["invoice_files"]!
+                    .map((x) => ShipmentInvoiceFile.fromJson(x)),
+              ),
         shipmentCharges: json["shipment_charges"],
         insuranceCharges: json["insurance_charges"],
         invoiceCharges: json["invoice_charges"] != null
@@ -286,6 +294,9 @@ class ShipmentDetails {
         "invoice_number": invoiceNumber,
         "invoice_path": invoicePath,
         "invoice_file": invoiceFile,
+        "invoice_files": invoiceFiles == null
+            ? []
+            : List<dynamic>.from(invoiceFiles!.map((x) => x.toJson())),
         "shipment_charges": shipmentCharges,
         "insurance_charges": insuranceCharges,
         "invoice_charges": invoiceCharges,
@@ -295,6 +306,47 @@ class ShipmentDetails {
         "gst": gst,
         "grand_total": grandTotal,
       };
+}
+
+class ShipmentInvoiceFile {
+  const ShipmentInvoiceFile({
+    this.id,
+    this.fileName,
+    this.originalName,
+    this.fileUrl,
+  });
+
+  final String? id;
+  final String? fileName;
+  final String? originalName;
+  final String? fileUrl;
+
+  factory ShipmentInvoiceFile.fromJson(Map<String, dynamic> json) =>
+      ShipmentInvoiceFile(
+        id: json["id"]?.toString(),
+        fileName: json["file_name"]?.toString(),
+        originalName: json["original_name"]?.toString(),
+        fileUrl: json["file_url"]?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "file_name": fileName,
+        "original_name": originalName,
+        "file_url": fileUrl,
+      };
+
+  bool get canDelete => id != null && id!.trim().isNotEmpty;
+
+  String resolvedUrl(String? invoicePath) {
+    final direct = fileUrl?.trim();
+    if (direct != null && direct.isNotEmpty) return direct;
+    final name = fileName?.trim();
+    if (name == null || name.isEmpty) return '';
+    if (name.startsWith('http://') || name.startsWith('https://')) return name;
+    final base = invoicePath?.trim() ?? '';
+    return '$base$name';
+  }
 }
 
 class TrackingStatus {

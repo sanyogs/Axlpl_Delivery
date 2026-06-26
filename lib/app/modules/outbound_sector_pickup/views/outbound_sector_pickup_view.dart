@@ -77,8 +77,8 @@ class _OutboundSectorPickupViewState extends State<OutboundSectorPickupView> {
           Align(
             alignment: Alignment.centerRight,
             child: OutboundPrimaryButtonCompact(
-              title: OutboundLabels.btnBackToList,
-              onPressed: busy ? null : _backToList,
+              title: OutboundLabels.btnShowList,
+              onPressed: busy ? null : _showList,
             ),
           ),
           OutboundAdminSection(
@@ -198,7 +198,7 @@ class _OutboundSectorPickupViewState extends State<OutboundSectorPickupView> {
     });
   }
 
-  void _backToList() {
+  void _showList() {
     Get.offNamed(Routes.OUTBOUND_SECTOR_PICKUP_LIST);
   }
 }
