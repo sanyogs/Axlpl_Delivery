@@ -21,6 +21,7 @@ import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
 import 'package:axlpl_delivery/common_widget/used_contract_shipment.dart';
 import 'package:axlpl_delivery/const/const.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
+import 'package:axlpl_delivery/app/modules/outbound_menu/widgets/outbound_menu_tile.dart';
 import 'package:axlpl_delivery/utils/assets.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
@@ -585,10 +586,12 @@ class HomeView extends GetView<HomeController> {
                     return Row(
                       children: [
                         Expanded(
-                          child: HomeIconContainer(
+                          child: OutboundMenuTile(
                             title: 'Outbound',
-                            Img: OutboundMenuIcons.home,
-                            OnTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
+                            assetPath: OutboundMenuIcons.home,
+                            maxIconWidth: 40,
+                            maxIconHeight: 28,
+                            onTap: () => Get.toNamed(Routes.OUTBOUND_MENU),
                           ),
                         ),
                       ],

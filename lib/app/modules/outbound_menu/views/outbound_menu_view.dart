@@ -1,8 +1,8 @@
 import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/common_widget/common_appbar.dart';
 import 'package:axlpl_delivery/common_widget/common_scaffold.dart';
-import 'package:axlpl_delivery/common_widget/home_icon_container.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/outbound_menu_icons.dart';
+import 'package:axlpl_delivery/app/modules/outbound_menu/widgets/outbound_menu_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -20,41 +20,41 @@ class OutboundMenuView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _outboundRow(
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Hub scan',
-                Img: OutboundMenuIcons.hubScan,
-                OnTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
+                assetPath: OutboundMenuIcons.hubScan,
+                onTap: () => Get.toNamed(Routes.OUTBOUND_HUB_SCAN),
               ),
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Bagging',
-                Img: OutboundMenuIcons.bagging,
-                OnTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
+                assetPath: OutboundMenuIcons.bagging,
+                onTap: () => Get.toNamed(Routes.OUTBOUND_BAGGING),
               ),
             ),
             SizedBox(height: 10.h),
             _outboundRow(
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Manifest',
-                Img: OutboundMenuIcons.manifest,
-                OnTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
+                assetPath: OutboundMenuIcons.manifest,
+                onTap: () => Get.toNamed(Routes.OUTBOUND_MANIFEST),
               ),
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Linehaul',
-                Img: OutboundMenuIcons.linehaul,
-                OnTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
+                assetPath: OutboundMenuIcons.linehaul,
+                onTap: () => Get.toNamed(Routes.OUTBOUND_LINEHAUL),
               ),
             ),
             SizedBox(height: 10.h),
             _outboundRow(
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Sector pickup',
-                Img: OutboundMenuIcons.sectorPickup,
-                OnTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
+                assetPath: OutboundMenuIcons.sectorPickup,
+                onTap: () => Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP),
               ),
-              HomeIconContainer(
+              OutboundMenuTile(
                 title: 'Pickup report',
-                Img: OutboundMenuIcons.sectorPickupReport,
-                OnTap: () =>
+                assetPath: OutboundMenuIcons.sectorPickupReport,
+                onTap: () =>
                     Get.toNamed(Routes.OUTBOUND_SECTOR_PICKUP_STATUS_REPORT),
               ),
             ),
@@ -64,7 +64,6 @@ class OutboundMenuView extends StatelessWidget {
     );
   }
 
-  /// Same two-column row pattern as the home dashboard — avoids GridView clipping PNG icons.
   Widget _outboundRow(Widget start, Widget end) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -11,6 +11,8 @@ OUT_SIZE = 120
 RENDER_SCALE = 4
 SIZE = OUT_SIZE * RENDER_SCALE
 STROKE = 4 * RENDER_SCALE
+# Small transparent edge on exported PNGs (final pixels).
+EXPORT_MARGIN = 6
 
 # Sampled from assets/tracking.png
 CORAL = (248, 104, 104)
@@ -22,8 +24,8 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 TRANSPARENT = (0, 0, 0, 0)
 
-TARGET_CONTENT_SIZE = OUT_SIZE - 6
-TARGET_MARGIN = (OUT_SIZE - TARGET_CONTENT_SIZE) // 2
+TARGET_CONTENT_SIZE = OUT_SIZE - 2 * EXPORT_MARGIN
+TARGET_MARGIN = EXPORT_MARGIN
 
 
 def canvas() -> Image.Image:
@@ -225,41 +227,41 @@ def _content_bbox(img: Image.Image) -> tuple[int, int, int, int] | None:
     return min_x, min_y, max_x + 1, max_y + 1
 
 
-def scale_icon_to_match_home(img: Image.Image) -> Image.Image:
-    """Downscale with anti-aliasing and fit to the tracking.png content window."""
+def export_icon_natural(img: Image.Image) -> Image.Image:
+    """Export artwork at natural aspect ratio — rectangular PNG when content is wide/tall."""
     bbox = _content_bbox(img)
     if bbox is None:
-        return img.resize((OUT_SIZE, OUT_SIZE), Image.Resampling.LANCZOS)
+        return Image.new("RGBA", (OUT_SIZE, OUT_SIZE), TRANSPARENT)
 
     cropped = img.crop(bbox)
     cw, ch = cropped.size
-    target_px = TARGET_CONTENT_SIZE * RENDER_SCALE
-    margin_px = TARGET_MARGIN * RENDER_SCALE
-    scale = max(target_px / cw, target_px / ch)
+    inner_px = TARGET_CONTENT_SIZE * RENDER_SCALE
+    scale = min(inner_px / cw, inner_px / ch)
     new_w = max(1, int(round(cw * scale)))
     new_h = max(1, int(round(ch * scale)))
     resized = cropped.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
-    stage = Image.new("RGBA", (SIZE, SIZE), TRANSPARENT)
-    paste_x = margin_px + (target_px - new_w) // 2
-    paste_y = margin_px + (target_px - new_h) // 2
-    stage.paste(resized, (paste_x, paste_y), resized)
+    margin_px = EXPORT_MARGIN * RENDER_SCALE
+    out_w = new_w + 2 * margin_px
+    out_h = new_h + 2 * margin_px
+    stage = Image.new("RGBA", (out_w, out_h), TRANSPARENT)
+    stage.paste(resized, (margin_px, margin_px), resized)
 
-    square = stage.crop(
-        (margin_px, margin_px, margin_px + target_px, margin_px + target_px)
-    )
-    final_hi = Image.new("RGBA", (SIZE, SIZE), TRANSPARENT)
-    final_hi.paste(square, (margin_px, margin_px))
+    final_w = max(1, int(round(out_w / RENDER_SCALE)))
+    final_h = max(1, int(round(out_h / RENDER_SCALE)))
+    return stage.resize((final_w, final_h), Image.Resampling.LANCZOS)
 
-    final = final_hi.resize((OUT_SIZE, OUT_SIZE), Image.Resampling.LANCZOS)
-    return final
+
+# Back-compat aliases.
+scale_icon_to_square = export_icon_natural
+scale_icon_to_match_home = export_icon_natural
 
 
 def main() -> None:
     assets = Path(__file__).resolve().parents[1] / "assets"
     for name, builder in OUTPUTS.items():
         path = assets / name
-        scale_icon_to_match_home(builder()).save(path, "PNG")
+        export_icon_natural(builder()).save(path, "PNG")
         print(f"wrote {path}")
 
 
