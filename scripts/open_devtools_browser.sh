@@ -21,7 +21,8 @@ if [[ -z "$VM_URI" ]]; then
 fi
 
 ENCODED="$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$VM_URI")"
-URL="http://127.0.0.1:9105/?uri=${ENCODED}"
+TAB="${DEVTOOLS_TAB:-network}"
+URL="http://127.0.0.1:9105/${TAB}?uri=${ENCODED}"
 
 echo "Opening DevTools: $URL"
 open "$URL"
