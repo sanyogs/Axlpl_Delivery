@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart'
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
+import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/linehaul_pre_alert_controller.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
@@ -62,10 +63,21 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                OutboundPrimaryButton(
+                  title: OutboundLabels.btnPrintPreAlert,
+                  onPressed: printing ? null : controller.printPreAlert,
+                  isLoading: printing,
+                ),
+                SizedBox(height: 10.h),
+                OutboundSecondaryButton(
+                  label: OutboundLabels.btnShowList,
+                  onPressed: printing ? null : () => Get.back(),
+                ),
+                SizedBox(height: 16.h),
                 OutboundAdminSection(
                   title: OutboundLabels.sectionPreAlertDetails,
                   children: [
-                    _PreAlertDetailsTable(
+                    _PreAlertDetailsBody(
                       detail: detail,
                       controller: controller,
                     ),
@@ -82,18 +94,6 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
                     ],
                   ],
                 ),
-                SizedBox(height: 16.h),
-                OutboundButtonRow(
-                  start: OutboundSecondaryButton(
-                    label: OutboundLabels.btnShowList,
-                    onPressed: printing ? null : () => Get.back(),
-                  ),
-                  end: OutboundPrimaryButtonCompact(
-                    title: OutboundLabels.btnPrintPreAlert,
-                    onPressed: printing ? null : controller.printPreAlert,
-                    isLoading: printing,
-                  ),
-                ),
               ],
             ),
         ],
@@ -102,8 +102,8 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
   }
 }
 
-class _PreAlertDetailsTable extends StatelessWidget {
-  const _PreAlertDetailsTable({
+class _PreAlertDetailsBody extends StatelessWidget {
+  const _PreAlertDetailsBody({
     required this.detail,
     required this.controller,
   });
@@ -113,103 +113,62 @@ class _PreAlertDetailsTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = [
-      [
-        _Pair(OutboundLabels.colOriginHub, controller.originHubLabel()),
-        _Pair(OutboundLabels.colDestinationHub, controller.destinationHubLabel()),
-        _Pair(
-          OutboundLabels.colMawbNo,
-          detail.mawbNo ?? detail.airwayBillNo ?? '—',
-          copyValue: detail.mawbNo ?? detail.airwayBillNo,
+    final mawb = detail.mawbNo ?? detail.airwayBillNo;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutboundDetailField(
+          label: OutboundLabels.colOriginHub,
+          value: controller.originHubLabel(),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colDestinationHub,
+          value: controller.destinationHubLabel(),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colMawbNo,
+          value: mawb?.trim().isNotEmpty == true ? mawb!.trim() : '—',
+          copyable: mawb?.trim().isNotEmpty == true,
+          copyValue: mawb,
+          snackbarTitle: 'Linehaul',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colFlightNoMode,
+          value: detail.flightNoAndMode,
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colFlightDate,
+          value: controller.flightDateLabel(),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colVendor,
+          value: controller.vendorLabel(),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colStd,
+          value: _formatStd(detail.stdFromDeparture),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colSta,
+          value: _formatSta(detail.arrivalTime),
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.noOfBags,
+          value: detail.noOfBags ?? detail.noOfBoxes ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colTotalNoOfCons,
+          value: '${detail.totalConsignments}',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colTotalNoOfBoxes,
+          value: detail.noOfBoxes ?? '—',
+        ),
+        OutboundDetailField(
+          label: OutboundLabels.colTotalWtInKg,
+          value: _formatWeight(detail.totalWeight),
         ),
       ],
-      [
-        _Pair(OutboundLabels.colFlightNoMode, detail.flightNoAndMode),
-        _Pair(OutboundLabels.colFlightDate, controller.flightDateLabel()),
-        _Pair(OutboundLabels.colVendor, controller.vendorLabel()),
-      ],
-      [
-        _Pair(OutboundLabels.colStd, _formatStd(detail.stdFromDeparture)),
-        _Pair(OutboundLabels.colSta, _formatSta(detail.arrivalTime)),
-        _Pair(OutboundLabels.noOfBags, detail.noOfBags ?? detail.noOfBoxes ?? '—'),
-      ],
-      [
-        _Pair(OutboundLabels.colTotalNoOfCons, '${detail.totalConsignments}'),
-        _Pair(OutboundLabels.colTotalNoOfBoxes, detail.noOfBoxes ?? '—'),
-        _Pair(
-          OutboundLabels.colTotalWtInKg,
-          _formatWeight(detail.totalWeight),
-        ),
-      ],
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: 320.w),
-        child: Card(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4.r),
-            side: BorderSide(color: themes.grayColor.withValues(alpha: 0.25)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Table(
-            border: TableBorder.all(
-              color: themes.grayColor.withValues(alpha: 0.22),
-              width: 0.8,
-            ),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            columnWidths: {
-              for (var i = 0; i < 6; i++)
-                i: FixedColumnWidth(i.isEven ? 92.w : 108.w),
-            },
-            children: [
-              for (final row in rows)
-                TableRow(
-                  children: [
-                    for (final cell in row) ...[
-                      _labelCell(cell.label),
-                      _valueCell(cell),
-                    ],
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static Widget _labelCell(String label) {
-    return Container(
-      color: themes.lightGrayColor.withValues(alpha: 0.35),
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-      child: Text(
-        label,
-        style: themes.fontSize14_500.copyWith(
-          fontSize: 10.sp,
-          color: themes.grayColor,
-        ),
-      ),
-    );
-  }
-
-  static Widget _valueCell(_Pair pair) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
-      child: pair.copyValue?.trim().isNotEmpty == true
-          ? OutboundCopyableInline(
-              text: pair.value,
-              value: pair.copyValue,
-              style: themes.fontSize14_500.copyWith(fontSize: 11.sp),
-              snackbarTitle: 'Linehaul',
-            )
-          : Text(
-              pair.value,
-              style: themes.fontSize14_500.copyWith(fontSize: 11.sp),
-            ),
     );
   }
 
@@ -245,13 +204,6 @@ class _PreAlertDetailsTable extends StatelessWidget {
     );
     return '$whole.${parts[1]}';
   }
-}
-
-class _Pair {
-  const _Pair(this.label, this.value, {this.copyValue});
-  final String label;
-  final String value;
-  final String? copyValue;
 }
 
 class _ConsignmentTable extends StatelessWidget {
