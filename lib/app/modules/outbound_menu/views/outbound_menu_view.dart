@@ -24,7 +24,7 @@ class OutboundMenuView extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                childAspectRatio: 1.35,
+                childAspectRatio: 1.2,
                 children: [
                   HomeIconContainer(
                     title: 'Hub scan',

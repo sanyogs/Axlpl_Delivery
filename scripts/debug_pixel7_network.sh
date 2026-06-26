@@ -98,9 +98,9 @@ EOF
 
   cd "$ROOT"
   log "Starting Flutter debug (API_HTTP_LOG=true) …"
-  local log_file
   log_file="$(mktemp)"
-  trap 'rm -f "$log_file"' EXIT
+  cleanup() { [[ -n "${log_file:-}" && -f "$log_file" ]] && rm -f "$log_file"; }
+  trap cleanup EXIT
 
   (
     "$FLUTTER" run -d "$device" \
