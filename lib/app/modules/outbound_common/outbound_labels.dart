@@ -252,6 +252,7 @@ class OutboundLabels {
   static const linehaulPreAlertTitle = 'Linehaul Pre-Alert View';
   static const sectionPreAlertDetails = 'PRE-ALERT DETAILS';
   static const sectionConsignmentDetails = 'CONSIGNMENT DETAILS';
+  static const sectionLinehaulPreAlertDocket = 'DOCKET DETAILS';
   static const btnPrintPreAlert = 'Print Pre-Alert';
   static const colVendor = 'Vendor';
   static const colStd = 'STD';

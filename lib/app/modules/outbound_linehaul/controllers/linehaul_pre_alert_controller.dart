@@ -30,11 +30,30 @@ class LinehaulPreAlertController extends GetxController {
   List<LinehaulConsignmentSummary> get consignmentRows {
     final d = detail.value;
     if (d == null) return const [];
-    return LinehaulConsignmentSummary.build(
+
+    final built = LinehaulConsignmentSummary.build(
       bags: bags.toList(growable: false),
       shipments: shipments.toList(growable: false),
       defaultDestHub: _destinationHubLabel(d),
     );
+    if (built.isNotEmpty) return built;
+
+    final consCount = d.totalConsignments;
+    final boxCount = int.tryParse(d.noOfBoxes ?? d.noOfBags ?? '') ?? 0;
+    if (consCount <= 0 && boxCount <= 0) return const [];
+
+    return [
+      LinehaulConsignmentSummary(
+        slNo: 1,
+        bagNo: d.noOfBags ?? d.tripNo ?? d.mawbNo,
+        destHub: _destinationHubLabel(d),
+        consignmentCount: consCount > 0 ? consCount : shipments.length,
+        boxCount: boxCount > 0 ? boxCount : consCount,
+        productMode: d.transportType ?? 'NORMAL',
+        weight: d.totalWeight,
+        shipmentType: d.status,
+      ),
+    ];
   }
 
   @override
@@ -216,10 +235,7 @@ class LinehaulPreAlertController extends GetxController {
       if (key != null && key.isNotEmpty) mergedBags[key] = bag;
     }
 
-    final needsEnrichment = mergedShipments.isEmpty ||
-        mergedShipments.values.every(_shipmentNeedsEnrichment);
-
-    if (needsEnrichment || parsed.manifests.isNotEmpty) {
+    if (parsed.manifests.isNotEmpty) {
       for (final manifest in parsed.manifests) {
         final code = manifest.manifestNo?.trim().isNotEmpty == true
             ? manifest.manifestNo!.trim()

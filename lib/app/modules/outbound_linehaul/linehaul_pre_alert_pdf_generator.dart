@@ -5,6 +5,7 @@ import 'package:axlpl_delivery/app/data/models/outbound/linehaul_consignment_sum
 import 'package:axlpl_delivery/app/data/models/outbound/linehaul_detail_model.dart';
 import 'package:axlpl_delivery/app/data/models/outbound/manifest_shipment_ref_model.dart';
 import 'package:axlpl_delivery/app/modules/outbound_bagging/bagging_report_pdf_generator.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -12,6 +13,50 @@ import 'package:pdf/widgets.dart' as pw;
 /// Builds the admin **Linehaul Pre-Alert** PDF.
 class LinehaulPreAlertPdfGenerator {
   LinehaulPreAlertPdfGenerator._();
+
+  /// PDF built-in fonts cannot render em-dash; use ASCII [N/A] for empty cells.
+  static String _na(String? value) {
+    final t = value?.trim();
+    if (t == null || t.isEmpty || t == '—' || t == '-' || t == '–') {
+      return 'N/A';
+    }
+    return t;
+  }
+
+  static String _formatStd(LinehaulDetail detail) {
+    final fromDeparture = detail.stdFromDeparture?.trim();
+    if (fromDeparture != null && fromDeparture.isNotEmpty) {
+      final parts = fromDeparture.split(':');
+      if (parts.length >= 2) {
+        return '${parts[0]}:${parts[1]}';
+      }
+      return fromDeparture;
+    }
+    return 'N/A';
+  }
+
+  static String _formatSta(LinehaulDetail detail) {
+    final raw = detail.arrivalTime?.trim();
+    if (raw == null || raw.isEmpty) return 'N/A';
+    final parsed = DateTime.tryParse(raw.replaceFirst(' ', 'T'));
+    if (parsed != null) {
+      return DateFormat('yyyy-MM-dd HH:mm').format(parsed);
+    }
+    return raw;
+  }
+
+  static String _formatWeight(String? raw) {
+    final value = raw?.trim();
+    if (value == null || value.isEmpty) return 'N/A';
+    final numeric = double.tryParse(value.replaceAll(',', ''));
+    if (numeric == null) return value;
+    final parts = numeric.toStringAsFixed(2).split('.');
+    final whole = parts[0].replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    return '$whole.${parts[1]}';
+  }
 
   static pw.Document buildDocument({
     required LinehaulDetail detail,
@@ -25,6 +70,7 @@ class LinehaulPreAlertPdfGenerator {
   }) {
     final printedAt = printDate ?? DateTime.now();
     final doc = pw.Document();
+    final mawb = detail.mawbNo ?? detail.airwayBillNo;
 
     doc.addPage(
       pw.MultiPage(
@@ -71,21 +117,27 @@ class LinehaulPreAlertPdfGenerator {
           _sectionTitle('PRE-ALERT DETAILS'),
           pw.SizedBox(height: 6),
           _detailsGrid([
-            _DetailCell('Origin', originHub),
-            _DetailCell('Destination', destinationHub),
-            _DetailCell('MAWB NO', detail.mawbNo ?? detail.airwayBillNo ?? '—'),
-            _DetailCell('Flight No & Mode', detail.flightNoAndMode),
-            _DetailCell('Flight Date', flightDate),
-            _DetailCell('Vendor', vendor),
-            _DetailCell('STD', detail.stdFromDeparture ?? '—'),
-            _DetailCell('STA', detail.arrivalTime ?? '—'),
-            _DetailCell('No Of Bags', detail.noOfBags ?? detail.noOfBoxes ?? '—'),
+            _DetailCell('Origin', _na(originHub)),
+            _DetailCell('Destination', _na(destinationHub)),
+            _DetailCell('MAWB NO', _na(mawb)),
+            _DetailCell('Flight No & Mode', _na(detail.flightNoAndMode)),
+            _DetailCell('Flight Date', _na(flightDate)),
+            _DetailCell('Vendor', _na(vendor)),
+            _DetailCell('STD', _formatStd(detail)),
+            _DetailCell('STA', _formatSta(detail)),
+            _DetailCell(
+              'No Of Bags',
+              _na(detail.noOfBags ?? detail.noOfBoxes),
+            ),
             _DetailCell(
               'Total No of Cons',
               '${detail.totalConsignments}',
             ),
-            _DetailCell('Total No of Boxes', detail.noOfBoxes ?? '—'),
-            _DetailCell('Total Weight (Kgs)', detail.totalWeight ?? '—'),
+            _DetailCell('Total No of Boxes', _na(detail.noOfBoxes)),
+            _DetailCell(
+              'Total Weight (Kgs)',
+              _formatWeight(detail.totalWeight),
+            ),
           ]),
           pw.SizedBox(height: 14),
           _sectionTitle('CONSIGNMENT DETAILS'),
@@ -220,20 +272,20 @@ class LinehaulPreAlertPdfGenerator {
           pw.TableRow(
             children: [
               _cell('${row.slNo}'),
-              _cell(row.masterBag ?? '—'),
-              _cell(row.bagNo ?? '—'),
-              _cell(row.entryNo ?? '—'),
-              _cell(row.destHub ?? '—'),
+              _cell(_na(row.masterBag)),
+              _cell(_na(row.bagNo)),
+              _cell(_na(row.entryNo)),
+              _cell(_na(row.destHub)),
               _cell('${row.consignmentCount}'),
               _cell('${row.boxCount}'),
-              _cell(row.productMode ?? '—'),
-              _cell(row.weight ?? '—'),
-              _cell(row.shipmentType ?? '—'),
+              _cell(_na(row.productMode)),
+              _cell(_na(row.weight)),
+              _cell(_na(row.shipmentType)),
             ],
           ),
         if (rows.isEmpty)
           pw.TableRow(
-            children: List.generate(10, (_) => _cell('—')),
+            children: List.generate(10, (_) => _cell('N/A')),
           ),
       ],
     );
@@ -267,18 +319,18 @@ class LinehaulPreAlertPdfGenerator {
         for (final shipment in shipments)
           pw.TableRow(
             children: [
-              _cell(shipment.docketNo),
-              _cell(shipment.senderName ?? '—'),
-              _cell(shipment.receiverName ?? '—'),
-              _cell(shipment.pcsDisplay),
-              _cell(shipment.netWeightDisplay),
-              _cell(shipment.grossWeightDisplay),
-              _cell(shipment.paidDisplay),
+              _cell(_na(shipment.docketNo)),
+              _cell(_na(shipment.senderName)),
+              _cell(_na(shipment.receiverName)),
+              _cell(_na(shipment.pcsDisplay)),
+              _cell(_na(shipment.netWeightDisplay)),
+              _cell(_na(shipment.grossWeightDisplay)),
+              _cell(_na(shipment.paidDisplay)),
             ],
           ),
         if (shipments.isEmpty)
           pw.TableRow(
-            children: List.generate(7, (_) => _cell('—')),
+            children: List.generate(7, (_) => _cell('N/A')),
           ),
       ],
     );
@@ -297,7 +349,7 @@ class LinehaulPreAlertPdfGenerator {
   static pw.Widget _valueCell(String text) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(4),
-      child: pw.Text(text, style: const pw.TextStyle(fontSize: 7)),
+      child: pw.Text(_na(text), style: const pw.TextStyle(fontSize: 7)),
     );
   }
 
@@ -305,7 +357,7 @@ class LinehaulPreAlertPdfGenerator {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(3),
       child: pw.Text(
-        text,
+        _na(text),
         style: pw.TextStyle(
           fontSize: 6.5,
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,

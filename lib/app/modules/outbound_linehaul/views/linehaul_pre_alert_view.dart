@@ -5,9 +5,9 @@ import 'package:axlpl_delivery/app/modules/outbound_common/outbound_labels.dart'
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_action_buttons.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_admin_section.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_copyable.dart';
-import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_detail_widgets.dart';
 import 'package:axlpl_delivery/app/modules/outbound_common/widgets/outbound_screen.dart';
 import 'package:axlpl_delivery/app/modules/outbound_linehaul/controllers/linehaul_pre_alert_controller.dart';
+import 'package:axlpl_delivery/app/routes/app_pages.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -46,6 +46,7 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
             )
           else if (err.isNotEmpty)
             Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   err,
@@ -61,38 +62,34 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
             )
           else if (detail != null)
             Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                OutboundPrimaryButton(
-                  title: OutboundLabels.btnPrintPreAlert,
-                  onPressed: printing ? null : controller.printPreAlert,
-                  isLoading: printing,
-                ),
-                SizedBox(height: 10.h),
-                OutboundSecondaryButton(
-                  label: OutboundLabels.btnShowList,
-                  onPressed: printing ? null : () => Get.back(),
-                ),
-                SizedBox(height: 16.h),
                 OutboundAdminSection(
                   title: OutboundLabels.sectionPreAlertDetails,
                   children: [
-                    _PreAlertDetailsBody(
+                    _PreAlertDetailsTable(
                       detail: detail,
                       controller: controller,
                     ),
                   ],
                 ),
-                SizedBox(height: 10.h),
                 OutboundAdminSection(
                   title: OutboundLabels.sectionConsignmentDetails,
                   children: [
                     _ConsignmentTable(rows: consignments),
-                    if (shipments.isNotEmpty) ...[
-                      SizedBox(height: 12.h),
-                      _DocketTable(shipments: shipments),
-                    ],
                   ],
+                ),
+                OutboundAdminSection(
+                  title: OutboundLabels.sectionLinehaulPreAlertDocket,
+                  children: [
+                    _DocketTable(shipments: shipments),
+                  ],
+                ),
+                _PreAlertActionButtons(
+                  printing: printing,
+                  onPrint: controller.printPreAlert,
+                  onBackToList: _backToLinehaulList,
                 ),
               ],
             ),
@@ -100,10 +97,60 @@ class LinehaulPreAlertView extends GetView<LinehaulPreAlertController> {
       );
     });
   }
+
+  static void _backToLinehaulList() {
+    if (Get.key.currentState?.canPop() == true) {
+      Get.back();
+      return;
+    }
+    Get.offNamed(Routes.OUTBOUND_LINEHAUL_LIST);
+  }
 }
 
-class _PreAlertDetailsBody extends StatelessWidget {
-  const _PreAlertDetailsBody({
+class _PreAlertActionButtons extends StatelessWidget {
+  const _PreAlertActionButtons({
+    required this.printing,
+    required this.onPrint,
+    required this.onBackToList,
+  });
+
+  final bool printing;
+  final Future<void> Function() onPrint;
+  final VoidCallback onBackToList;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutboundPrimaryButton(
+          title: OutboundLabels.btnPrintPreAlert,
+          onPressed: printing ? null : onPrint,
+          isLoading: printing,
+        ),
+        SizedBox(height: 10.h),
+        SizedBox(
+          width: double.infinity,
+          height: OutboundButtons.height,
+          child: OutlinedButton.icon(
+            onPressed: printing ? null : onBackToList,
+            icon: Icon(
+              Icons.arrow_back,
+              size: 16.sp,
+              color: printing ? themes.grayColor : themes.darkCyanBlue,
+            ),
+            label: Text(OutboundLabels.btnBackToList),
+            style: OutboundButtons.secondaryStyle(enabled: !printing),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PreAlertDetailsTable extends StatelessWidget {
+  const _PreAlertDetailsTable({
     required this.detail,
     required this.controller,
   });
@@ -113,63 +160,29 @@ class _PreAlertDetailsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mawb = detail.mawbNo ?? detail.airwayBillNo;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutboundDetailField(
-          label: OutboundLabels.colOriginHub,
-          value: controller.originHubLabel(),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colDestinationHub,
-          value: controller.destinationHubLabel(),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colMawbNo,
-          value: mawb?.trim().isNotEmpty == true ? mawb!.trim() : '—',
-          copyable: mawb?.trim().isNotEmpty == true,
-          copyValue: mawb,
-          snackbarTitle: 'Linehaul',
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colFlightNoMode,
-          value: detail.flightNoAndMode,
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colFlightDate,
-          value: controller.flightDateLabel(),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colVendor,
-          value: controller.vendorLabel(),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colStd,
-          value: _formatStd(detail.stdFromDeparture),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colSta,
-          value: _formatSta(detail.arrivalTime),
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.noOfBags,
-          value: detail.noOfBags ?? detail.noOfBoxes ?? '—',
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colTotalNoOfCons,
-          value: '${detail.totalConsignments}',
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colTotalNoOfBoxes,
-          value: detail.noOfBoxes ?? '—',
-        ),
-        OutboundDetailField(
-          label: OutboundLabels.colTotalWtInKg,
-          value: _formatWeight(detail.totalWeight),
-        ),
-      ],
-    );
+    final cells = [
+      _Pair(OutboundLabels.colOriginHub, controller.originHubLabel()),
+      _Pair(OutboundLabels.colDestinationHub, controller.destinationHubLabel()),
+      _Pair(
+        OutboundLabels.colMawbNo,
+        detail.mawbNo ?? detail.airwayBillNo ?? '—',
+        copyValue: detail.mawbNo ?? detail.airwayBillNo,
+      ),
+      _Pair(OutboundLabels.colFlightNoMode, detail.flightNoAndMode),
+      _Pair(OutboundLabels.colFlightDate, controller.flightDateLabel()),
+      _Pair(OutboundLabels.colVendor, controller.vendorLabel()),
+      _Pair(OutboundLabels.colStd, _formatStd(detail.stdFromDeparture)),
+      _Pair(OutboundLabels.colSta, _formatSta(detail.arrivalTime)),
+      _Pair(OutboundLabels.noOfBags, detail.noOfBags ?? detail.noOfBoxes ?? '—'),
+      _Pair(OutboundLabels.colTotalNoOfCons, '${detail.totalConsignments}'),
+      _Pair(OutboundLabels.colTotalNoOfBoxes, detail.noOfBoxes ?? '—'),
+      _Pair(
+        OutboundLabels.colTotalWtInKg,
+        _formatWeight(detail.totalWeight),
+      ),
+    ];
+
+    return _PreAlertDetailsMobileList(rows: cells);
   }
 
   static String _formatStd(String? raw) {
@@ -206,6 +219,76 @@ class _PreAlertDetailsBody extends StatelessWidget {
   }
 }
 
+class _PreAlertDetailsMobileList extends StatelessWidget {
+  const _PreAlertDetailsMobileList({required this.rows});
+
+  final List<_Pair> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4.r),
+        side: BorderSide(color: themes.grayColor.withValues(alpha: 0.25)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 0.8,
+                color: themes.grayColor.withValues(alpha: 0.22),
+              ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 118.w,
+                    child: Text(
+                      rows[i].label,
+                      style: themes.fontSize14_500.copyWith(
+                        fontSize: 10.sp,
+                        color: themes.grayColor,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: rows[i].copyValue?.trim().isNotEmpty == true
+                        ? OutboundCopyableInline(
+                            text: rows[i].value,
+                            value: rows[i].copyValue,
+                            style: themes.fontSize14_500.copyWith(fontSize: 11.sp),
+                            snackbarTitle: 'Linehaul',
+                          )
+                        : Text(
+                            rows[i].value,
+                            style: themes.fontSize14_500.copyWith(fontSize: 11.sp),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Pair {
+  const _Pair(this.label, this.value, {this.copyValue});
+  final String label;
+  final String value;
+  final String? copyValue;
+}
+
 class _ConsignmentTable extends StatelessWidget {
   const _ConsignmentTable({required this.rows});
 
@@ -220,68 +303,28 @@ class _ConsignmentTable extends StatelessWidget {
       );
     }
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      color: themes.whiteColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        side: BorderSide(color: themes.grayColor.withValues(alpha: 0.2)),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: DataTable(
-          headingRowHeight: 44,
-          dataRowMinHeight: 52,
-          headingTextStyle: themes.fontSize14_500.copyWith(
-            fontSize: 10.sp,
-            color: themes.whiteColor,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0) SizedBox(height: 8.h),
+          _PreAlertRecordCard(
+            fields: [
+              _Field(OutboundLabels.colSlNo, '${rows[i].slNo}'),
+              _Field(OutboundLabels.colMasterBag, rows[i].masterBag ?? '—'),
+              _Field(OutboundLabels.colBagNo, rows[i].bagNo ?? '—', copyable: true, copyValue: rows[i].bagNo),
+              _Field(OutboundLabels.colEntryNo, rows[i].entryNo ?? '—'),
+              _Field(OutboundLabels.colDestHub, rows[i].destHub ?? '—'),
+              _Field(OutboundLabels.colNoOfConsign, '${rows[i].consignmentCount}'),
+              _Field(OutboundLabels.colNoOfBoxes, '${rows[i].boxCount}'),
+              _Field(OutboundLabels.colProductMode, rows[i].productMode ?? '—'),
+              _Field(OutboundLabels.colWeight, rows[i].weight ?? '—'),
+              _Field(OutboundLabels.colShipmentType, rows[i].shipmentType ?? '—'),
+            ],
           ),
-          headingRowColor: WidgetStateProperty.all(themes.darkCyanBlue),
-          columns: const [
-            DataColumn(label: Text(OutboundLabels.colSlNo)),
-            DataColumn(label: Text(OutboundLabels.colMasterBag)),
-            DataColumn(label: Text(OutboundLabels.colBagNo)),
-            DataColumn(label: Text(OutboundLabels.colEntryNo)),
-            DataColumn(label: Text(OutboundLabels.colDestHub)),
-            DataColumn(label: Text(OutboundLabels.colNoOfConsign)),
-            DataColumn(label: Text(OutboundLabels.colNoOfBoxes)),
-            DataColumn(label: Text(OutboundLabels.colProductMode)),
-            DataColumn(label: Text(OutboundLabels.colWeight)),
-            DataColumn(label: Text(OutboundLabels.colShipmentType)),
-          ],
-          rows: rows
-              .map(
-                (row) => DataRow(
-                  cells: [
-                    DataCell(Text('${row.slNo}')),
-                    DataCell(
-                      OutboundCopyableTableCell(
-                        value: row.masterBag,
-                        snackbarTitle: 'Linehaul',
-                      ),
-                    ),
-                    DataCell(
-                      OutboundCopyableTableCell(
-                        value: row.bagNo,
-                        emphasized: true,
-                        snackbarTitle: 'Bag',
-                      ),
-                    ),
-                    DataCell(Text(row.entryNo ?? '—')),
-                    DataCell(Text(row.destHub ?? '—')),
-                    DataCell(Text('${row.consignmentCount}')),
-                    DataCell(Text('${row.boxCount}')),
-                    DataCell(Text(row.productMode ?? '—')),
-                    DataCell(Text(row.weight ?? '—')),
-                    DataCell(Text(row.shipmentType ?? '—')),
-                  ],
-                ),
-              )
-              .toList(),
-        ),
-      ),
+        ],
+      ],
     );
   }
 }
@@ -300,76 +343,111 @@ class _DocketTable extends StatelessWidget {
       );
     }
 
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < shipments.length; i++) ...[
+          if (i > 0) SizedBox(height: 8.h),
+          _PreAlertRecordCard(
+            fields: [
+              _Field(
+                OutboundLabels.colDocketNo,
+                shipments[i].docketNo,
+                copyable: true,
+                copyValue: shipments[i].id ?? shipments[i].shipmentInvoiceNo,
+              ),
+              _Field(OutboundLabels.colSender, shipments[i].senderName ?? '—'),
+              _Field(OutboundLabels.colReceiver, shipments[i].receiverName ?? '—'),
+              _Field(OutboundLabels.colPcs, shipments[i].pcsDisplay),
+              _Field(OutboundLabels.colNetWeight, shipments[i].netWeightDisplay),
+              _Field(OutboundLabels.colGrossWeight, shipments[i].grossWeightDisplay),
+              _Field(OutboundLabels.colPaid, shipments[i].paidDisplay),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _Field {
+  const _Field(
+    this.label,
+    this.value, {
+    this.copyable = false,
+    this.copyValue,
+  });
+
+  final String label;
+  final String value;
+  final bool copyable;
+  final String? copyValue;
+}
+
+class _PreAlertRecordCard extends StatelessWidget {
+  const _PreAlertRecordCard({required this.fields});
+
+  final List<_Field> fields;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
       color: themes.whiteColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.r),
-        side: BorderSide(color: themes.grayColor.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(6.r),
+        side: BorderSide(color: themes.grayColor.withValues(alpha: 0.22)),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(vertical: 4.h),
-        child: DataTable(
-          headingRowHeight: 44,
-          dataRowMinHeight: 52,
-          headingTextStyle: themes.fontSize14_500.copyWith(
-            fontSize: 10.sp,
-            color: themes.grayColor,
-          ),
-          columns: const [
-            DataColumn(label: Text(OutboundLabels.colDocketNo)),
-            DataColumn(label: Text(OutboundLabels.colSender)),
-            DataColumn(label: Text(OutboundLabels.colReceiver)),
-            DataColumn(label: Text(OutboundLabels.colPcs)),
-            DataColumn(label: Text(OutboundLabels.colNetWeight)),
-            DataColumn(label: Text(OutboundLabels.colGrossWeight)),
-            DataColumn(label: Text(OutboundLabels.colPaid)),
-          ],
-          rows: shipments
-              .map(
-                (shipment) => DataRow(
-                  cells: [
-                    DataCell(
-                      OutboundCopyableTableCell(
-                        value: shipment.docketNo,
-                        emphasized: true,
-                        snackbarTitle: 'Docket',
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < fields.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 0.8,
+                color: themes.grayColor.withValues(alpha: 0.18),
+              ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 108.w,
+                    child: Text(
+                      fields[i].label,
+                      style: themes.fontSize14_500.copyWith(
+                        fontSize: 10.sp,
+                        color: themes.grayColor,
                       ),
                     ),
-                    DataCell(
-                      _WrappedTableText(shipment.senderName),
-                    ),
-                    DataCell(
-                      _WrappedTableText(shipment.receiverName),
-                    ),
-                    DataCell(Text(shipment.pcsDisplay)),
-                    DataCell(Text(shipment.netWeightDisplay)),
-                    DataCell(Text(shipment.grossWeightDisplay)),
-                    DataCell(Text(shipment.paidDisplay)),
-                  ],
-                ),
-              )
-              .toList(),
-        ),
+                  ),
+                  Expanded(
+                    child: fields[i].copyable &&
+                            fields[i].copyValue?.trim().isNotEmpty == true
+                        ? OutboundCopyableInline(
+                            text: fields[i].value,
+                            value: fields[i].copyValue,
+                            style: themes.fontSize14_400.copyWith(fontSize: 11.sp),
+                            snackbarTitle: 'Linehaul',
+                            compact: true,
+                          )
+                        : Text(
+                            fields[i].value,
+                            style: themes.fontSize14_400.copyWith(fontSize: 11.sp),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
-    );
-  }
-}
-
-class _WrappedTableText extends StatelessWidget {
-  const _WrappedTableText(this.text);
-
-  final String? text;
-
-  @override
-  Widget build(BuildContext context) {
-    final value = text?.trim();
-    return Text(
-      value == null || value.isEmpty ? '—' : value,
-      softWrap: true,
-      style: themes.fontSize14_400.copyWith(fontSize: 10.sp),
     );
   }
 }

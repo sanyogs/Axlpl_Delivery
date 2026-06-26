@@ -102,8 +102,13 @@ class ManifestShipmentRef {
   String get grossWeightDisplay =>
       grossWeight?.trim().isNotEmpty == true ? grossWeight!.trim() : '—';
 
-  String get paidDisplay =>
-      paymentMode?.trim().isNotEmpty == true ? paymentMode!.trim() : '—';
+  String get paidDisplay {
+    final paid = paymentMode?.trim();
+    if (paid != null && paid.isNotEmpty) return paid;
+    final status = shipmentStatus?.trim();
+    if (status != null && status.isNotEmpty) return status;
+    return '—';
+  }
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
