@@ -534,6 +534,7 @@ class OutboundLinehaulController extends GetxController {
             : null,
       );
 
+      var bookingSaved = false;
       editR.when(
         success: (data) {
           lastResponseText.value = '';
@@ -543,15 +544,49 @@ class OutboundLinehaulController extends GetxController {
             'Linehaul',
             msg.isNotEmpty ? msg : 'Linehaul booking saved',
           );
-          openLinehaulList();
+          bookingSaved = true;
         },
         error: (e) {
           lastResponseText.value = e.message;
         },
       );
+      if (bookingSaved) {
+        resetLinehaulBookingForm();
+        await loadLinehaulList();
+        openLinehaulList();
+      }
     } finally {
       isBusy.value = false;
     }
+  }
+
+  void resetLinehaulBookingForm() {
+    manifestNoController.clear();
+    transportController.clear();
+    airlineController.clear();
+    airwayBillController.clear();
+    ewayBillController.clear();
+    airwayBillDateController.clear();
+    airwayBillTimeController.clear();
+    noOfBagsController.clear();
+    totalWeightController.clear();
+    estArrivalDateController.clear();
+    estArrivalTimeController.clear();
+    totalCdWeightController.clear();
+    totalBillingWeightController.clear();
+    flightNoController.clear();
+    departureDateController.clear();
+    departureTimeController.clear();
+    linehaulRefController.clear();
+
+    transportMode.value = OutboundLabels.modeAirway;
+    manifestDetail.value = null;
+    bagTableRows.clear();
+    selectedDestCityId.value = null;
+    selectedOriginCityId.value = null;
+    selectedAirlineId.value = null;
+    lastResponseText.value = '';
+    manifestLoadRevision.value++;
   }
 
   Future<bool> loadLinehaulList() async {

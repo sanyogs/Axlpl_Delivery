@@ -37,3 +37,5 @@ const outboundBaggingIcon = 'assets/outbound_bagging_icon.png';
 const outboundManifestIcon = 'assets/outbound_manifest_icon.png';
 const outboundLinehaulIcon = 'assets/outbound_linehaul_icon.png';
 const outboundSectorPickupIcon = 'assets/outbound_sector_pickup_icon.png';
+const outboundSectorPickupReportIcon =
+    'assets/outbound_sector_pickup_report_icon.png';

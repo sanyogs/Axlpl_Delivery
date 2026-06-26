@@ -1,29 +1,29 @@
-import 'package:flutter/material.dart';
+import 'package:axlpl_delivery/utils/assets.dart';
 
-/// Icons for outbound navigation (home tile + outbound process menu).
+/// Colorful asset icons for outbound navigation (home tile + outbound menu).
 ///
-/// Vector [IconData] keeps all tiles the same style and resolution on any DPI.
+/// Matches the flat PNG style used by Pickups, Delivery, Add Shipment, etc.
 abstract final class OutboundMenuIcons {
   OutboundMenuIcons._();
 
   /// Home dashboard entry — outbound logistics pipeline.
-  static const IconData home = Icons.warehouse_outlined;
+  static const String home = outboundHomeIcon;
 
   /// Module A — barcode scan at hub.
-  static const IconData hubScan = Icons.qr_code_scanner_outlined;
+  static const String hubScan = outboundHubScanIcon;
 
   /// Module B — pack shipments into bags.
-  static const IconData bagging = Icons.inventory_2_outlined;
+  static const String bagging = outboundBaggingIcon;
 
   /// Module C — manifest creation and listing.
-  static const IconData manifest = Icons.assignment_outlined;
+  static const String manifest = outboundManifestIcon;
 
   /// Module D — linehaul assignment and tracking.
-  static const IconData linehaul = Icons.local_shipping_outlined;
+  static const String linehaul = outboundLinehaulIcon;
 
   /// Module E — sector pickup scans.
-  static const IconData sectorPickup = Icons.pin_drop_outlined;
+  static const String sectorPickup = outboundSectorPickupIcon;
 
   /// Sector pickup status report (`pickupreport`).
-  static const IconData sectorPickupReport = Icons.assessment_outlined;
+  static const String sectorPickupReport = outboundSectorPickupReportIcon;
 }

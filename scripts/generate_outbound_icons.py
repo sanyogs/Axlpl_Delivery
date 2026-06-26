@@ -134,12 +134,75 @@ def icon_sector_pickup() -> Image.Image:
     return img
 
 
-# Hub scan and bagging icons are maintained manually — do not overwrite.
+def icon_hub_scan() -> Image.Image:
+    """Hub scan — barcode inside scanner frame."""
+    img = canvas()
+    d = ImageDraw.Draw(img)
+    s = RENDER_SCALE
+    draw_rounded_rect(d, (20 * s, 22 * s, 100 * s, 98 * s), GREY, radius=6 * s)
+    for x0, y0, x1, y1 in (
+        (26 * s, 28 * s, 44 * s, 46 * s),
+        (76 * s, 28 * s, 94 * s, 46 * s),
+        (26 * s, 74 * s, 44 * s, 92 * s),
+        (76 * s, 74 * s, 94 * s, 92 * s),
+    ):
+        draw_rounded_rect(d, (x0, y0, x1, y1), CORAL, radius=3 * s)
+    x = 38 * s
+    for w in (3, 5, 3, 7, 4, 3, 6, 3):
+        draw_rounded_rect(
+            d,
+            (x, 48 * s, x + w * s, 72 * s),
+            NAVY if w % 2 == 0 else CORAL,
+            radius=2 * s,
+        )
+        x += (w + 3) * s
+    return img
+
+
+def icon_bagging() -> Image.Image:
+    """Bagging — sealed carton."""
+    img = canvas()
+    d = ImageDraw.Draw(img)
+    s = RENDER_SCALE
+    draw_rounded_rect(d, (26 * s, 46 * s, 94 * s, 104 * s), GREY, radius=5 * s)
+    d.polygon(
+        [(26 * s, 46 * s), (60 * s, 18 * s), (94 * s, 46 * s)],
+        fill=CORAL,
+        outline=BLACK,
+        width=STROKE,
+    )
+    draw_rounded_rect(d, (42 * s, 58 * s, 78 * s, 74 * s), BLUE, radius=3 * s)
+    d.line([(34 * s, 82 * s), (86 * s, 82 * s)], fill=NAVY, width=STROKE)
+    d.line([(60 * s, 46 * s), (60 * s, 104 * s)], fill=NAVY, width=2 * s)
+    return img
+
+
+def icon_sector_pickup_report() -> Image.Image:
+    """Pickup status report — bar chart on a board."""
+    img = canvas()
+    d = ImageDraw.Draw(img)
+    s = RENDER_SCALE
+    draw_rounded_rect(d, (24 * s, 22 * s, 96 * s, 104 * s), GREY, radius=6 * s)
+    draw_rounded_rect(d, (44 * s, 10 * s, 76 * s, 26 * s), CORAL, radius=6 * s)
+    base_y = 92 * s
+    bars = [
+        (38 * s, 52 * s, 50 * s, base_y, BLUE),
+        (54 * s, 40 * s, 66 * s, base_y, CORAL),
+        (70 * s, 60 * s, 82 * s, base_y, NAVY),
+    ]
+    for x1, y1, x2, y2, color in bars:
+        draw_rounded_rect(d, (x1, y1, x2, y2), color, radius=3 * s)
+    return img
+
+
 OUTPUTS = {
     "outbound_home_icon.png": icon_home,
+    "outbound_hub_scan_icon.png": icon_hub_scan,
+    "outbound_bagging_icon.png": icon_bagging,
     "outbound_manifest_icon.png": icon_manifest,
     "outbound_linehaul_icon.png": icon_linehaul,
     "outbound_sector_pickup_icon.png": icon_sector_pickup,
+    "outbound_sector_pickup_report_icon.png": icon_sector_pickup_report,
 }
 
 
