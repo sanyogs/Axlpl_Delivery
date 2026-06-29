@@ -82,7 +82,7 @@ class TrackingRepo {
           final parsed = InvoiceUploadResult.fromDynamic(body);
           if (!parsed.success) {
             final fallback = CommonModel.fromJson(
-              body is Map<String, dynamic> ? body : <String, dynamic>{},
+              body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{},
             );
             apiMessage = fallback.message ?? 'Invoice upload failed.';
             return InvoiceUploadResult(
@@ -109,30 +109,39 @@ class TrackingRepo {
     }
   }
 
-  Future<InvoiceDeleteResult> deleteShipmentInvoiceFileRepo(
-    String invoiceFileId,
-  ) async {
+  Future<InvoiceDeleteResult> deleteShipmentInvoiceFileRepo({
+    String? invoiceFileId,
+    String? fileName,
+  }) async {
     apiMessage = null;
 
     final userData = await _localStorage.getUserLocalData();
     final token =
         userData?.messangerdetail?.token ?? userData?.customerdetail?.token;
 
+    final id = invoiceFileId?.trim();
+    final name = fileName?.trim();
+    if ((id == null || id.isEmpty) && (name == null || name.isEmpty)) {
+      apiMessage = 'Invoice file id or file name is required.';
+      return const InvoiceDeleteResult(success: false);
+    }
+
     try {
       final response = await _apiServices.deleteShipmentInvoiceFile(
-        invoiceFileId,
-        token,
+        invoiceFileId: id,
+        fileName: name,
+        token: token,
       );
 
       return response.when(
         success: (body) {
           log("Delete invoice API success body: $body");
           final parsed = InvoiceDeleteResult.fromDynamic(
-            body is Map<String, dynamic> ? body : <String, dynamic>{},
+            body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{},
           );
           if (!parsed.success) {
             final fallback = CommonModel.fromJson(
-              body is Map<String, dynamic> ? body : <String, dynamic>{},
+              body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{},
             );
             apiMessage = fallback.message ?? 'Invoice delete failed.';
             return InvoiceDeleteResult(

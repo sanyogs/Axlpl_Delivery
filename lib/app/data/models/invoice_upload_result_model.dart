@@ -31,10 +31,14 @@ class InvoiceUploadResult {
     final totalCount = total is num
         ? total.toInt()
         : int.tryParse(total?.toString() ?? '') ?? uploadedFiles.length;
+    final explicitSuccess = status == 'success';
+    final inferredSuccess =
+        status == null && (uploadedFiles.isNotEmpty || totalCount > 0);
 
     return InvoiceUploadResult(
-      success: status == 'success',
-      message: map['message']?.toString(),
+      success: explicitSuccess || inferredSuccess,
+      message: map['message']?.toString() ??
+          map['__server_message']?.toString(),
       shipmentId: map['shipment_id']?.toString(),
       totalFilesUploaded: totalCount,
       files: uploadedFiles,

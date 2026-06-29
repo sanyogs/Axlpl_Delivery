@@ -42,6 +42,7 @@ dependencies:
   enhance_stepper: ^1.0.1
   percent_indicator: ^4.2.5
   image_picker: ^1.1.2
+  flutter_image_compress: ^2.4.0
   flutter_secure_storage: ^9.2.4
   dio: ^5.8.0+1
   talker_dio_logger: ^4.6.10

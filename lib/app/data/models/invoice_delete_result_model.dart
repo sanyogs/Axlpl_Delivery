@@ -17,17 +17,23 @@ class InvoiceDeleteResult {
     }
     final map = Map<String, dynamic>.from(data);
     final status = map['status']?.toString().trim().toLowerCase();
+    final type = map['type']?.toString().trim().toLowerCase();
     final serverMessage = map['__server_message']?.toString();
     final inner = map['data'];
     final innerMap = inner is Map ? Map<String, dynamic>.from(inner) : null;
 
     final id = innerMap?['id']?.toString() ??
-        map['id']?.toString();
+        innerMap?['invoice_file_id']?.toString() ??
+        map['id']?.toString() ??
+        map['invoice_file_id']?.toString();
     final fileName = innerMap?['file_name']?.toString() ??
         map['file_name']?.toString();
 
-    if (status == 'success' ||
-        (status == null && (id != null || fileName != null))) {
+    final explicitSuccess = status == 'success' || type == 'success';
+    final inferredSuccess =
+        status == null && type == null && (id != null || fileName != null);
+
+    if (explicitSuccess || inferredSuccess) {
       return InvoiceDeleteResult(
         success: true,
         message: map['message']?.toString() ??

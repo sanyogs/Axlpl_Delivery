@@ -36,25 +36,35 @@ class InvoiceAttachmentSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final details = controller.shipmentDetail.value;
+      final resolvedInvoicePath =
+          details?.invoicePath?.toString() ?? invoicePath;
+      final resolvedInvoiceFile = details?.invoiceFile ?? invoiceFile;
+      final resolvedInvoiceFiles = details?.invoiceFiles ?? invoiceFiles;
+      // Rebuild when attachments change (upload/delete/refresh).
+      controller.invoiceAttachmentsRevision.value;
+      controller.invoiceFileIdCache.length;
+      controller.hadMultiInvoiceFiles.length;
+
       final files = controller.getImages(shipmentId);
       final uploadedFiles = controller.resolveUploadedInvoiceFiles(
         shipmentId: shipmentId,
-        invoicePath: invoicePath,
-        invoiceFile: invoiceFile,
-        invoiceFiles: invoiceFiles,
+        invoicePath: resolvedInvoicePath,
+        invoiceFile: resolvedInvoiceFile,
+        invoiceFiles: resolvedInvoiceFiles,
       );
       final uploadedCount = uploadedFiles.length;
       final total = controller.totalAttachmentCount(
         shipmentId,
-        invoicePath: invoicePath,
-        invoiceFile: invoiceFile,
-        invoiceFiles: invoiceFiles,
+        invoicePath: resolvedInvoicePath,
+        invoiceFile: resolvedInvoiceFile,
+        invoiceFiles: resolvedInvoiceFiles,
       );
       final remaining = controller.remainingAttachmentSlots(
         shipmentId,
-        invoicePath: invoicePath,
-        invoiceFile: invoiceFile,
-        invoiceFiles: invoiceFiles,
+        invoicePath: resolvedInvoicePath,
+        invoiceFile: resolvedInvoiceFile,
+        invoiceFiles: resolvedInvoiceFiles,
       );
       final uploading =
           controller.isInvoiceUpload.value == Status.loading;
@@ -135,10 +145,10 @@ class InvoiceAttachmentSection extends StatelessWidget {
                   if (index < uploadedCount) {
                     final uploaded = uploadedFiles[index];
                     return _UploadedAttachmentThumb(
-                      url: uploaded.resolvedUrl(invoicePath),
+                      url: uploaded.resolvedUrl(resolvedInvoicePath),
                       onTap: () => _showUploadedInvoiceDialog(
                         context,
-                        uploaded.resolvedUrl(invoicePath),
+                        uploaded.resolvedUrl(resolvedInvoicePath),
                       ),
                       onDelete: attachmentBusy
                           ? null
@@ -213,70 +223,72 @@ class _UploadedAttachmentThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 100.w,
-        height: 100.w,
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: Image.network(
-                url,
-                width: 100.w,
-                height: 100.w,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+    return SizedBox(
+      width: 100.w,
+      height: 100.w,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: onTap,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10.r),
+                child: Image.network(
+                  url,
                   width: 100.w,
                   height: 100.w,
-                  color: themes.lightGrayColor,
-                  alignment: Alignment.center,
-                  child: Icon(Icons.image_outlined, color: themes.grayColor),
-                ),
-              ),
-            ),
-            if (onDelete != null)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onDelete,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
-                      shape: BoxShape.circle,
-                    ),
-                    padding: EdgeInsets.all(4.w),
-                    child: Icon(
-                      Icons.close,
-                      size: 16.sp,
-                      color: Colors.white,
-                    ),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 100.w,
+                    height: 100.w,
+                    color: themes.lightGrayColor,
+                    alignment: Alignment.center,
+                    child: Icon(Icons.image_outlined, color: themes.grayColor),
                   ),
                 ),
               ),
+            ),
+          ),
+          if (onDelete != null)
             Positioned(
-              left: 4,
-              bottom: 4,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Text(
-                  'Uploaded',
-                  style: themes.fontSize14_400.copyWith(
-                    fontSize: 9.sp,
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onDelete,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(4.w),
+                  child: Icon(
+                    Icons.close,
+                    size: 16.sp,
                     color: Colors.white,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          Positioned(
+            left: 4,
+            bottom: 4,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(6.r),
+              ),
+              child: Text(
+                'Uploaded',
+                style: themes.fontSize14_400.copyWith(
+                  fontSize: 9.sp,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

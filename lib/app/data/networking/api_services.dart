@@ -588,17 +588,28 @@ class ApiServices {
     );
   }
 
-  Future<APIResponse> deleteShipmentInvoiceFile(
-    String invoiceFileId,
-    final token,
-  ) async {
+  Future<APIResponse> deleteShipmentInvoiceFile({
+    String? invoiceFileId,
+    String? fileName,
+    required token,
+  }) async {
     final formData = FormData();
-    formData.fields.add(MapEntry('id', invoiceFileId.toString()));
+    final id = invoiceFileId?.trim();
+    final name = fileName?.trim();
+    if (id != null && id.isNotEmpty) {
+      formData.fields.add(MapEntry('id', id));
+    }
+    if (name != null && name.isNotEmpty) {
+      formData.fields.add(MapEntry('file_name', name));
+    }
     return _api.post(
       '',
       formData,
       token: token,
-      query: {'request': deleteShipmentInvoiceFilePoint},
+      query: {
+        'request': deleteShipmentInvoiceFilePoint,
+        if (id != null && id.isNotEmpty) 'id': id,
+      },
       contentType: ContentType.multipart,
     );
   }

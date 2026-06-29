@@ -67,9 +67,57 @@ void main() {
       shipmentId: shipmentId,
       invoicePath: invoicePath,
       invoiceFile: '6968676665_cached.png',
-      invoiceFiles: const [],
+      invoiceFiles: null,
     );
 
     expect(files.single.id, '42');
+  });
+
+  test('suppresses stale legacy when server returns empty invoice_files', () {
+    final controller = RunningDeliveryDetailsController();
+    Get.put(controller);
+    const shipmentId = '6968676665';
+    const invoicePath =
+        'https://my.axlpl.com/admin/template/assets/images/invoice_file/';
+
+    controller.hadMultiInvoiceFiles[shipmentId] = true;
+
+    final files = controller.resolveUploadedInvoiceFiles(
+      shipmentId: shipmentId,
+      invoicePath: invoicePath,
+      invoiceFile: '6968676665_stale_legacy.png',
+      invoiceFiles: const [],
+    );
+
+    expect(files, isEmpty);
+  });
+
+  test('finds invoice file id from shipment details list', () {
+    final controller = RunningDeliveryDetailsController();
+    Get.put(controller);
+    const shipmentId = '6968676665';
+    controller.shipmentDetail.value = ShipmentDetails.fromJson({
+      'shipment_id': shipmentId,
+      'invoice_path':
+          'https://my.axlpl.com/admin/template/assets/images/invoice_file/',
+      'invoice_files': [
+        {
+          'id': '6',
+          'file_name': '6968676665_6a421b362a241.png',
+          'file_url':
+              'https://my.axlpl.com/admin/template/assets/images/invoice_file/6968676665_6a421b362a241.png',
+        },
+      ],
+    });
+
+    final files = controller.resolveUploadedInvoiceFiles(
+      shipmentId: shipmentId,
+      invoicePath: controller.shipmentDetail.value?.invoicePath,
+      invoiceFile: controller.shipmentDetail.value?.invoiceFile,
+      invoiceFiles: controller.shipmentDetail.value?.invoiceFiles,
+    );
+
+    expect(files.single.id, '6');
+    expect(files.single.canDelete, isTrue);
   });
 }

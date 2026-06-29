@@ -8,6 +8,7 @@ import 'package:axlpl_delivery/app/data/models/negative_status_model.dart';
 import 'package:axlpl_delivery/app/data/networking/data_state.dart';
 import 'package:axlpl_delivery/app/data/networking/repostiory/tracking_repo.dart';
 import 'package:axlpl_delivery/common_widget/common_tow_btn_dialog.dart';
+import 'package:axlpl_delivery/utils/image_compress_util.dart';
 import 'package:axlpl_delivery/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,6 +48,8 @@ class RunningDeliveryDetailsController extends GetxController {
   var imageMap = <String, List<File>>{}.obs;
   final invoiceFileIdCache = <String, Map<String, String>>{}.obs;
   final hadMultiInvoiceFiles = <String, bool>{}.obs;
+  final invoiceAttachmentsRevision = 0.obs;
+  final _pendingUploadInvoiceNames = <String, List<String>>{};
 
   static const int maxInvoiceAttachments =
       InvoiceAttachmentState.maxInvoiceAttachments;
@@ -156,18 +159,39 @@ class RunningDeliveryDetailsController extends GetxController {
     );
   }
 
-  void _rememberInvoiceFileIds(String shipmentId, ShipmentDetails? details) {
+  void _notifyInvoiceUiChanged() {
+    invoiceAttachmentsRevision.value++;
+    shipmentDetail.refresh();
+    invoiceFileIdCache.refresh();
+    hadMultiInvoiceFiles.refresh();
+    imageMap.refresh();
+  }
+
+  void _syncInvoiceAttachmentsFromServer(
+    String shipmentId,
+    ShipmentDetails? details,
+  ) {
     final id = shipmentId.trim();
     if (id.isEmpty || details == null) return;
 
     final files = details.invoiceFiles;
-    if (files == null || files.isEmpty) return;
+    if (files == null) {
+      // Legacy track response — show `invoice_file` until server sends `invoice_files`.
+      hadMultiInvoiceFiles.remove(id);
+      hadMultiInvoiceFiles.refresh();
+      return;
+    }
 
+    // `invoice_files` present (even empty) => multi-invoice API; ignore stale legacy.
     hadMultiInvoiceFiles[id] = true;
     final cache = invoiceFileIdCache.putIfAbsent(id, () => {});
+    final activeNames = <String>{};
     for (final file in files) {
       final fileId = file.id?.trim();
       final name = file.fileName?.trim();
+      if (name != null && name.isNotEmpty) {
+        activeNames.add(name);
+      }
       if (fileId != null &&
           fileId.isNotEmpty &&
           name != null &&
@@ -175,8 +199,24 @@ class RunningDeliveryDetailsController extends GetxController {
         cache[name] = fileId;
       }
     }
+    cache.removeWhere((name, _) => !activeNames.contains(name));
     invoiceFileIdCache.refresh();
     hadMultiInvoiceFiles.refresh();
+  }
+
+  /// Re-fetch tracking details after upload/delete so attachments match the server.
+  Future<void> refreshTrackingDetailsAfterInvoiceAction(
+    String shipmentID, {
+    List<String>? ensureFileNames,
+  }) async {
+    final id = shipmentID.trim();
+    if (ensureFileNames != null && ensureFileNames.isNotEmpty) {
+      _pendingUploadInvoiceNames[id] = ensureFileNames
+          .map((name) => name.trim())
+          .where((name) => name.isNotEmpty)
+          .toList(growable: false);
+    }
+    await fetchTrackingData(shipmentID, silent: true);
   }
 
   void _forgetCachedInvoiceFile(String shipmentId, ShipmentInvoiceFile file) {
@@ -185,6 +225,98 @@ class RunningDeliveryDetailsController extends GetxController {
     if (id.isEmpty || name == null || name.isEmpty) return;
     invoiceFileIdCache[id]?.remove(name);
     invoiceFileIdCache.refresh();
+  }
+
+  void _mergeUploadedFilesIntoShipmentDetails(
+    String shipmentId,
+    List<String> uploadedFileNames,
+  ) {
+    if (uploadedFileNames.isEmpty) return;
+    final details = shipmentDetail.value;
+    if (details == null) return;
+
+    final base = details.invoicePath?.trim() ?? '';
+    final existing = List<ShipmentInvoiceFile>.from(details.invoiceFiles ?? []);
+    final seen = <String>{
+      for (final file in existing)
+        if (file.fileName?.trim().isNotEmpty == true) file.fileName!.trim(),
+    };
+
+    for (final rawName in uploadedFileNames) {
+      final name = rawName.trim();
+      if (name.isEmpty || seen.contains(name)) continue;
+      seen.add(name);
+      existing.add(
+        ShipmentInvoiceFile(
+          fileName: name,
+          fileUrl: name.startsWith('http://') || name.startsWith('https://')
+              ? name
+              : '$base$name',
+        ),
+      );
+    }
+
+    details.invoiceFiles = existing;
+    details.invoiceFile = existing
+        .map((file) => file.fileName?.trim())
+        .whereType<String>()
+        .where((name) => name.isNotEmpty)
+        .join(',');
+    if (existing.isNotEmpty) {
+      hadMultiInvoiceFiles[shipmentId.trim()] = true;
+    }
+    _notifyInvoiceUiChanged();
+  }
+
+  void _removeUploadedInvoiceFromShipmentDetails(
+    String shipmentId,
+    ShipmentInvoiceFile file, {
+    String? deletedFileName,
+  }) {
+    final details = shipmentDetail.value;
+    if (details == null) return;
+
+    final targetName = (deletedFileName ?? file.fileName)?.trim();
+    final targetUrl = file.resolvedUrl(details.invoicePath);
+    final remaining = (details.invoiceFiles ?? const <ShipmentInvoiceFile>[])
+        .where((candidate) {
+          final name = candidate.fileName?.trim();
+          if (targetName != null &&
+              targetName.isNotEmpty &&
+              name == targetName) {
+            return false;
+          }
+          if (targetUrl.isNotEmpty &&
+              candidate.resolvedUrl(details.invoicePath) == targetUrl) {
+            return false;
+          }
+          return true;
+        })
+        .toList(growable: false);
+
+    details.invoiceFiles = remaining;
+    details.invoiceFile = remaining
+        .map((item) => item.fileName?.trim())
+        .whereType<String>()
+        .where((name) => name.isNotEmpty)
+        .join(',');
+
+    _forgetCachedInvoiceFile(shipmentId, file);
+    _notifyInvoiceUiChanged();
+  }
+
+  bool _invoiceFilesMatch(ShipmentInvoiceFile a, ShipmentInvoiceFile b) {
+    final aName = a.fileName?.trim();
+    final bName = b.fileName?.trim();
+    if (aName != null && aName.isNotEmpty && aName == bName) return true;
+    final aOriginal = a.originalName?.trim();
+    final bOriginal = b.originalName?.trim();
+    if (aOriginal != null &&
+        aOriginal.isNotEmpty &&
+        aOriginal == bOriginal) {
+      return true;
+    }
+    return false;
   }
 
   Future<String?> _resolveInvoiceFileIdForDelete({
@@ -198,27 +330,67 @@ class RunningDeliveryDetailsController extends GetxController {
     final cached = enriched.id?.trim();
     if (cached != null && cached.isNotEmpty) return cached;
 
-    await fetchTrackingData(shipmentID, silent: true);
     final details = shipmentDetail.value;
+    final directFromDetails = _findInvoiceFileIdInDetails(details, file);
+    if (directFromDetails != null && directFromDetails.isNotEmpty) {
+      return directFromDetails;
+    }
+
+    await fetchTrackingData(shipmentID, silent: true);
+    final refreshedDetails = shipmentDetail.value;
+    final fromServer = _findInvoiceFileIdInDetails(refreshedDetails, file);
+    if (fromServer != null && fromServer.isNotEmpty) return fromServer;
+
     final refreshed = resolveUploadedInvoiceFiles(
       shipmentId: shipmentID,
-      invoicePath: details?.invoicePath,
-      invoiceFile: details?.invoiceFile,
-      invoiceFiles: details?.invoiceFiles,
+      invoicePath: refreshedDetails?.invoicePath,
+      invoiceFile: refreshedDetails?.invoiceFile,
+      invoiceFiles: refreshedDetails?.invoiceFiles,
     );
     final targetName = file.fileName?.trim();
-    final targetUrl = file.resolvedUrl(details?.invoicePath);
+    final targetOriginal = file.originalName?.trim();
+    final targetUrl = file.resolvedUrl(refreshedDetails?.invoicePath);
     for (final candidate in refreshed) {
       final candidateId = candidate.id?.trim();
       if (candidateId == null || candidateId.isEmpty) continue;
+      if (_invoiceFilesMatch(candidate, file)) {
+        return candidateId;
+      }
       final name = candidate.fileName?.trim();
       if (targetName != null &&
           targetName.isNotEmpty &&
           name == targetName) {
         return candidateId;
       }
+      if (targetOriginal != null &&
+          targetOriginal.isNotEmpty &&
+          candidate.originalName?.trim() == targetOriginal) {
+        return candidateId;
+      }
       if (targetUrl.isNotEmpty &&
-          candidate.resolvedUrl(details?.invoicePath) == targetUrl) {
+          candidate.resolvedUrl(refreshedDetails?.invoicePath) == targetUrl) {
+        return candidateId;
+      }
+    }
+    return null;
+  }
+
+  String? _findInvoiceFileIdInDetails(
+    ShipmentDetails? details,
+    ShipmentInvoiceFile file,
+  ) {
+    if (details == null) return null;
+    final files = details.invoiceFiles;
+    if (files == null || files.isEmpty) return null;
+
+    for (final candidate in files) {
+      final candidateId = candidate.id?.trim();
+      if (candidateId == null || candidateId.isEmpty) continue;
+      if (_invoiceFilesMatch(candidate, file)) return candidateId;
+
+      final targetUrl = file.resolvedUrl(details.invoicePath);
+      if (targetUrl.isNotEmpty &&
+          candidate.resolvedUrl(details.invoicePath) == targetUrl) {
         return candidateId;
       }
     }
@@ -406,12 +578,16 @@ class RunningDeliveryDetailsController extends GetxController {
       if (remaining == 1) {
         final single = await picker.pickImage(
           source: ImageSource.gallery,
-          imageQuality: 85,
+          imageQuality: ImageCompressUtil.defaultQuality,
+          maxWidth: ImageCompressUtil.defaultMaxDimension.toDouble(),
+          maxHeight: ImageCompressUtil.defaultMaxDimension.toDouble(),
         );
         pickedFiles = single == null ? const [] : [single];
       } else {
         pickedFiles = await picker.pickMultiImage(
-          imageQuality: 85,
+          imageQuality: ImageCompressUtil.defaultQuality,
+          maxWidth: ImageCompressUtil.defaultMaxDimension.toDouble(),
+          maxHeight: ImageCompressUtil.defaultMaxDimension.toDouble(),
           limit: remaining.clamp(1, maxInvoiceAttachments),
         );
       }
@@ -420,7 +596,9 @@ class RunningDeliveryDetailsController extends GetxController {
       final files = <File>[];
       for (final picked in pickedFiles.take(remaining)) {
         final file = File(picked.path);
-        if (await file.exists()) files.add(file);
+        if (await file.exists()) {
+          files.add(await ImageCompressUtil.compressForUpload(file));
+        }
       }
       if (files.isEmpty) {
         Get.snackbar(
@@ -456,12 +634,16 @@ class RunningDeliveryDetailsController extends GetxController {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: source,
-        imageQuality: 85,
+        imageQuality: ImageCompressUtil.defaultQuality,
+        maxWidth: ImageCompressUtil.defaultMaxDimension.toDouble(),
+        maxHeight: ImageCompressUtil.defaultMaxDimension.toDouble(),
       );
 
       if (pickedFile == null) return;
 
-      final file = File(pickedFile.path);
+      final file = await ImageCompressUtil.compressForUpload(
+        File(pickedFile.path),
+      );
       if (!await file.exists()) {
         Get.snackbar(
           "Error",
@@ -505,6 +687,52 @@ class RunningDeliveryDetailsController extends GetxController {
   // --------------------------------------------------------------------------
   // 🔹 Tracking Fetch
   // --------------------------------------------------------------------------
+  void _applyTrackingPayload(String shipmentID, List<Tracking> trackingList) {
+    List<TrackingStatus> trackingStatusList = [];
+    List<ErData> senderDataList = [];
+    List<ErData> receiverDataList = [];
+    List<CashLog> cashCollList = [];
+    ShipmentDetails? shipmentDetails;
+
+    for (var item in trackingList) {
+      if (item.trackingStatus != null && item.trackingStatus!.isNotEmpty) {
+        trackingStatusList.addAll(item.trackingStatus!);
+      }
+      if (item.senderData != null) senderDataList.add(item.senderData!);
+      if (item.receiverData != null) receiverDataList.add(item.receiverData!);
+      if (item.cashLog != null && item.cashLog!.isNotEmpty) {
+        cashCollList.addAll(item.cashLog!);
+      }
+      if (shipmentDetails == null && item.shipmentDetails != null) {
+        shipmentDetails = item.shipmentDetails;
+      }
+    }
+
+    trackingStatus.value = trackingStatusList;
+    senderData.value = senderDataList;
+    receiverData.value = receiverDataList;
+    cashCollData.value = cashCollList;
+    shipmentDetail.value = shipmentDetails;
+    _syncInvoiceAttachmentsFromServer(shipmentID, shipmentDetails);
+
+    final pending = _pendingUploadInvoiceNames.remove(shipmentID.trim());
+    if (pending != null &&
+        pending.isNotEmpty &&
+        shipmentDetails != null) {
+      _mergeUploadedFilesIntoShipmentDetails(shipmentID, pending);
+    }
+
+    Utils().logInfo("""
+        Tracking Data Loaded:
+        - Status Events: ${trackingStatusList.length}
+        - Sender Data: ${senderDataList.length}
+        - Receiver Data: ${receiverDataList.length}
+        - Cash Collection Data: ${cashCollList.length}
+        - Shipment Details: ${shipmentDetails != null ? 'Available' : 'Not Available'}
+        - Invoice files: ${shipmentDetails?.invoiceFiles?.length ?? 'legacy'}
+        """);
+  }
+
   Future<void> fetchTrackingData(
     String shipmentID, {
     bool silent = false,
@@ -517,55 +745,26 @@ class RunningDeliveryDetailsController extends GetxController {
       final trackingList = trackingData?.tracking ?? [];
 
       if (trackingList.isNotEmpty) {
-        List<TrackingStatus> trackingStatusList = [];
-        List<ErData> senderDataList = [];
-        List<ErData> receiverDataList = [];
-        List<CashLog> cashCollList = [];
-        ShipmentDetails? shipmentDetails;
-
-        for (var item in trackingList) {
-          if (item.trackingStatus != null && item.trackingStatus!.isNotEmpty) {
-            trackingStatusList.addAll(item.trackingStatus!);
-          }
-          if (item.senderData != null) senderDataList.add(item.senderData!);
-          if (item.receiverData != null)
-            receiverDataList.add(item.receiverData!);
-          if (item.cashLog != null && item.cashLog!.isNotEmpty) {
-            cashCollList.addAll(item.cashLog!);
-          }
-          if (shipmentDetails == null && item.shipmentDetails != null) {
-            shipmentDetails = item.shipmentDetails;
-          }
-        }
-
-        trackingStatus.value = trackingStatusList;
-        senderData.value = senderDataList;
-        receiverData.value = receiverDataList;
-        cashCollData.value = cashCollList;
-        shipmentDetail.value = shipmentDetails;
-        _rememberInvoiceFileIds(shipmentID, shipmentDetails);
+        _applyTrackingPayload(shipmentID, trackingList);
         if (!silent) {
           isTrackingLoading.value = Status.success;
+        } else {
+          _notifyInvoiceUiChanged();
         }
-
-        Utils().logInfo("""
-        Tracking Data Loaded:
-        - Status Events: ${trackingStatusList.length}
-        - Sender Data: ${senderDataList.length}
-        - Receiver Data: ${receiverDataList.length}
-        - Cash Collection Data: ${cashCollList.length}
-        - Shipment Details: ${shipmentDetails != null ? 'Available' : 'Not Available'}
-        """);
       } else {
-        _clearAllData();
         if (!silent) {
+          _clearAllData();
           isTrackingLoading.value = Status.error;
+          Utils().logInfo("No tracking data found for shipment: $shipmentID");
+        } else {
+          Utils().logInfo(
+            "Silent refresh: no tracking data for shipment: $shipmentID",
+          );
         }
-        Utils().logInfo("No tracking data found for shipment: $shipmentID");
       }
     } catch (e) {
-      _clearAllData();
       if (!silent) {
+        _clearAllData();
         isTrackingLoading.value = Status.error;
       }
       Utils().logError("Failed to fetch tracking data: ${e.toString()}");
@@ -597,21 +796,31 @@ class RunningDeliveryDetailsController extends GetxController {
       isInvoiceUpload.value = Status.loading;
       message.value = '';
 
-      final result = await repo.uploadInvoiceRepo(shipmentID, existing);
+      final compressed = await ImageCompressUtil.compressAllForUpload(existing);
+      final result = await repo.uploadInvoiceRepo(shipmentID, compressed);
       if (result.success) {
-        isInvoiceUpload.value = Status.success;
         final uploadedCount = result.totalFilesUploaded > 0
             ? result.totalFilesUploaded
-            : existing.length;
+            : compressed.length;
+        final uploadedNames = result.files.isNotEmpty
+            ? result.files
+            : compressed
+                .map((file) => file.path.split('/').last)
+                .toList(growable: false);
         message.value = result.message?.trim().isNotEmpty == true
             ? result.message!.trim()
             : uploadedCount > 1
                 ? '$uploadedCount invoices uploaded successfully'
                 : 'Invoice uploaded successfully';
         clearImages(shipmentID);
+        _mergeUploadedFilesIntoShipmentDetails(shipmentID, uploadedNames);
         Get.snackbar("Success", message.value,
             backgroundColor: themes.darkCyanBlue, colorText: themes.whiteColor);
-        await fetchTrackingData(shipmentID);
+        await refreshTrackingDetailsAfterInvoiceAction(
+          shipmentID,
+          ensureFileNames: uploadedNames,
+        );
+        isInvoiceUpload.value = Status.initial;
       } else {
         isInvoiceUpload.value = Status.error;
         message.value = result.message ?? repo.apiMessage ?? 'Upload failed';
@@ -623,6 +832,10 @@ class RunningDeliveryDetailsController extends GetxController {
       message.value = 'Unexpected error: $e';
       Get.snackbar("Error", message.value,
           backgroundColor: themes.redColor, colorText: themes.whiteColor);
+    } finally {
+      if (isInvoiceUpload.value == Status.loading) {
+        isInvoiceUpload.value = Status.initial;
+      }
     }
   }
 
@@ -647,24 +860,49 @@ class RunningDeliveryDetailsController extends GetxController {
       'Delete',
       'Cancel',
       () async {
-        final invoiceFileId = await _resolveInvoiceFileIdForDelete(
-          shipmentID: shipmentID,
-          file: file,
-        );
-        if (invoiceFileId == null || invoiceFileId.isEmpty) {
+        try {
+          final invoiceFileId = await _resolveInvoiceFileIdForDelete(
+            shipmentID: shipmentID,
+            file: file,
+          );
+          final fileName = file.fileName?.trim();
+          if ((invoiceFileId == null || invoiceFileId.isEmpty) &&
+              (fileName == null || fileName.isEmpty)) {
+            await refreshTrackingDetailsAfterInvoiceAction(shipmentID);
+            final retryId = await _resolveInvoiceFileIdForDelete(
+              shipmentID: shipmentID,
+              file: file,
+            );
+            if ((retryId == null || retryId.isEmpty) &&
+                (fileName == null || fileName.isEmpty)) {
+              Get.snackbar(
+                'Invoice',
+                'Unable to delete this attachment. Please refresh and try again.',
+                backgroundColor: themes.redColor,
+                colorText: themes.whiteColor,
+              );
+              return;
+            }
+            await deleteUploadedInvoice(
+              shipmentID: shipmentID,
+              file: file,
+              invoiceFileId: retryId,
+            );
+            return;
+          }
+          await deleteUploadedInvoice(
+            shipmentID: shipmentID,
+            file: file,
+            invoiceFileId: invoiceFileId,
+          );
+        } catch (e) {
           Get.snackbar(
             'Invoice',
-            'Unable to delete this attachment. Please refresh and try again.',
+            'Delete failed: $e',
             backgroundColor: themes.redColor,
             colorText: themes.whiteColor,
           );
-          return;
         }
-        await deleteUploadedInvoice(
-          shipmentID: shipmentID,
-          invoiceFileId: invoiceFileId,
-          file: file,
-        );
       },
       icon: Icons.delete_outline,
       iconColor: themes.redColor,
@@ -673,19 +911,23 @@ class RunningDeliveryDetailsController extends GetxController {
 
   Future<void> deleteUploadedInvoice({
     required String shipmentID,
-    required String invoiceFileId,
-    ShipmentInvoiceFile? file,
+    required ShipmentInvoiceFile file,
+    String? invoiceFileId,
   }) async {
     try {
       isInvoiceDelete.value = Status.loading;
       message.value = '';
 
-      final result = await repo.deleteShipmentInvoiceFileRepo(invoiceFileId);
+      final result = await repo.deleteShipmentInvoiceFileRepo(
+        invoiceFileId: invoiceFileId,
+        fileName: file.fileName,
+      );
       if (result.success) {
-        isInvoiceDelete.value = Status.success;
-        if (file != null) {
-          _forgetCachedInvoiceFile(shipmentID, file);
-        }
+        _removeUploadedInvoiceFromShipmentDetails(
+          shipmentID,
+          file,
+          deletedFileName: result.fileName ?? file.fileName,
+        );
         message.value = result.message?.trim().isNotEmpty == true
             ? result.message!.trim()
             : 'Invoice file deleted successfully';
@@ -695,7 +937,8 @@ class RunningDeliveryDetailsController extends GetxController {
           backgroundColor: themes.darkCyanBlue,
           colorText: themes.whiteColor,
         );
-        await fetchTrackingData(shipmentID, silent: true);
+        await refreshTrackingDetailsAfterInvoiceAction(shipmentID);
+        isInvoiceDelete.value = Status.initial;
       } else {
         isInvoiceDelete.value = Status.error;
         message.value = result.message ?? repo.apiMessage ?? 'Delete failed';
@@ -715,6 +958,10 @@ class RunningDeliveryDetailsController extends GetxController {
         backgroundColor: themes.redColor,
         colorText: themes.whiteColor,
       );
+    } finally {
+      if (isInvoiceDelete.value == Status.loading) {
+        isInvoiceDelete.value = Status.initial;
+      }
     }
   }
 

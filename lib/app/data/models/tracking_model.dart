@@ -248,9 +248,9 @@ class ShipmentDetails {
         invoicePath: json["invoice_path"],
         invoiceFile: json["invoice_file"],
         invoiceFiles: json["invoice_files"] == null
-            ? []
+            ? null
             : List<ShipmentInvoiceFile>.from(
-                json["invoice_files"]!
+                (json["invoice_files"] as List)
                     .map((x) => ShipmentInvoiceFile.fromJson(x)),
               ),
         shipmentCharges: json["shipment_charges"],
@@ -323,7 +323,7 @@ class ShipmentInvoiceFile {
 
   factory ShipmentInvoiceFile.fromJson(Map<String, dynamic> json) =>
       ShipmentInvoiceFile(
-        id: json["id"]?.toString(),
+        id: json["id"]?.toString() ?? json["invoice_file_id"]?.toString(),
         fileName: json["file_name"]?.toString(),
         originalName: json["original_name"]?.toString(),
         fileUrl: json["file_url"]?.toString(),
