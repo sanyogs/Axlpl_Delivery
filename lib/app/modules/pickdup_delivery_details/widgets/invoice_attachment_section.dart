@@ -139,6 +139,7 @@ class InvoiceAttachmentSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 itemCount: tileCount,
                 separatorBuilder: (_, __) => SizedBox(width: 10.w),
                 itemBuilder: (context, index) {

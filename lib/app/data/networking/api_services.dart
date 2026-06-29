@@ -609,6 +609,7 @@ class ApiServices {
       query: {
         'request': deleteShipmentInvoiceFilePoint,
         if (id != null && id.isNotEmpty) 'id': id,
+        if (name != null && name.isNotEmpty) 'file_name': name,
       },
       contentType: ContentType.multipart,
     );

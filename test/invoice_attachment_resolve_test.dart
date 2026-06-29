@@ -120,4 +120,40 @@ void main() {
     expect(files.single.id, '6');
     expect(files.single.canDelete, isTrue);
   });
+
+  test('adds missing legacy invoice_file entries not already in invoice_files',
+      () {
+    final controller = RunningDeliveryDetailsController();
+    Get.put(controller);
+    const shipmentId = '6968676665';
+    const invoicePath =
+        'https://my.axlpl.com/admin/template/assets/images/invoice_file/';
+
+    controller.hadMultiInvoiceFiles[shipmentId] = true;
+
+    final files = controller.resolveUploadedInvoiceFiles(
+      shipmentId: shipmentId,
+      invoicePath: invoicePath,
+      invoiceFile:
+          '6968676665_a.jpg,6968676665_b.jpg,6968676665_c.jpg',
+      invoiceFiles: const [
+        ShipmentInvoiceFile(
+          fileName: '6968676665_a.jpg',
+          fileUrl:
+              'https://my.axlpl.com/admin/template/assets/images/invoice_file/6968676665_a.jpg',
+        ),
+        ShipmentInvoiceFile(
+          fileName: '6968676665_b.jpg',
+          fileUrl:
+              'https://my.axlpl.com/admin/template/assets/images/invoice_file/6968676665_b.jpg',
+        ),
+      ],
+    );
+
+    expect(files, hasLength(3));
+    expect(
+      files.map((file) => file.fileName),
+      contains('6968676665_c.jpg'),
+    );
+  });
 }
